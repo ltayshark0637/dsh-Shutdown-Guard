@@ -1,5 +1,11 @@
 # Changelog
 
+## v1.0.3 — 2026-11-02
+
+- 警戒带接缝修好：改为单条 2 倍宽元素（`::before`）承载 `repeating-linear-gradient(115deg)`，用 `translateX(-22.07px)` 平移；周期 20/sin115°≈22.07px，不再按 34px 平铺，斜线连续。
+- 卡片颜色不再受宿主主题干预：改用自有调色板 `--dsp-*`（bg/fg/muted/line/accent/danger/track/tape-a/tape-b），只在运行时读取宿主表面亮度（probe `var(--dsw-alias-bg-layer-1)`）决定 `data-lum="light|dark"`，浅色用另一套值；字体仍随宿主。
+- 终端屏幕改为固定深色（`#0b0d10` / `#9ef0a8`），不再受主题 token 影响；设置分区保留宿主 token（它位于设置页）。
+
 ## v1.0.2 — 2026-11-02
 
 - 警戒带改用固定琥珀 #f0a83a + 主题错误红：此前用 --dsw-alias-button-primary-fill，而当前主题的主按钮填充是近白色，条带成了白红相间。
