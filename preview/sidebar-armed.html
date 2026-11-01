@@ -1,0 +1,232 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+<meta charset="utf-8">
+<title>dsh-shutdown-panel · 侧边栏视觉预览</title>
+<style>
+  :root{
+    --bg:#0e1014; --panel:#171a20; --panel-2:#1d2129; --line:#2a2f3a;
+    --text:#e8ebf2; --muted:#8b94a3; --dim:#5d6675;
+    --blue:#5b8cff; --amber:#ffb224; --red:#ff4d4f; --yellow:#ffd23f;
+    --r-lg:16px; --r-md:10px; --r-sm:7px;
+    --mono: ui-monospace, SFMono-Regular, "Cascadia Mono", Consolas, monospace;
+    font-family: system-ui, -apple-system, "Segoe UI", "PingFang SC", "Microsoft YaHei", sans-serif;
+  }
+  *{box-sizing:border-box}
+  body{margin:0;background:var(--bg);color:var(--text);padding:28px;min-height:100vh}
+  h1{font-size:15px;font-weight:600;margin:0 0 4px;letter-spacing:.02em}
+  .sub{color:var(--muted);font-size:12px;margin:0 0 22px}
+  .stage{display:flex;gap:34px;align-items:flex-start}
+
+  /* ---------- sidebar mock ---------- */
+  .sidebar{width:252px;background:var(--panel);border:1px solid var(--line);border-radius:14px;padding:10px 8px 12px;display:flex;flex-direction:column;gap:10px;min-height:640px}
+  .brand{display:flex;align-items:center;gap:8px;padding:6px 8px 10px}
+  .brand .dot{width:20px;height:20px;border-radius:7px;background:linear-gradient(145deg,#5b8cff,#8b5cf6)}
+  .brand b{font-size:13px;font-weight:600}
+  .newbtn{display:flex;align-items:center;gap:8px;padding:8px;border-radius:var(--r-md);background:var(--panel-2);color:var(--text);font-size:12.5px;border:1px solid var(--line)}
+  .newbtn kbd{margin-left:auto;color:var(--dim);font-size:10px;font-family:var(--mono)}
+  .navrow{display:flex;align-items:center;gap:9px;padding:7px 9px;border-radius:var(--r-md);color:var(--muted);font-size:12.5px}
+  .navrow.on{background:var(--panel-2);color:var(--text)}
+  .navrow svg{opacity:.85}
+  .seclabel{font-size:10.5px;color:var(--dim);letter-spacing:.08em;padding:8px 9px 2px;text-transform:uppercase}
+  .sess{display:flex;align-items:center;gap:8px;padding:7px 9px;border-radius:var(--r-sm);color:var(--muted);font-size:12px}
+  .sess i{width:5px;height:5px;border-radius:50%;background:var(--dim);flex:none}
+  .spacer{flex:1}
+
+  /* ---------- card ---------- */
+  .card{position:relative;border-radius:var(--r-lg);background:linear-gradient(180deg,#1b1f27,#161920);
+        border:1px solid var(--line);padding:12px 12px 0;overflow:hidden;
+        transition:border-color .35s ease, box-shadow .35s ease}
+  .card.armed{border-color:rgba(255,178,36,.55);box-shadow:0 0 0 1px rgba(255,178,36,.12), 0 8px 26px -14px rgba(255,178,36,.55)}
+  .card.counting{border-color:rgba(255,77,79,.6);box-shadow:0 0 0 1px rgba(255,77,79,.14), 0 10px 30px -14px rgba(255,77,79,.6)}
+  .card::after{content:"";position:absolute;inset:0;border-radius:inherit;pointer-events:none;
+        background:radial-gradient(120% 80% at 50% -30%, rgba(255,178,36,.14), transparent 60%);opacity:0;transition:opacity .4s}
+  .card.armed::after{opacity:1}
+
+  .chead{display:flex;align-items:center;gap:7px;font-size:11.5px;color:var(--muted)}
+  .chead .live{width:6px;height:6px;border-radius:50%;background:var(--dim);flex:none}
+  .card.armed .chead .live{background:var(--amber);box-shadow:0 0 0 0 rgba(255,178,36,.7);animation:pulse 1.8s infinite}
+  .chead .tag{margin-left:auto;font-size:9.5px;letter-spacing:.1em;font-family:var(--mono);padding:2px 6px;border-radius:5px;
+        color:var(--dim);border:1px solid var(--line)}
+  .card.armed .chead .tag{color:var(--amber);border-color:rgba(255,178,36,.45);background:rgba(255,178,36,.08)}
+  .card.counting .chead .tag{color:var(--red);border-color:rgba(255,77,79,.5);background:rgba(255,77,79,.09)}
+
+  .cbody{padding:10px 0 12px}
+  .big{font-family:var(--mono);font-size:26px;line-height:1.05;letter-spacing:-.02em;font-weight:600}
+  .big small{font-size:12px;color:var(--muted);font-weight:400;margin-left:6px;letter-spacing:0}
+  .card.counting .big{color:#ffd9d9;text-shadow:0 0 22px rgba(255,77,79,.45)}
+  .meta{display:flex;gap:10px;margin-top:7px;font-size:11px;color:var(--muted);flex-wrap:wrap}
+  .meta span{display:inline-flex;align-items:center;gap:4px}
+  .meta b{color:var(--text);font-weight:600;font-family:var(--mono);font-size:11px}
+  .meta .warn{color:var(--yellow)}
+
+  .cbtns{display:flex;gap:6px;padding-bottom:12px}
+  .btn{flex:1;height:28px;border-radius:8px;border:1px solid var(--line);background:#20242d;color:var(--text);
+       font-size:11.5px;cursor:pointer;transition:.15s}
+  .btn:hover{background:#272c37}
+  .btn.primary{background:linear-gradient(180deg,#ffbf45,#ffa414);border-color:#ffb224;color:#241a00;font-weight:600}
+  .btn.danger{border-color:rgba(255,77,79,.4);color:#ffb3b3;background:rgba(255,77,79,.08)}
+  .btn.primary:hover{filter:brightness(1.06)}
+
+  /* ---------- hazard band ---------- */
+  .hazard{position:relative;height:10px;margin:0 -12px;overflow:hidden;
+        background:repeating-linear-gradient(-45deg,
+          var(--red) 0 10px, var(--red) 10px 12px,
+          var(--yellow) 12px 22px, var(--yellow) 22px 24px);
+        background-size:34px 34px;animation:slide 1.15s linear infinite;opacity:.32;
+        transition:opacity .4s ease}
+  .card.armed .hazard{opacity:.95}
+  .card.counting .hazard{opacity:1;animation-duration:.42s;filter:saturate(1.15)}
+  .hazard::after{content:"";position:absolute;inset:0;background:linear-gradient(180deg,rgba(0,0,0,.35),transparent 45%,rgba(0,0,0,.25))}
+  @keyframes slide{to{background-position:-34px 0}}
+  @keyframes pulse{0%{box-shadow:0 0 0 0 rgba(255,178,36,.65)}70%{box-shadow:0 0 0 7px rgba(255,178,36,0)}100%{box-shadow:0 0 0 0 rgba(255,178,36,0)}}
+
+  /* ---------- variants grid ---------- */
+  .col{display:flex;flex-direction:column;gap:14px}
+  .legend{font-size:11px;color:var(--muted);margin:0 0 6px;letter-spacing:.02em}
+  .row{display:flex;gap:16px;flex-wrap:wrap}
+  .mini{width:212px}
+
+  /* variant B radar */
+  .radar .disc{position:relative;height:64px;margin:4px 0 8px;border-radius:10px;background:
+      radial-gradient(circle at 50% 50%, rgba(255,178,36,.07), transparent 62%), #141821;
+      border:1px solid var(--line);overflow:hidden;display:flex;align-items:center;justify-content:center}
+  .radar .sweep{position:absolute;left:50%;top:50%;width:170px;height:170px;margin:-85px 0 0 -85px;border-radius:50%;
+      background:conic-gradient(from 0deg, rgba(255,178,36,0) 0deg, rgba(255,178,36,.10) 14deg, rgba(255,178,36,.60) 30deg, rgba(255,178,36,0) 44deg);
+      animation:spin 2.6s linear infinite}
+  .radar .ring{position:absolute;width:44px;height:44px;border-radius:50%;border:1px solid rgba(255,178,36,.30);z-index:1}
+  .radar .ring:nth-child(2){width:66px;height:66px;opacity:.5}
+  .radar .ping{position:absolute;width:6px;height:6px;border-radius:50%;background:var(--amber);z-index:2;
+      box-shadow:0 0 12px rgba(255,178,36,.9);animation:pulse 1.8s infinite}
+  .radar .num{position:relative;z-index:2;font-family:var(--mono);font-size:17px;color:#ffe6b0}
+  @keyframes spin{to{transform:rotate(360deg)}}
+
+  /* variant C terminal */
+  .term .screen{background:#0b0d10;border:1px solid #232a35;border-radius:9px;padding:9px 10px;margin:4px 0 8px;
+      font-family:var(--mono);font-size:11px;color:#9ef0a8;line-height:1.55;position:relative;overflow:hidden}
+  .term .screen::after{content:"";position:absolute;inset:0;background:repeating-linear-gradient(0deg,rgba(255,255,255,.035) 0 1px,transparent 1px 3px);pointer-events:none}
+  .term .cl{color:#4f6b57}
+  .term .cursor{display:inline-block;width:6px;height:11px;background:#9ef0a8;vertical-align:-1px;animation:blink 1s steps(1) infinite}
+  @keyframes blink{50%{opacity:0}}
+  .term .leds{display:flex;gap:4px;margin-bottom:8px}
+  .term .leds i{width:16px;height:5px;border-radius:2px;background:#2a3140}
+  .term .leds i.on{background:var(--amber);box-shadow:0 0 8px rgba(255,178,36,.7)}
+  .cap{font-size:11px;color:var(--dim);margin-top:6px}
+  .cap b{color:var(--muted);font-weight:600}
+</style>
+</head>
+<body>
+  <h1>任务完成后关机 · 侧边栏视觉预览</h1>
+  <p class="sub">方案 A（你的构想）· 左侧侧边栏「技能中心」行下方，圆角卡片 + 红黄斜向警戒带；警戒带自右向左滚动</p>
+
+  <div class="stage">
+    <!-- ============ full sidebar context ============ -->
+    <div>
+      <p class="legend">① 真实上下文（宽 252px 侧边栏，已武装）</p>
+      <div class="sidebar">
+        <div class="brand"><span class="dot"></span><b>DeepSeek Harness</b></div>
+        <div class="newbtn">＋ 新建会话 <kbd>Ctrl N</kbd></div>
+
+        <div class="navrow on">
+          <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7"><path d="M4 5h16v11H8l-4 4z"/></svg>
+          对话
+        </div>
+        <div class="navrow">
+          <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7"><path d="M12 3l2.2 5.3L20 10l-5.8 1.7L12 17l-2.2-5.3L4 10l5.8-1.7z"/></svg>
+          技能中心
+        </div>
+
+        <!-- ▼ our module -->
+        <div class="card armed">
+          <div class="chead"><span class="live"></span>任务完成后关机<span class="tag">ARMED</span></div>
+          <div class="cbody">
+            <div class="big">待命<small>所有任务结束后触发</small></div>
+            <div class="meta">
+              <span>空闲会话 <b>0</b></span>
+              <span>运行中 <b>3</b></span>
+              <span>后台任务 <b>1</b></span>
+            </div>
+          </div>
+          <div class="cbtns"><button class="btn danger">解除</button><button class="btn">立即关机</button></div>
+          <div class="hazard"></div>
+        </div>
+        <!-- ▲ our module -->
+
+        <div class="seclabel">会话</div>
+        <div class="sess"><i></i>重构关机插件</div>
+        <div class="sess"><i></i>周报数据整理</div>
+        <div class="sess"><i></i>README 校对</div>
+        <div class="spacer"></div>
+        <div class="navrow">
+          <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7"><circle cx="12" cy="12" r="8"/><path d="M12 8v8M8 12h8"/></svg>
+          设置
+        </div>
+      </div>
+    </div>
+
+    <!-- ============ states + variants ============ -->
+    <div class="col">
+      <p class="legend">② 四种状态（同一张卡片）</p>
+      <div class="row">
+        <div class="mini">
+          <div class="card">
+            <div class="chead"><span class="live"></span>任务完成后关机<span class="tag">OFF</span></div>
+            <div class="cbody"><div class="big">未开启</div><div class="meta"><span>点击下方按钮武装</span></div></div>
+            <div class="cbtns"><button class="btn primary">武装</button></div>
+            <div class="hazard"></div>
+          </div>
+          <p class="cap"><b>未开启</b>：警戒带压低到 32% 透明度，不抢注意力</p>
+        </div>
+
+        <div class="mini">
+          <div class="card counting">
+            <div class="chead"><span class="live"></span>任务完成后关机<span class="tag">FIRE</span></div>
+            <div class="cbody"><div class="big">00:58<small>后关机</small></div><div class="meta"><span class="warn">系统关机指令已下发</span></div></div>
+            <div class="cbtns"><button class="btn danger">取消关机</button></div>
+            <div class="hazard"></div>
+          </div>
+          <p class="cap"><b>倒计时</b>：边框转红，警戒带加速 2.7×</p>
+        </div>
+
+        <div class="mini">
+          <div class="card armed">
+            <div class="chead"><span class="live"></span>任务完成后关机<span class="tag">HOLD</span></div>
+            <div class="cbody"><div class="big" style="font-size:19px">等后台任务</div><div class="meta"><span class="warn">2 个任务运行中，暂不关机</span></div></div>
+            <div class="cbtns"><button class="btn danger">解除</button></div>
+            <div class="hazard"></div>
+          </div>
+          <p class="cap"><b>已跳过</b>：后台任务未结束，守着不触发</p>
+        </div>
+      </div>
+
+      <p class="legend" style="margin-top:6px">③ 另外两个方向（同一位置，替换卡片内部表现）</p>
+      <div class="row">
+        <div class="mini radar">
+          <div class="card armed">
+            <div class="chead"><span class="live"></span>任务完成后关机<span class="tag">ARMED</span></div>
+            <div class="disc"><div class="sweep"></div><div class="ring"></div><div class="ring"></div><div class="ping"></div><div class="num">Standby</div></div>
+            <div class="cbtns"><button class="btn danger">解除</button></div>
+            <div class="hazard"></div>
+          </div>
+          <p class="cap"><b>B 雷达扫描</b>：武装时缓缓扫掠，比条纹更克制</p>
+        </div>
+
+        <div class="mini term">
+          <div class="card armed">
+            <div class="chead"><span class="live"></span>任务完成后关机<span class="tag">ARMED</span></div>
+            <div class="screen">
+              <div><span class="cl">$</span> shutdown --when idle</div>
+              <div><span class="cl">›</span> roots 3 · running 0</div>
+              <div><span class="cl">›</span> jobs 1 · waiting<span class="cursor"></span></div>
+            </div>
+            <div class="leds"><i class="on"></i><i class="on"></i><i></i><i></i><i></i></div>
+            <div class="cbtns"><button class="btn danger">解除</button></div>
+            <div class="hazard"></div>
+          </div>
+          <p class="cap"><b>C 终端仪表</b>：把状态写成命令行日志，极客风</p>
+        </div>
+      </div>
+    </div>
+  </div>
+</body>
+</html>

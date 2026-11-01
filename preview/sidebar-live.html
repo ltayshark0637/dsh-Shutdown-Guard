@@ -1,0 +1,730 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+<meta charset="utf-8">
+<title>dsh-shutdown-panel · 交互原型 v2</title>
+<style>
+  :root{
+    --bg:#0b0d11; --panel:#15181e; --panel-2:#1b1f27; --line:#2a3040; --line-soft:#222733;
+    --text:#e9ecf3; --muted:#8d97a8; --dim:#5c6678;
+    --amber:#ffb224; --red:#ff4d4f; --yellow:#ffd23f; --green:#63d68b;
+    --hover-bg:rgba(255,255,255,.06);
+    --shadow:0 18px 40px -22px rgba(0,0,0,.9);
+    --mono: ui-monospace, "Cascadia Mono", Consolas, "PingFang SC", "Microsoft YaHei", monospace;
+    --card-radius:16px;
+    --screen-bg:#0a0c10; --screen-fg:#9ef0a8; --screen-cl:#4c6a55; --screen-line:rgba(255,255,255,.035);
+    font-family: system-ui, -apple-system, "Segoe UI", "PingFang SC", "Microsoft YaHei", sans-serif;
+  }
+  body[data-theme="light"]{
+    --bg:#eef0f4; --panel:#ffffff; --panel-2:#f3f5f9; --line:#dde2ec; --line-soft:#e8ecf3;
+    --text:#1b2030; --muted:#55617a; --dim:#6f7c93; --hover-bg:rgba(0,0,0,.05);
+    --shadow:0 18px 40px -24px rgba(20,30,60,.35);
+    --screen-bg:#f3f6fa; --screen-fg:#186b41; --screen-cl:#8fa0ad; --screen-line:rgba(0,0,0,.03);
+    --red:#d92d20; --yellow:#c99012; --amber:#e08a00;
+  }
+  body[data-theme="claude"]{
+    --bg:#141413; --panel:#141413; --panel-2:#1e1e1d; --line:rgba(255,255,255,.09); --line-soft:rgba(255,255,255,.06);
+    --text:#faf9f5; --muted:#b0aea5; --dim:#6b6a65;
+    --amber:#d97757; --red:#e5534b; --yellow:#d9a441; --hover-bg:rgba(255,255,255,.08);
+    --shadow:0 4px 16px rgba(0,0,0,.35);
+    --card-radius:12px;
+    font-family: Inter, ui-sans-serif, "Segoe UI", "PingFang SC", "Microsoft YaHei", sans-serif;
+  }
+  *{box-sizing:border-box}
+  body{margin:0;background:var(--bg);color:var(--text);min-height:100vh}
+  .wrap{display:flex;gap:28px;padding:26px;align-items:flex-start;max-width:1120px;margin:0 auto}
+  .col-side{flex:none}
+  .col-side .hint{font-size:11px;color:var(--dim);margin:10px 2px 0;line-height:1.7}
+
+  /* ---------------- sidebar ---------------- */
+  .sidebar{width:252px;background:var(--panel);border:1px solid var(--line);border-radius:14px;
+    padding:10px 8px;display:flex;flex-direction:column;min-height:660px;box-shadow:var(--shadow);
+    transition:width .22s ease}
+  .brand{display:flex;align-items:center;gap:8px;padding:6px 8px 10px;overflow:hidden}
+  .brand .mark{width:20px;height:20px;border-radius:7px;background:linear-gradient(145deg,#5b8cff,#8b5cf6);flex:none}
+  .brand b{font-size:13px;font-weight:650;white-space:nowrap}
+  .newbtn{display:flex;align-items:center;gap:8px;margin:0 2px 8px;padding:8px;border-radius:9px;background:var(--panel-2);
+    border:1px solid var(--line);color:var(--text);font-size:12.5px;white-space:nowrap;overflow:hidden}
+  .newbtn kbd{margin-left:auto;color:var(--dim);font-size:10px;font-family:var(--mono)}
+  .navrow{position:relative;display:flex;align-items:center;gap:9px;margin:0 2px 2px;padding:7px 9px;border-radius:6px;
+    color:var(--muted);font-size:12.5px;white-space:nowrap;overflow:hidden;transition:background-color .16s}
+  .navrow:hover,.navrow.forcehover{background:var(--hover-bg)}
+  .navrow.on{background:var(--panel-2);color:var(--text)}
+  .navrow svg{flex:none;opacity:.85}
+  .navrow .armdot{display:none;width:6px;height:6px;border-radius:50%;background:var(--amber);flex:none;margin-left:auto}
+  .sidebar.armed .navrow .armdot{display:block;animation:pulse 1.8s infinite}
+  .navrow .lbl{min-width:0;overflow:hidden;text-overflow:ellipsis}
+
+  .region{flex:1;min-height:0;display:flex;flex-direction:column;gap:8px;margin-top:6px;overflow:hidden;padding:0 2px 4px}
+  .seclabel{font-size:10.5px;color:var(--dim);letter-spacing:.08em;padding:4px 7px 0;white-space:nowrap}
+  .sess{display:flex;align-items:center;gap:8px;padding:6px 7px;border-radius:7px;color:var(--muted);font-size:12px;white-space:nowrap;overflow:hidden}
+  .sess i{width:5px;height:5px;border-radius:50%;background:var(--dim);flex:none}
+  .sess.act{background:var(--panel-2);color:var(--text)}
+  .spacer{flex:1}
+
+  /* ---------------- card（固定尺寸） ---------------- */
+  .card{position:relative;flex:none;height:178px;display:flex;flex-direction:column;border-radius:var(--card-radius);
+    background:linear-gradient(180deg,var(--panel-2),var(--panel));border:1px solid var(--line);
+    padding:12px 12px 0;transition:border-color .35s,box-shadow .35s}
+  .card[data-state="armed"],.card[data-state="idle"]{border-color:color-mix(in srgb, var(--amber) 55%, transparent);
+    box-shadow:0 0 0 1px color-mix(in srgb, var(--amber) 12%, transparent),0 12px 30px -20px color-mix(in srgb, var(--amber) 85%, transparent)}
+  .card[data-state="hold"]{border-color:color-mix(in srgb, var(--amber) 26%, transparent);box-shadow:none}
+  .card[data-state="fire"]{border-color:color-mix(in srgb, var(--red) 62%, transparent);
+    box-shadow:0 0 0 1px color-mix(in srgb, var(--red) 16%, transparent),0 14px 36px -20px color-mix(in srgb, var(--red) 90%, transparent)}
+  .card[data-state="fired"]{border-color:color-mix(in srgb, var(--red) 30%, transparent);box-shadow:none}
+  .card::before{content:"";position:absolute;inset:0;border-radius:inherit;pointer-events:none;opacity:0;transition:opacity .4s;z-index:0;
+    background:radial-gradient(120% 78% at 50% -26%, color-mix(in srgb, var(--amber) 18%, transparent), transparent 62%)}
+  .card[data-state="armed"]::before,.card[data-state="idle"]::before,.card[data-state="hold"]::before{opacity:1}
+  .card[data-state="fire"]::before{opacity:1;background:radial-gradient(120% 78% at 50% -26%, color-mix(in srgb, var(--red) 20%, transparent), transparent 62%)}
+  .card>*{position:relative;z-index:1}
+
+  .chead{display:flex;align-items:center;gap:7px;font-size:11.5px;color:var(--muted);white-space:nowrap;flex:none;cursor:pointer}
+  .fold{width:18px;height:18px;display:grid;place-items:center;border:0;background:transparent;color:var(--muted);
+    cursor:pointer;padding:0;border-radius:5px;flex:none;margin-left:2px}
+  .fold:hover{background:var(--hover-bg);color:var(--text)}
+  .fold svg{transition:transform .2s ease}
+  .card.collapsed .fold svg{transform:rotate(-90deg)}
+  .card.collapsed{height:44px;padding-bottom:10px}
+  .card.collapsed .cbody,.card.collapsed .cbtns,.card.collapsed .hazard{display:none}
+  .chead .live{width:6px;height:6px;border-radius:50%;background:var(--dim);flex:none}
+  .card[data-state="armed"] .chead .live,.card[data-state="idle"] .chead .live{background:var(--amber);animation:pulse 1.8s infinite}
+  .card[data-state="hold"] .chead .live{background:var(--amber);opacity:.55;animation:pulse 3.4s infinite}
+  .card[data-state="fire"] .chead .live{background:var(--red);animation:pulse-red .9s infinite}
+  .card[data-state="fired"] .chead .live{background:var(--red);opacity:.5}
+  .tag{margin-left:auto;font-size:9px;letter-spacing:.12em;font-family:var(--mono);padding:2px 6px;border-radius:5px;
+    color:var(--dim);border:1px solid var(--line)}
+  .card[data-state="armed"] .tag,.card[data-state="idle"] .tag{color:var(--amber);border-color:color-mix(in srgb, var(--amber) 45%, transparent);background:color-mix(in srgb, var(--amber) 9%, transparent)}
+  .card[data-state="hold"] .tag{color:var(--amber);opacity:.8;border-color:color-mix(in srgb, var(--amber) 28%, transparent)}
+  .card[data-state="fire"] .tag{color:var(--red);border-color:color-mix(in srgb, var(--red) 50%, transparent);background:color-mix(in srgb, var(--red) 10%, transparent)}
+  .card[data-state="fired"] .tag{color:var(--red);opacity:.6;border-color:color-mix(in srgb, var(--red) 30%, transparent)}
+
+  .cbody{flex:1;min-height:0;padding:7px 0 6px;display:flex;flex-direction:column;overflow:hidden}
+  .v-a{display:flex;flex-direction:column;justify-content:center;height:100%}
+  .big{font-family:var(--mono);font-size:24px;line-height:1.1;font-weight:600;letter-spacing:-.02em;white-space:nowrap}
+  .big small{font-size:11px;color:var(--muted);font-weight:400;margin-left:6px;letter-spacing:0}
+  .card[data-state="fire"] .big{color:color-mix(in srgb, var(--red) 55%, #fff);text-shadow:0 0 20px color-mix(in srgb, var(--red) 45%, transparent)}
+  .card[data-state="fired"] .big{color:color-mix(in srgb, var(--red) 45%, #fff);font-size:21px}
+  .meta{display:flex;gap:9px;margin-top:6px;font-size:10.5px;color:var(--muted);flex-wrap:wrap;min-height:14px;max-height:30px;overflow:hidden;line-height:1.42}
+  .meta b{color:var(--text);font-weight:600;font-family:var(--mono);font-size:10.5px}
+  .meta .warn{color:var(--yellow)}
+
+  .cbtns{display:flex;gap:6px;padding-bottom:10px;flex:none}
+  .btn{flex:1;height:27px;border-radius:8px;border:1px solid var(--line);background:var(--panel-2);color:var(--text);
+    font:inherit;font-size:11.5px;cursor:pointer;transition:.15s}
+  .btn:hover{filter:brightness(1.14)}
+  .btn.primary{background:var(--amber);border-color:var(--amber);color:#241500;font-weight:650}
+  body[data-theme="claude"] .btn.primary{color:#faf9f5}
+  .btn.danger{border-color:color-mix(in srgb, var(--red) 42%, transparent);color:color-mix(in srgb, var(--red) 55%, #fff);background:color-mix(in srgb, var(--red) 8%, transparent)}
+  body[data-theme="light"] .btn.danger{color:#b42318;border-color:rgba(217,45,32,.32);background:rgba(217,45,32,.05)}
+  body[data-theme="light"] .btn.primary{color:#231400}
+  .btn.ghost{flex:0 0 34px;display:grid;place-items:center;color:var(--muted)}
+  .hazard{flex:none;height:10px;margin:0 -12px;position:relative;overflow:hidden;opacity:.3;transition:opacity .4s,filter .4s;
+    border-radius:0 0 calc(var(--card-radius) - 1px) calc(var(--card-radius) - 1px);
+    background:repeating-linear-gradient(-45deg,var(--red) 0 10px,var(--red) 10px 12px,var(--yellow) 12px 22px,var(--yellow) 22px 24px);
+    background-size:34px 34px;animation:slide 1.15s linear infinite}
+  .card[data-state="armed"] .hazard,.card[data-state="idle"] .hazard{opacity:.95}
+  .card[data-state="hold"] .hazard{opacity:.5;animation-duration:2.2s;filter:saturate(.65) brightness(.85)}
+  .card[data-state="fire"] .hazard{opacity:1;animation-duration:.42s;filter:saturate(1.15)}
+  .card[data-state="fired"] .hazard{opacity:.85;animation-duration:2.6s;filter:saturate(.5) brightness(.7)}
+  .card[data-state="off"] .hazard{animation:none;opacity:.24;filter:grayscale(.55) brightness(.95)}
+  body[data-theme="light"] .card[data-state="fire"] .big{color:#b42318;text-shadow:0 0 18px rgba(217,45,32,.18)}
+  body[data-theme="light"] .card[data-state="fire"] .tag{border-color:rgba(217,45,32,.35);background:rgba(217,45,32,.07)}
+  body[data-theme="light"] .card[data-state="fired"] .big{color:#b42318}
+  body[data-theme="light"] .card[data-state="fire"] .btn.danger{color:#b42318;border-color:rgba(217,45,32,.35);background:rgba(217,45,32,.06)}
+  .card.endgame .hazard{animation-duration:.26s}
+  .hazard::after{content:"";position:absolute;inset:0;background:linear-gradient(180deg,rgba(0,0,0,.32),transparent 46%,rgba(0,0,0,.22))}
+  .card.endgame{animation:breathe 1s ease-in-out infinite}
+  .card.endgame .bigmain{display:inline-block;animation:shake .9s infinite}
+
+  .flash{position:absolute;inset:0;pointer-events:none;opacity:0;border-radius:inherit;z-index:3}
+  .flash.play{animation:sweep 720ms cubic-bezier(.2,.7,.3,1) 1;
+    background:linear-gradient(105deg,transparent 30%,rgba(255,255,255,.16) 46%,color-mix(in srgb, var(--amber) 45%, transparent) 50%,rgba(255,255,255,.14) 54%,transparent 70%);
+    background-size:260% 100%;background-position:120% 0}
+
+  /* variants */
+  .v-b,.v-c{display:none}
+  .card[data-variant="B"] .v-a,.card[data-variant="C"] .v-a{display:none}
+  .card[data-variant="B"] .v-b{display:block;height:100%}
+  .card[data-variant="C"] .v-c{display:flex;flex-direction:column;height:100%}
+
+  /* B: 雷达铺满整个 v-b 区域 */
+  .disc{position:relative;height:100%;min-height:66px;border-radius:10px;border:1px solid var(--line);overflow:hidden;
+    background:radial-gradient(circle at 50% 50%, color-mix(in srgb, var(--amber) 9%, transparent), transparent 66%),var(--panel-2)}
+  .card[data-variant="B"][data-state="fire"] .disc{background:radial-gradient(circle at 50% 50%, color-mix(in srgb, var(--red) 12%, transparent), transparent 66%),var(--panel-2)}
+  .sweep{position:absolute;left:50%;top:50%;width:460px;height:460px;margin:-230px 0 0 -230px;border-radius:50%;
+    background:conic-gradient(from 0deg,transparent 0deg,transparent 6deg,
+      color-mix(in srgb, var(--amber) 18%, transparent) 24deg,
+      color-mix(in srgb, var(--amber) 38%, transparent) 52deg,
+      color-mix(in srgb, var(--amber) 62%, transparent) 78deg,
+      color-mix(in srgb, var(--amber) 30%, transparent) 104deg,
+      color-mix(in srgb, var(--amber) 10%, transparent) 122deg,transparent 134deg,transparent 360deg);
+    animation:spin 3.2s linear infinite}
+  .card[data-variant="B"][data-state="hold"] .sweep{animation-duration:5.6s;opacity:.62}
+  .card[data-variant="B"][data-state="fire"] .sweep{animation-duration:1s;
+    background:conic-gradient(from 0deg,transparent 0deg,transparent 6deg,
+      color-mix(in srgb, var(--red) 18%, transparent) 24deg,
+      color-mix(in srgb, var(--red) 42%, transparent) 52deg,
+      color-mix(in srgb, var(--red) 66%, transparent) 78deg,
+      color-mix(in srgb, var(--red) 30%, transparent) 104deg,
+      color-mix(in srgb, var(--red) 10%, transparent) 122deg,transparent 134deg,transparent 360deg)}
+  .ring{position:absolute;left:50%;top:50%;border-radius:50%;transform:translate(-50%,-50%);
+    border:1px solid color-mix(in srgb, var(--amber) 30%, transparent);z-index:1}
+  body[data-theme="light"] .ring{border-color:color-mix(in srgb, var(--amber) 46%, transparent)}
+  .ping{position:absolute;left:50%;top:50%;width:6px;height:6px;margin:-3px 0 0 -3px;border-radius:50%;background:var(--amber);z-index:2;
+    box-shadow:0 0 12px color-mix(in srgb, var(--amber) 90%, transparent)}
+  .card[data-variant="B"][data-state="fire"] .ping{background:var(--red);box-shadow:0 0 12px color-mix(in srgb, var(--red) 90%, transparent)}
+  .rdot{position:absolute;width:5px;height:5px;border-radius:50%;transform:translate(-50%,-50%);z-index:2}
+  .rdot.run{background:var(--muted);box-shadow:0 0 6px color-mix(in srgb, var(--muted) 80%, transparent)}
+  .rdot.job{background:var(--amber);box-shadow:0 0 8px color-mix(in srgb, var(--amber) 95%, transparent)}
+  .card[data-state="hold"] .rdot{animation:dotpulse 2.4s ease-in-out infinite}
+  .card[data-state="fire"] .rdot{opacity:.3}
+  .card[data-state="fired"] .rdot{opacity:.18}
+  .disc::after{content:"";position:absolute;left:0;right:0;bottom:0;height:42px;z-index:1;pointer-events:none;
+    background:linear-gradient(0deg, color-mix(in srgb, var(--panel) 92%, transparent) 12%, transparent)}
+  .num{position:absolute;left:9px;right:9px;bottom:7px;z-index:3;display:flex;align-items:baseline;gap:6px;flex-wrap:wrap;row-gap:1px;
+    font-family:var(--mono);font-size:9.5px;letter-spacing:.13em;text-transform:uppercase;color:var(--muted);
+    text-shadow:0 1px 8px rgba(0,0,0,.5);white-space:nowrap;line-height:1.45}
+  .num span{white-space:nowrap}
+  .num::before{content:"";width:4px;height:4px;border-radius:50%;background:var(--amber);flex:none;align-self:center;
+    box-shadow:0 0 7px color-mix(in srgb, var(--amber) 90%, transparent)}
+  .num b{font-size:11px;letter-spacing:.1em;color:var(--text);font-weight:600}
+  .card[data-state="fire"] .num b{font-size:12px;color:color-mix(in srgb, var(--red) 55%, #fff)}
+  .card[data-state="fire"] .num::before{background:var(--red);box-shadow:0 0 7px color-mix(in srgb, var(--red) 90%, transparent)}
+  .card[data-state="off"] .num::before,.card[data-state="fired"] .num::before{background:var(--dim);box-shadow:none}
+  body[data-theme="light"] .num{text-shadow:0 1px 2px rgba(255,255,255,.55)}
+  body[data-theme="light"] .num span{color:#3f4a5c}
+  body[data-theme="light"] .num b{color:#151b26}
+  .num small{font-size:9.5px;color:var(--muted);margin-left:4px}
+
+  /* C */
+  .screen{background:var(--screen-bg);border:1px solid var(--line);border-radius:9px;padding:8px 9px;flex:1;min-height:0;
+    font-family:var(--mono);font-size:10.5px;line-height:1.62;color:var(--screen-fg);position:relative;overflow:hidden}
+  .screen::after{content:"";position:absolute;inset:0;pointer-events:none;
+    background:repeating-linear-gradient(0deg,var(--screen-line) 0 1px,transparent 1px 3px)}
+  .screen .cl{color:var(--screen-cl)}
+  .screen .cur{display:inline-block;width:5px;height:10px;background:var(--screen-fg);vertical-align:-1px;animation:blink 1s steps(1) infinite}
+  .card[data-variant="C"][data-state="fire"] .screen{color:#ff9fa1;border-color:color-mix(in srgb, var(--red) 35%, transparent)}
+  .card[data-variant="C"][data-state="fire"] .screen .cl{color:#6d4448}
+  .card[data-variant="C"][data-state="fire"] .screen .cur{background:#ff9fa1}
+  body[data-theme="light"] .card[data-variant="C"][data-state="fire"] .screen{background:#fff6f5;color:#b42318;border-color:#f0c9c4}
+  body[data-theme="light"] .card[data-variant="C"][data-state="fire"] .screen .cl{color:#c98a86}
+  body[data-theme="light"] .card[data-variant="C"][data-state="fire"] .screen .cur{background:#b42318}
+  .leds{display:flex;gap:4px;padding:6px 0 2px;flex:none}
+  .leds i{height:4px;flex:1;border-radius:2px;background:var(--line)}
+  .card[data-state="armed"] .leds i:nth-child(-n+3),.card[data-state="idle"] .leds i:nth-child(-n+3){background:var(--amber);box-shadow:0 0 8px color-mix(in srgb, var(--amber) 55%, transparent)}
+  .card[data-state="fire"] .leds i:nth-child(-n+4){background:var(--red);box-shadow:0 0 8px color-mix(in srgb, var(--red) 60%, transparent)}
+  .card[data-state="hold"] .leds i:nth-child(-n+2){background:var(--amber);opacity:.6}
+  .card[data-state="fired"] .leds i{background:#5a2a2b}
+
+  /* collapsed */
+  .sidebar.collapsed{width:58px;padding:8px 6px}
+  .sidebar.collapsed .brand{padding:8px;justify-content:center}
+  .sidebar.collapsed .brand b,.sidebar.collapsed .newbtn span,.sidebar.collapsed .newbtn kbd,
+  .sidebar.collapsed .navrow .lbl,.sidebar.collapsed .seclabel,.sidebar.collapsed .sess,
+  .sidebar.collapsed .other-plugin .op-body,.sidebar.collapsed .other-plugin .op-head span{display:none}
+  .sidebar.collapsed .newbtn{justify-content:center;padding:9px 0}
+  .sidebar.collapsed .navrow{justify-content:center;padding:9px 0}
+  .sidebar.collapsed .navrow .armdot{position:absolute;top:6px;right:8px;margin:0}
+  .sidebar.collapsed .region{gap:10px;padding:0}
+  .sidebar.collapsed .card{padding:0;width:36px;height:36px;margin:0 auto;border-radius:11px;display:grid;place-items:center}
+  .sidebar.collapsed .card .chead,.sidebar.collapsed .card .cbody,
+  .sidebar.collapsed .card .cbtns{display:none}
+  .sidebar.collapsed .card .hazard{position:absolute;left:0;right:0;bottom:0;height:4px;margin:0;border-radius:0 0 10px 10px}
+  .sidebar.collapsed .card .rail-dot{display:block;width:8px;height:8px;border-radius:50%;background:var(--dim)}
+  .sidebar.collapsed .card[data-state="armed"] .rail-dot,.sidebar.collapsed .card[data-state="idle"] .rail-dot{background:var(--amber);animation:pulse 1.8s infinite}
+  .sidebar.collapsed .card[data-state="fire"] .rail-dot{background:var(--red);animation:pulse-red .9s infinite}
+  .rail-dot{display:none}
+  .sidebar.collapsed .other-plugin{padding:0;width:36px;height:32px;margin:0 auto;display:grid;place-items:center}
+  .sidebar.collapsed .navrow.foot{justify-content:center}
+
+  .other-plugin{flex:none;border:1px dashed var(--line);border-radius:12px;padding:9px 10px;margin-top:2px}
+  .other-plugin .op-head{display:flex;align-items:center;gap:6px;font-size:10.5px;color:var(--dim);white-space:nowrap;overflow:hidden}
+  .other-plugin .op-body{font-size:11px;color:var(--muted);margin-top:5px;white-space:nowrap;overflow:hidden}
+
+  /* ---------------- console ---------------- */
+  .console{flex:1;min-width:0;max-width:470px}
+  .console h1{font-size:14px;margin:2px 0 4px;font-weight:650}
+  .console .sub{font-size:11.5px;color:var(--dim);margin-bottom:16px;line-height:1.7}
+  .box{background:var(--panel);border:1px solid var(--line);border-radius:12px;padding:12px 13px;margin-bottom:12px}
+  .box h2{font-size:10.5px;letter-spacing:.09em;color:var(--dim);margin:0 0 9px;font-weight:600;text-transform:uppercase}
+  .seg{display:inline-flex;background:var(--panel-2);border:1px solid var(--line);border-radius:9px;padding:2px;gap:2px}
+  .seg button{border:0;background:transparent;color:var(--muted);font:inherit;font-size:11.5px;padding:5px 11px;border-radius:7px;cursor:pointer}
+  .seg button.on{background:var(--text);color:var(--panel)}
+  .row{display:flex;align-items:center;gap:10px;justify-content:space-between;padding:6px 0;font-size:12px;color:var(--muted)}
+  .row b{color:var(--text);font-weight:550;font-size:12px}
+  .stepper{display:flex;align-items:center;gap:4px;flex:none}
+  .step{width:24px;height:24px;border-radius:7px;border:1px solid var(--line);background:var(--panel-2);color:var(--text);
+    font:inherit;font-size:13px;line-height:1;cursor:pointer;display:grid;place-items:center;padding:0}
+  .step:hover{border-color:color-mix(in srgb, var(--text) 26%, transparent)}
+  .numin{width:54px;height:24px;border-radius:7px;border:1px solid var(--line);background:var(--panel-2);color:var(--text);
+    font:inherit;font-size:12px;text-align:center;padding:0 4px;box-sizing:border-box;-moz-appearance:textfield}
+  .numin::-webkit-outer-spin-button,.numin::-webkit-inner-spin-button{-webkit-appearance:none;margin:0}
+  .numin:focus{outline:none;border-color:var(--amber);box-shadow:0 0 0 2px color-mix(in srgb, var(--amber) 22%, transparent)}
+  .switch{position:relative;width:36px;height:20px;border-radius:20px;background:var(--line);border:0;cursor:pointer;flex:none;transition:.18s}
+  .switch::after{content:"";position:absolute;top:2px;left:2px;width:16px;height:16px;border-radius:50%;background:#fff;transition:.18s}
+  .switch.on{background:var(--amber)}
+  .switch.on::after{left:18px}
+  .btns-row{display:flex;gap:8px;margin-top:6px}
+  .actbtn{flex:1;height:32px;border-radius:9px;border:1px solid var(--line);background:var(--panel-2);color:var(--text);
+    font:inherit;font-size:12px;cursor:pointer}
+  .actbtn:hover{filter:brightness(1.12)}
+  .actbtn.amber{border-color:color-mix(in srgb, var(--amber) 45%, transparent);color:var(--amber);background:color-mix(in srgb, var(--amber) 7%, transparent)}
+  pre.state{margin:0;font-family:var(--mono);font-size:10.5px;line-height:1.7;color:var(--muted);white-space:pre-wrap;word-break:break-all}
+  pre.state .t{color:var(--amber)}
+  .log{font-family:var(--mono);font-size:10.5px;line-height:1.85;max-height:150px;overflow:auto}
+  .log div{color:var(--muted);display:flex;gap:7px}
+  .log div .tm{color:var(--dim);flex:none}
+  .log div.hi{color:var(--text)}
+  .log div.warn{color:var(--yellow)}
+  .log div.err{color:color-mix(in srgb, var(--red) 55%, #fff)}
+  .log .empty{color:var(--dim)}
+
+  .settings .cond{display:flex;align-items:center;gap:8px;font-size:11.5px;color:var(--muted);padding:3px 0}
+  .settings .cond b{margin-left:auto;font-family:var(--mono);font-size:10.5px;color:var(--green)}
+  .settings .cond b.no{color:var(--dim)}
+  .settings .skip{margin-top:8px;font-size:11px;color:var(--muted);line-height:1.6}
+  .settings .why{margin-top:10px;font-size:11px;color:var(--muted);line-height:1.75;
+    padding:8px 10px;border-radius:8px;background:color-mix(in srgb, var(--text) 4%, transparent);
+    border-left:2px solid color-mix(in srgb, var(--amber) 55%, transparent)}
+  .settings .skip .k{color:var(--dim);font-family:var(--mono);font-size:9.5px;letter-spacing:.04em;display:block;margin-bottom:2px}
+  .legend{margin-top:10px;font-size:10.5px;color:var(--dim);line-height:1.7}
+  body.release #boxScene, body.release #segCollapse, body.release #segFold{display:none}
+
+  @keyframes slide{to{background-position:-34px 0}}
+  @keyframes spin{to{transform:rotate(360deg)}}
+  @keyframes blink{50%{opacity:0}}
+  @keyframes pulse{0%{box-shadow:0 0 0 0 color-mix(in srgb, var(--amber) 65%, transparent)}70%{box-shadow:0 0 0 6px transparent}100%{box-shadow:0 0 0 0 transparent}}
+  @keyframes pulse-red{0%{box-shadow:0 0 0 0 color-mix(in srgb, var(--red) 75%, transparent)}70%{box-shadow:0 0 0 7px transparent}100%{box-shadow:0 0 0 0 transparent}}
+  @keyframes dotpulse{0%,100%{opacity:1}50%{opacity:.35}}
+  @keyframes breathe{0%,100%{box-shadow:0 0 0 1px color-mix(in srgb, var(--red) 18%, transparent),0 10px 30px -22px color-mix(in srgb, var(--red) 70%, transparent)}
+    50%{box-shadow:0 0 0 2px color-mix(in srgb, var(--red) 42%, transparent),0 14px 40px -18px color-mix(in srgb, var(--red) 100%, transparent)}}
+  @keyframes sweep{0%{opacity:0;background-position:120% 0}12%{opacity:1}100%{opacity:0;background-position:-40% 0}}
+  @keyframes shake{0%,100%{transform:translateX(0)}20%{transform:translateX(-.6px)}40%{transform:translateX(.7px)}60%{transform:translateX(-.4px)}80%{transform:translateX(.3px)}}
+</style>
+</head>
+<body data-theme="dark">
+
+<div class="wrap">
+  <div class="col-side">
+    <div id="sideHost"></div>
+    <div class="hint">点卡片里的按钮就是真实交互：武装 → 倒计时 → 取消 / 解除。<br>条件、上次为什么没关机，都在右侧「什么情况下才关机」里。</div>
+  </div>
+
+  <div class="console">
+    <h1>任务完成后关机 · 交互原型 v3</h1>
+    <div class="sub">卡片尺寸在所有状态固定；支持纵向折叠（只留标题+状态）；浅色模式与 Claude Style 都有独立配色，含终端反色；武装且当前无任务时显示「待命 ARMED」。</div>
+
+    <div class="box">
+      <h2>外观（插件设置）</h2>
+      <div class="seg" id="segVariant">
+        <button data-v="A" class="on">A 警戒带</button><button data-v="B">B 雷达</button><button data-v="C">C 终端</button>
+      </div>
+      <div style="display:flex;gap:8px;margin-top:10px;flex-wrap:wrap">
+        <div class="seg" id="segTheme">
+          <button data-v="dark" class="on">深色</button><button data-v="light">浅色</button><button data-v="claude">Claude Style</button>
+        </div>
+        <div class="seg" id="segCollapse"><button data-v="c">折叠侧边栏</button></div>
+        <div class="seg" id="segFold"><button data-v="f">折叠模块</button></div>
+      </div>
+      <div class="legend" id="termLegend" hidden>终端外观里那 6 个小方块，从左到右是：已开启、只算成功、会话空闲、后台任务清零、没有报错、正在倒计时。亮几个，就是几条已经满足。</div>
+    </div>
+
+    <div class="box" id="boxScene">
+      <h2>场景模拟</h2>
+      <div class="row">
+        <span>有会话在运行</span>
+        <div class="stepper">
+          <button type="button" class="step" data-k="run" data-d="-1" aria-label="减少会话">−</button>
+          <input class="numin" id="inRun" type="number" min="0" max="999" step="1" value="3" aria-label="会话数">
+          <button type="button" class="step" data-k="run" data-d="1" aria-label="增加会话">+</button>
+        </div>
+      </div>
+      <div class="row">
+        <span>有后台任务在跑</span>
+        <div class="stepper">
+          <button type="button" class="step" data-k="job" data-d="-1" aria-label="减少后台任务">−</button>
+          <input class="numin" id="inJob" type="number" min="0" max="999" step="1" value="2" aria-label="后台任务数">
+          <button type="button" class="step" data-k="job" data-d="1" aria-label="增加后台任务">+</button>
+        </div>
+      </div>
+      <div class="btns-row">
+        <button class="actbtn amber" id="btnFinish">模拟本轮任务全部结束</button>
+        <button class="actbtn" id="btnReset">重置</button>
+      </div>
+    </div>
+
+    <div class="box settings">
+      <h2>什么情况下才关机</h2>
+      <div class="cond"><span>有会话报错就跳过这一轮</span><b id="c1">开</b></div>
+      <div class="cond"><span>后台任务跑完才关机</span><b id="c2">是</b></div>
+      <div class="cond"><span>会话都停下来才关机</span><b id="c3">是</b></div>
+      <div class="why" id="whyText"></div>
+      <div class="skip"><span class="k">上次为什么没关机</span><span id="skipText">还没发生过</span></div>
+    </div>
+
+    <div class="box">
+      <h2>/state</h2>
+      <pre class="state" id="stateJson"></pre>
+    </div>
+
+    <div class="box">
+      <h2>事件</h2>
+      <div class="log" id="log"><div class="empty">— 点「武装」开始 —</div></div>
+    </div>
+  </div>
+</div>
+
+<script>
+const ICON_CHAT = '<svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7"><path d="M4 5h16v11H8l-4 4z"/></svg>';
+const ICON_SKILL = '<svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7"><path d="M12 3l2.2 5.3L20 10l-5.8 1.7L12 17l-2.2-5.3L4 10l5.8-1.7z"/></svg>';
+const ICON_CLIP = '<svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7"><rect x="7" y="5" width="10" height="14" rx="2"/><path d="M9 5V3h6v2"/></svg>';
+const ICON_GEAR = '<svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7"><circle cx="12" cy="12" r="3"/><path d="M12 2v3M12 19v3M2 12h3M19 12h3M5 5l2 2M17 17l2 2M19 5l-2 2M7 17l-2 2"/></svg>';
+
+const S = {
+  armed:false, phase:'waiting', sec:60, variant:'A', collapsed:false, theme:'dark',
+  running:3, jobs:2, lastSkip:null, log:[], forceHover:false, cardCollapsed:false, dotEpoch:0
+};
+let timer = null;
+
+function view(){
+  if (!S.armed) return 'off';
+  if (S.phase === 'fired') return 'fired';
+  if (S.phase === 'countdown') return 'fire';
+  if (S.jobs > 0 || S.running > 0) return 'hold';
+  return 'idle';
+}
+function mmss(s){ return String(Math.floor(s/60)).padStart(2,'0') + ':' + String(s%60).padStart(2,'0'); }
+function fmt(n){ return n > 9 ? '9+' : String(n); }     // A：汉字多，9+ 封顶
+function fmt2(n){ return n > 99 ? '99+' : String(n); }  // B/C：独占一行，99+ 封顶
+function tagOf(v){ return v==='off'?'OFF':v==='fire'?'FIRE':v==='fired'?'DONE':v==='hold'?'WAIT':'ARMED'; }
+
+function stamp(){ const d=new Date(); return [d.getHours(),d.getMinutes(),d.getSeconds()].map(n=>String(n).padStart(2,'0')).join(':'); }
+function log(text, kind){
+  S.log.unshift({ t: stamp(), text, kind: kind||'' });
+  if (S.log.length > 40) S.log.pop();
+  renderLog();
+}
+
+function arm(){
+  S.armed = true; S.phase = 'waiting'; S.sec = 60; S.lastSkip = null;
+  log('已武装：所有任务结束后自动关机');
+  if (S.jobs > 0 || S.running > 0){
+    S.lastSkip = { at: Date.now(), reason: '还有 ' + S.jobs + ' 个后台任务 / ' + S.running + ' 个会话在运行，暂不关机' };
+    log('暂不关机：' + S.lastSkip.reason, 'warn');
+  } else {
+    log('当前没有运行中的任务：进入待命，等下一次任务结束后倒计时', 'hi');
+  }
+  render();
+}
+function disarm(){
+  stopTimer(); S.armed=false; S.phase='waiting'; S.sec=60;
+  log('已关闭自动关机'); render();
+}
+function cancelCountdown(){
+  stopTimer(); S.phase='waiting'; S.sec=60;
+  S.lastSkip = { at: Date.now(), reason: '用户取消了本次倒计时（模式保持开启）' };
+  log('已取消本次倒计时，模式保持开启', 'warn'); render();
+}
+function reset(){
+  stopTimer(); S.armed=false; S.phase='waiting'; S.sec=60; S.lastSkip=null;
+  log('已重置'); render();
+}
+function startCountdown(why){
+  S.phase='countdown'; S.sec=60;
+  log('所有任务已结束（' + why + '）→ 开始 60 秒倒计时', 'hi');
+  stopTimer();
+  timer = setInterval(function(){
+    S.sec -= 1;
+    if (S.sec <= 0){
+      stopTimer(); S.phase='fired'; S.sec=0;
+      log('关机指令已生效（演示环境不会真的关机）', 'err');
+      render(); return;
+    }
+    paintCountdown();
+  }, 1000);
+  paintCountdown();
+}
+function stopTimer(){ if (timer){ clearInterval(timer); timer=null; } }
+
+function setJobs(n){
+  const prev = S.jobs; S.jobs = n; if (n !== prev) S.dotEpoch++;
+  if (S.armed && S.phase==='countdown' && n>0){ stopTimer(); S.phase='waiting'; S.sec=60; log('倒计时中出现新的后台任务 → 已取消本次关机（保持武装）','warn'); }
+  else if (S.armed && S.phase==='waiting' && n>0 && prev===0){ log('检测到 '+n+' 个后台任务，暂不关机','warn'); }
+  else if (S.armed && S.phase==='waiting' && prev>0 && n===0 && S.running===0){ startCountdown('后台任务已结束'); }
+  render();
+}
+function setRunning(n){
+  const prev = S.running; S.running = n; if (n !== prev) S.dotEpoch++;
+  if (S.armed && S.phase==='countdown' && n>0){ stopTimer(); S.phase='waiting'; S.sec=60; log('倒计时中出现新的运行会话 → 已取消本次关机（保持武装）','warn'); }
+  else if (S.armed && S.phase==='waiting' && n>0 && prev===0){ log('检测到 '+n+' 个会话在运行，暂不关机','warn'); }
+  else if (S.armed && S.phase==='waiting' && prev>0 && n===0 && S.jobs===0){ startCountdown('会话已结束'); }
+  render();
+}
+
+function metaText(v){
+  if (v === 'fire') return '<span class="warn">系统关机指令已下发</span>';
+  if (v === 'fired') return '<span class="warn">指令已生效，无法取消</span>';
+  if (v === 'hold'){
+    const parts = [];
+    if (S.jobs > 0) parts.push(fmt2(S.jobs) + ' 后台任务');
+    if (S.running > 0) parts.push(fmt2(S.running) + ' 会话');
+    const n = parts.join(' · ');
+    return '<span class="warn" title="' + S.jobs + ' 个后台任务 / ' + S.running + ' 个会话在运行">' + n + '，完成后关机</span>';
+  }
+  if (v === 'idle') return '<span>所有任务已结束 · 等待下一次触发</span>';
+  if (v === 'off') return '<span>点击「武装」开启自动关机</span>';
+  return '<span>等待任务结束后关机</span>';
+}
+function bigHTML(v){
+  if (v === 'fire') return '<span class="bigmain" data-count>'+mmss(S.sec)+'</span><small>后关机</small>';
+  if (v === 'fired') return '<span class="bigmain">已关机</span><small>演示结束</small>';
+  if (v === 'hold') return '等待后台任务';
+  if (v === 'idle') return '待命';
+  return '<span class="bigmain">未开启</span>';
+}
+function btnsHTML(v){
+  const gear = '<button class="btn ghost" data-act="gear" title="什么情况下才关机">'+ICON_GEAR+'</button>';
+  if (v === 'fire') return '<button class="btn danger" data-act="cancel">取消关机</button>' + gear;
+  if (v === 'fired') return '<button class="btn" data-act="reset">重置</button>' + gear;
+  if (v === 'off') return '<button class="btn primary" data-act="arm">武装</button>' + gear;
+  return '<button class="btn danger" data-act="disarm">解除</button>' + gear;
+}
+const dotStore = { run: [], job: [] };   // 持久化：数量变化时只增删，不重排
+function sampleDot(taken){
+  const W = 226, H = 88, R = 23, R5 = 71;
+  for (let guard = 0; guard < 6000; guard++){
+    const x = (Math.random() - .5) * (W - 30);
+    const y = (Math.random() - .5) * (H - 22);
+    const r = Math.hypot(x, y);
+    if (r < R && Math.random() > 0.05) continue;
+    if (r > R5 && Math.random() > 1 / 80) continue;
+    const px = x + W / 2, py = y + H / 2;
+    if (px < W * 0.78 && py > H * 0.70) continue;
+    if (r > 112) continue;
+    let hit = false;
+    for (const t of taken){ if (Math.hypot(t.x - x, t.y - y) < 8){ hit = true; break; } }
+    if (hit) continue;
+    return { x, y };
+  }
+  return null;
+}
+function ensureDots(kind, n){
+  const arr = dotStore[kind];
+  const cap = Math.min(n, 40);
+  while (arr.length > cap) arr.pop();
+  while (arr.length < cap){
+    const all = dotStore.run.concat(dotStore.job);
+    const p = sampleDot(all);
+    if (!p) break;
+    arr.push(p);
+  }
+}
+function randomDots(){
+  ensureDots('run', S.running);
+  ensureDots('job', S.jobs);
+  return dotStore.run.map(p => '<i class="rdot run" style="left:calc(50% + ' + p.x.toFixed(1) + 'px);top:calc(50% + ' + p.y.toFixed(1) + 'px)"></i>').join('')
+       + dotStore.job.map(p => '<i class="rdot job" style="left:calc(50% + ' + p.x.toFixed(1) + 'px);top:calc(50% + ' + p.y.toFixed(1) + 'px)"></i>').join('');
+}
+function radarRings(){
+  const light = document.body.dataset.theme === 'light';
+  const out = [];
+  for (let d = 46, k = 0; d <= 260; d += 24, k++){
+    const op = light ? Math.max(0.30, 0.72 - k * 0.046) : Math.max(0.14, 0.42 - k * 0.032);
+    out.push('<i class="ring" style="width:'+d+'px;height:'+d+'px;opacity:'+op.toFixed(2)+'"></i>');
+  }
+  return out.join('');
+}
+function vbHTML(v){
+  if (v === 'fire') return '<b data-count>'+mmss(S.sec)+'</b><span>T-minus</span>';
+  if (v === 'fired') return '<b>Fired</b><span>done</span>';
+  if (v === 'hold'){
+    return '<b>Holding</b><span>jobs ' + fmt2(S.jobs) + ' · agent ' + fmt2(S.running) + '</span>';
+  }
+  if (v === 'idle') return '<b>Standby</b><span>armed</span>';
+  return '<b>Offline</b>';
+}
+function vcHTML(v){
+  if (v === 'fire') return '<div><span class="cl">$</span> shutdown --fire</div><div><span class="cl">&gt;</span> T-minus <span data-count>'+mmss(S.sec)+'</span></div><div><span class="cl">&gt;</span> ready<span class="cur"></span></div>';
+  if (v === 'fired') return '<div><span class="cl">$</span> shutdown --fire</div><div><span class="cl">&gt;</span> executed</div><div><span class="cl">&gt;</span> bye<span class="cur"></span></div>';
+  if (v === 'hold') return '<div><span class="cl">$</span> shutdown --when idle</div><div><span class="cl">&gt;</span> jobs '+fmt2(S.jobs)+' · agent '+fmt2(S.running)+'</div><div><span class="cl">&gt;</span> hold<span class="cur"></span></div>';
+  if (v === 'idle') return '<div><span class="cl">$</span> shutdown --when idle</div><div><span class="cl">&gt;</span> agent '+fmt2(S.running)+' · running</div><div><span class="cl">&gt;</span> waiting<span class="cur"></span></div>';
+  return '<div><span class="cl">$</span> shutdown --when idle</div><div><span class="cl">&gt;</span> disabled</div><div><span class="cl">&gt;</span> <span class="cur"></span></div>';
+}
+function cardHTML(){
+  const v = view();
+  return '<div class="card'+(S.cardCollapsed?' collapsed':'')+'" id="card" data-state="'+v+'" data-variant="'+S.variant+'">'
+    + '<div class="flash" id="flash"></div>'
+    + '<div class="rail-dot"></div>'
+    + '<div class="chead" data-act="fold" title="点击折叠 / 展开"><span class="live"></span><span>任务完成后关机</span><span class="tag">'+tagOf(v)+'</span><button class="fold" data-act="fold" title="折叠 / 展开"><svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M6 9l6 6 6-6"/></svg></button></div>'
+    + '<div class="cbody">'
+    +   '<div class="v-a"><div class="big">'+bigHTML(v)+'</div><div class="meta">'+metaText(v)+'</div></div>'
+    +   '<div class="v-b"><div class="disc"><div class="sweep"></div>'+radarRings()+'<div class="ping"></div>'+randomDots()+'<div class="num">'+vbHTML(v)+'</div></div></div>'
+    +   '<div class="v-c"><div class="screen">'+vcHTML(v)+'</div><div class="leds" title="武装 / 仅成功 / 会话空闲 / 后台任务为 0 / 无错误 / 倒计时"><i></i><i></i><i></i><i></i><i></i><i></i></div></div>'
+    + '</div>'
+    + '<div class="cbtns">'+btnsHTML(v)+'</div>'
+    + '<div class="hazard"></div>'
+    + '</div>';
+}
+function sidebarHTML(){
+  const cls = 'sidebar' + (S.collapsed?' collapsed':'') + (S.armed?' armed':'');
+  return '<div class="'+cls+'">'
+    +'<div class="brand"><span class="mark"></span><b>DeepSeek Harness</b></div>'
+    +'<div class="newbtn">＋ <span>新建会话</span><kbd>Ctrl N</kbd></div>'
+    +'<div class="navrow on">'+ICON_CHAT+'<span class="lbl">对话</span></div>'
+    +'<div class="navrow'+(S.forceHover?' forcehover':'')+'">'+ICON_SKILL+'<span class="lbl">技能中心</span><span class="armdot"></span></div>'
+    +'<div class="region">'+cardHTML()
+    +'<div class="other-plugin"><div class="op-head">'+ICON_CLIP+'<span>剪贴板历史</span></div><div class="op-body">8 条记录 · 刚刚同步</div></div>'
+    +'<div class="seclabel">会话</div>'
+    +'<div class="sess act"><i></i>重构关机插件</div>'
+    +'<div class="sess"><i></i>周报数据整理</div>'
+    +'<div class="sess"><i></i>README 校对</div>'
+    +'<div class="spacer"></div></div>'
+    +'<div class="navrow foot">'+ICON_GEAR+'<span class="lbl">设置</span></div>'
+    +'</div>';
+}
+
+function paintCountdown(){
+  document.querySelectorAll('[data-count]').forEach(function(n){ n.textContent = mmss(Math.max(S.sec,0)); });
+  const c = document.getElementById('card');
+  if (c) c.classList.toggle('endgame', S.sec <= 10 && S.phase === 'countdown');
+  paintState();
+}
+function render(){
+  document.getElementById('sideHost').innerHTML = sidebarHTML();
+  const f = document.getElementById('flash');
+  if (f && S.armed && S.phase === 'waiting' && !(S.jobs>0||S.running>0)) requestAnimationFrame(function(){ f.classList.add('play'); });
+  syncNums();
+  const v = view();
+  let why = '';
+  if (v === 'off') why = '仅在点击「武装」后才会运行程序。';
+  else if (v === 'idle') why = '现在都空着。等下一轮任务全部结束，就会开始倒计时关机。';
+  else if (v === 'hold'){
+    const bits = [];
+    if (S.jobs > 0) bits.push(S.jobs + ' 个后台任务');
+    if (S.running > 0) bits.push(S.running + ' 个会话');
+    why = '先不关机：还有 ' + bits.join('、') + '在跑。等它们结束，再开始倒计时。';
+  }
+  else if (v === 'fire') why = '已在倒计时，剩 ' + S.sec + ' 秒关机。点「取消关机」可以撤销，但会继续等下一次。';
+  else if (v === 'fired') why = '关机指令已经发出去，来不及取消了（演示到此为止）。';
+  document.getElementById('whyText').textContent = why;
+  document.getElementById('termLegend').hidden = (S.variant !== 'C');
+  document.getElementById('c2').textContent = S.jobs>0 ? '否' : '是';
+  document.getElementById('c2').classList.toggle('no', S.jobs>0);
+  document.getElementById('c3').textContent = S.running>0 ? '否' : '是';
+  document.getElementById('c3').classList.toggle('no', S.running>0);
+  document.getElementById('c1').textContent = '开';
+  document.getElementById('skipText').textContent = S.lastSkip ? S.lastSkip.reason : '还没发生过';
+  paintState();
+}
+function paintState(){
+  const deadline = S.phase==='countdown' ? Date.now()+S.sec*1000 : 0;
+  const obj = {
+    armed: S.armed,
+    state: S.phase==='countdown' ? 'countdown' : (S.phase==='fired' ? 'fired' : 'idle'),
+    view: view(), deadline: deadline, countdownSec: 60, jobsRunning: S.jobs, running: S.running,
+    lastSkip: S.lastSkip ? { at: S.lastSkip.at, reason: S.lastSkip.reason } : null
+  };
+  document.getElementById('stateJson').innerHTML = JSON.stringify(obj, null, 2)
+    .replace(/&/g,'&amp;').replace(/</g,'&lt;')
+    .replace(/"armed": (true|false)/, '"armed": <span class="t">$1</span>')
+    .replace(/"state": "([a-z]+)"/, '"state": <span class="t">"$1"</span>')
+    .replace(/"view": "([a-z]+)"/, '"view": <span class="t">"$1"</span>')
+    .replace(/"jobsRunning": (\d+)/, '"jobsRunning": <span class="t">$1</span>')
+    .replace(/"running": (\d+)/, '"running": <span class="t">$1</span>');
+}
+function renderLog(){
+  const el = document.getElementById('log');
+  if (!S.log.length){ el.innerHTML = '<div class="empty">— 点「武装」开始 —</div>'; return; }
+  el.innerHTML = S.log.map(function(e){ return '<div class="'+e.kind+'"><span class="tm">'+e.t+'</span><span>'+e.text+'</span></div>'; }).join('');
+}
+
+document.getElementById('sideHost').addEventListener('click', function(e){
+  const b = e.target.closest('[data-act]'); if (!b) return;
+  const a = b.dataset.act;
+  if (a === 'arm') arm();
+  if (a === 'disarm') disarm();
+  if (a === 'cancel') cancelCountdown();
+  if (a === 'reset') reset();
+  if (a === 'gear') document.querySelector('.settings').scrollIntoView({behavior:'smooth', block:'center'});
+  if (a === 'fold'){ S.cardCollapsed = !S.cardCollapsed; render(); }
+});
+document.getElementById('segVariant').addEventListener('click', function(e){
+  const b = e.target.closest('button'); if (!b) return;
+  S.variant = b.dataset.v;
+  document.querySelectorAll('#segVariant button').forEach(function(x){ x.classList.toggle('on', x === b); });
+  render();
+});
+document.getElementById('segTheme').addEventListener('click', function(e){
+  const b = e.target.closest('button'); if (!b) return;
+  S.theme = b.dataset.v; document.body.dataset.theme = S.theme;
+  document.querySelectorAll('#segTheme button').forEach(function(x){ x.classList.toggle('on', x === b); });
+  render();
+});
+document.getElementById('segCollapse').addEventListener('click', function(e){
+  const b = e.target.closest('button'); if (!b) return;
+  S.collapsed = !S.collapsed; b.classList.toggle('on', S.collapsed); render();
+});
+document.getElementById('segFold').addEventListener('click', function(e){
+  const b = e.target.closest('button'); if (!b) return;
+  S.cardCollapsed = !S.cardCollapsed; b.classList.toggle('on', S.cardCollapsed); render();
+});
+function clampNum(v){ v = parseInt(v, 10); if (!isFinite(v)) v = 0; return Math.max(0, Math.min(999, v)); }
+function syncNums(){
+  [['inRun', S.running], ['inJob', S.jobs]].forEach(function(pair){
+    const el = document.getElementById(pair[0]);
+    if (el && document.activeElement !== el) el.value = pair[1];
+  });
+}
+function applyNum(kind, value){
+  const v = clampNum(value);
+  if (kind === 'run') setRunning(v); else setJobs(v);
+  return v;
+}
+
+document.getElementById('inRun').addEventListener('input', function(){ if (this.value !== ''){ const v = applyNum('run', this.value); if (String(v) !== this.value) this.value = v; } });
+document.getElementById('inJob').addEventListener('input', function(){ if (this.value !== ''){ const v = applyNum('job', this.value); if (String(v) !== this.value) this.value = v; } });
+document.getElementById('inRun').addEventListener('blur', function(){ this.value = S.running; });
+document.getElementById('inJob').addEventListener('blur', function(){ this.value = S.jobs; });
+document.querySelectorAll('.step').forEach(function(btn){
+  btn.addEventListener('click', function(){
+    const kind = btn.dataset.k, d = parseInt(btn.dataset.d, 10);
+    applyNum(kind, (kind === 'run' ? S.running : S.jobs) + d);
+  });
+});
+document.getElementById('btnFinish').addEventListener('click', function(){
+  S.running = 0; S.jobs = 0;
+  if (!S.armed){ log('任务已结束，但当前未武装'); render(); return; }
+  if (S.phase === 'fired'){ log('上一轮已执行，请先重置','warn'); render(); return; }
+  log('本轮任务全部结束','hi'); startCountdown('任务全部结束'); render();
+});
+document.getElementById('btnReset').addEventListener('click', reset);
+
+(function init(){
+  const p = new URLSearchParams(location.search);
+  const theme = p.get('theme');
+  if (theme){ S.theme = theme; document.body.dataset.theme = theme;
+    document.querySelectorAll('#segTheme button').forEach(function(x){ x.classList.toggle('on', x.dataset.v === theme); }); }
+  const variant = p.get('variant');
+  if (variant){ S.variant = variant;
+    document.querySelectorAll('#segVariant button').forEach(function(x){ x.classList.toggle('on', x.dataset.v === variant); }); }
+  if (p.get('hover') === '1') S.forceHover = true;
+  if (p.get('collapse') === '1') S.collapsed = true;
+  if (p.get('fold') === '1'){ S.cardCollapsed = true;
+    document.querySelectorAll('#segFold button').forEach(function(x){ x.classList.add('on'); }); }
+
+  if (p.get('release') === '1') document.body.classList.add('release');
+  const demo = p.get('demo');
+  if (demo === 'hold'){ S.armed=true; S.phase='waiting'; S.jobs=2; S.running=3; log('已武装：所有任务结束后自动关机'); log('暂不关机：还有 2 个后台任务 / 3 个会话在运行','warn'); }
+  if (demo === 'idle' || demo === 'armed'){ S.armed=true; S.phase='waiting'; S.jobs=0; S.running=0; log('已武装：所有任务结束后自动关机'); log('当前没有运行中的任务：待命中','hi'); }
+  if (demo === 'fire'){ S.armed=true; S.phase='countdown'; S.sec=8; S.jobs=0; S.running=0; log('已武装'); log('所有任务已结束 → 开始 60 秒倒计时','hi'); }
+  if (demo === 'fired'){ S.armed=true; S.phase='fired'; S.sec=0; S.jobs=0; S.running=0; log('关机指令已生效（演示）','err'); }
+  if (p.has('run') || p.has('jobs')){
+    if (p.has('run')) S.running = Math.max(0, Math.min(99, parseInt(p.get('run'), 10) || 0));
+    if (p.has('jobs')) S.jobs = Math.max(0, Math.min(99, parseInt(p.get('jobs'), 10) || 0));
+    if (S.running > 0 || S.jobs > 0){ S.armed = true; S.phase = 'waiting'; }
+  }
+  render();
+})();
+</script>
+</body>
+</html>
