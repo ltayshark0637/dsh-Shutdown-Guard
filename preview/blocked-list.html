@@ -1,0 +1,344 @@
+<!doctype html><html><head><meta charset="utf-8"><title>阻断态清单</title>
+<style>
+  body{margin:0;background:#141413;color:#faf9f5;font-family:'Inter',system-ui,'Microsoft YaHei',sans-serif}
+  .app{display:flex;gap:26px;padding:26px;align-items:flex-start}
+  .list{width:330px;flex:0 0 auto;background:#1a1a19;border-radius:14px;padding:14px 14px 18px;max-height:calc(100vh - 52px);overflow:auto}
+  .lg{font-size:11px;letter-spacing:.09em;text-transform:uppercase;color:#7d7b72;margin:16px 2px 8px}
+  .lg:first-child{margin-top:2px}
+  .item{padding:9px 10px;border-radius:8px;cursor:pointer;display:flex;gap:9px;align-items:flex-start;margin-bottom:3px}
+  .item:hover{background:rgba(255,255,255,.055)}
+  .item.on{background:rgba(255,255,255,.10)}
+  .item i{width:7px;height:7px;border-radius:50%;flex:0 0 7px;margin-top:6px}
+  .item .nm{font-size:13px;line-height:17px}
+  .item .cd{font-size:10.5px;color:#8b887e;line-height:15px;font-family:ui-monospace,Menlo,monospace;margin-top:1px}
+  .dot-h{background:#7e8aa3}.dot-w{background:#6f8f7a}.dot-s{background:#8a7391}.dot-n{background:#f0a83a}
+  .stage{flex:1;display:flex;gap:30px;align-items:flex-start}
+  .col{display:flex;flex-direction:column;gap:14px;width:264px;flex:0 0 264px}
+  .panel{width:560px;background:#1a1a19;border-radius:14px;padding:6px 20px 16px}
+  .lbl{font-size:11px;letter-spacing:.08em;text-transform:uppercase;color:#7d7b72;margin:0 0 2px}
+  .explain{font-size:12.5px;line-height:20px;color:#b0aea5;background:#1a1a19;border-radius:12px;padding:12px 15px;margin-bottom:4px;border-left:2px solid #7e8aa3}
+  .explain b{color:#faf9f5;font-weight:600}
+  .segs{display:flex;gap:6px;margin-bottom:12px}
+  .segs button{font:inherit;font-size:12px;padding:5px 13px;border-radius:7px;cursor:pointer;background:transparent;color:#b0aea5;border:1px solid rgba(255,255,255,.14)}
+  .segs button.on{background:#f0a83a;border-color:#f0a83a;color:#141413;font-weight:600}
+  .dsp-host{flex:0 0 auto;padding:0 12px 8px 0;min-width:0}
+.dsp-card{--dsp-bg:#1c1e22;--dsp-fg:#f3f4f6;--dsp-muted:#a7abb4;--dsp-line:rgba(255,255,255,.14);
+--dsp-accent:#f0a83a;--dsp-danger:#ef5350;--dsp-track:rgba(255,255,255,.16);
+--dsp-tape-a:#f2b13c;--dsp-tape-b:#e8453c}
+.dsp-card.dsp-claude{--dsp-bg:#1f1d1a;--dsp-fg:#f5f1ea;--dsp-muted:#b3a99c;--dsp-line:rgba(255,255,255,.12);--dsp-accent:#d97757;--dsp-danger:#e5674f;--dsp-tape-a:#e08a5f;--dsp-tape-b:#b8483a}
+.dsp-card[data-lum="light"]{--dsp-bg:#ffffff;--dsp-fg:#1b2030;--dsp-muted:#5b6472;--dsp-line:rgba(0,0,0,.15);
+--dsp-accent:#e08f13;--dsp-danger:#d92d20;--dsp-track:rgba(0,0,0,.13);--dsp-tape-a:#f0b03a;--dsp-tape-b:#e0483c}
+.dsp-card{position:relative;display:flex;flex-direction:column;box-sizing:border-box;width:100%;height:178px;margin:0;padding:10px 12px 0;border-radius:12px;
+border:1px solid var(--dsp-line);background:var(--dsp-bg);color:var(--dsp-fg);
+font-family:var(--dsw-font-family, system-ui);overflow:hidden;transition:height .18s ease}
+.dsp-card[data-state="off"]{background:color-mix(in srgb, var(--dsp-fg) 2.5%, var(--dsp-bg))}
+.dsp-card[data-state="fire"]{border-color:var(--dsp-danger)}
+.dsp-card.is-folded{height:auto;padding-bottom:8px}
+.dsp-chead{display:flex;align-items:center;gap:7px;height:22px;line-height:22px;cursor:pointer;user-select:none}
+.dsp-live{width:6px;height:6px;margin-top:0;border-radius:50%;flex:0 0 6px;align-self:center;background:var(--dsp-muted)}
+.dsp-card[data-state="armed"] .dsp-live,.dsp-card[data-state="hold"] .dsp-live{background:var(--dsp-accent);box-shadow:0 0 8px var(--dsp-accent)}
+.dsp-card[data-state="fire"] .dsp-live,.dsp-card[data-state="fired"] .dsp-live{background:var(--dsp-danger);animation:dsp-pulse-red .9s infinite}
+.dsp-ctitle{flex:1 1 auto;min-width:0;font-size:12.5px;line-height:22px;color:var(--dsp-muted);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.dsp-tag{flex:0 0 auto;font-family:ui-monospace, "Cascadia Mono", Consolas, monospace;font-size:9px;letter-spacing:.08em;
+padding:1px 5px;border-radius:5px;border:1px solid color-mix(in srgb, var(--dsp-muted) 40%, transparent);color:var(--dsp-muted)}
+.dsp-card[data-state="armed"] .dsp-tag,.dsp-card[data-state="hold"] .dsp-tag{color:var(--dsp-accent);border-color:color-mix(in srgb, var(--dsp-accent) 50%, transparent)}
+.dsp-card[data-state="fire"] .dsp-tag,.dsp-card[data-state="fired"] .dsp-tag{color:var(--dsp-danger);border-color:color-mix(in srgb, var(--dsp-danger) 50%, transparent)}
+.dsp-chev{flex:0 0 auto;display:block;color:var(--dsp-muted);transition:transform .18s}
+.dsp-chev.is-folded{transform:rotate(-90deg)}
+.dsp-cbody{position:relative;flex:1;min-height:0}
+.dsp-v-a{display:flex;flex-direction:column;justify-content:center;height:100%;padding:0}
+.dsp-big{font-family:ui-monospace, "Cascadia Mono", Consolas, "Microsoft YaHei", monospace;font-size:26px;line-height:1.15;font-weight:650;letter-spacing:-.2px}
+.dsp-card[data-state="fire"] .dsp-big{color:var(--dsp-danger)}
+.dsp-meta{margin-top:5px;font-size:11.5px;line-height:16px;color:var(--dsp-muted);min-height:15px}
+.dsp-card[data-state="hold"] .dsp-meta{color:var(--dsp-accent)}
+.dsp-cbtns{display:flex;align-items:center;gap:6px;padding:8px 0 10px;flex:0 0 auto}
+.dsp-btn{flex:1 1 auto;min-width:0;height:30px;border-radius:8px;border:1px solid var(--dsp-line);background:transparent;color:inherit;font:inherit;font-size:12.5px;cursor:pointer}
+.dsp-btn:hover{background:color-mix(in srgb, var(--dsp-fg) 7%, transparent)}
+.dsp-btn-primary{border-color:transparent;background:var(--dsp-accent);color:#1a1200;font-weight:600}
+.dsp-btn-danger{border-color:color-mix(in srgb, var(--dsp-danger) 45%, transparent);color:var(--dsp-danger);background:color-mix(in srgb, var(--dsp-danger) 6%, transparent)}
+.dsp-hazard{position:relative;height:10px;margin:0 -12px;overflow:hidden}
+.dsp-hazard::before{content:"";position:absolute;top:0;bottom:0;left:-48px;right:-48px;
+background:repeating-linear-gradient(45deg,var(--dsp-tape-a) 0 10px,var(--dsp-tape-b) 10px 20px);
+animation:dsp-slide var(--dsp-haz-dur, 1.15s) linear infinite;animation-delay:var(--dsp-haz-phase, 0s)}
+.dsp-card[data-state="hold"] .dsp-hazard::before{--dsp-haz-dur:2.6s;opacity:.9}
+.dsp-card[data-state="fire"] .dsp-hazard::before{--dsp-haz-dur:.42s}
+.dsp-card[data-state="off"] .dsp-hazard{opacity:.55}
+.dsp-card[data-state="off"] .dsp-hazard::before{animation-play-state:paused}
+.dsp-card[data-state="fired"] .dsp-hazard{opacity:.45}
+.dsp-card[data-state="fired"] .dsp-hazard::before{animation-play-state:paused}
+.dsp-v-b{display:block;height:100%;padding:6px 0 0}
+.dsp-disc{position:relative;height:100%;min-height:66px;border-radius:10px;border:1px solid var(--dsp-line);overflow:hidden;
+background:radial-gradient(circle at 50% 50%, color-mix(in srgb, var(--dsp-accent) 9%, transparent), transparent 66%), color-mix(in srgb, var(--dsp-bg) 94%, var(--dsp-fg))}
+.dsp-sweep{position:absolute;left:50%;top:50%;width:320px;height:320px;margin:-160px 0 0 -160px;border-radius:50%;
+background:conic-gradient(from 0deg,transparent 0deg,transparent 10deg,
+color-mix(in srgb, var(--dsp-accent) 8%, transparent) 22deg,
+color-mix(in srgb, var(--dsp-accent) 20%, transparent) 38deg,
+color-mix(in srgb, var(--dsp-accent) 34%, transparent) 54deg,
+color-mix(in srgb, var(--dsp-accent) 12%, transparent) 66deg,
+color-mix(in srgb, var(--dsp-accent) 4%, transparent) 72deg,transparent 78deg,transparent 360deg);
+animation:dsp-spin 3.2s linear infinite;
+-webkit-mask-image:radial-gradient(circle, #000 0 44%, transparent 74%);mask-image:radial-gradient(circle, #000 0 44%, transparent 74%)}',        '.dsp-card[data-state="hold"] .dsp-sweep{animation-duration:5.6s;opacity:.62}
+.dsp-card[data-state="fire"] .dsp-sweep{animation-duration:1s}
+.dsp-rings{position:absolute;inset:0}
+.dsp-radar-svg{position:absolute;left:50%;top:50%;width:238px;height:202px;margin:-101px 0 0 -119px;pointer-events:none}
+.dsp-dots{position:absolute;inset:0}
+.dsp-ring{position:absolute;left:50%;top:50%;border-radius:50%;transform:translate(-50%,-50%);border:1px solid color-mix(in srgb, var(--dsp-accent) 30%, transparent);z-index:1}
+.dsp-ping{position:absolute;left:50%;top:50%;width:6px;height:6px;margin:-3px 0 0 -3px;border-radius:50%;background:var(--dsp-accent);z-index:2;box-shadow:0 0 12px color-mix(in srgb, var(--dsp-accent) 90%, transparent)}
+.dsp-card[data-state="fire"] .dsp-ping{background:var(--dsp-danger);box-shadow:0 0 12px color-mix(in srgb, var(--dsp-danger) 90%, transparent)}
+.dsp-rdot{position:absolute;width:5px;height:5px;border-radius:50%;transform:translate(-50%,-50%);z-index:2}
+.dsp-rdot-run{background:var(--dsp-muted);box-shadow:0 0 6px color-mix(in srgb, var(--dsp-muted) 80%, transparent)}
+.dsp-rdot-job{background:var(--dsp-accent);box-shadow:0 0 8px color-mix(in srgb, var(--dsp-accent) 95%, transparent)}
+.dsp-card[data-state="hold"] .dsp-rdot{animation:dsp-dotpulse 2.4s ease-in-out infinite}
+.dsp-card[data-state="fire"] .dsp-rdot{opacity:.3}
+.dsp-card[data-state="fired"] .dsp-rdot{opacity:.18}
+.dsp-disc::after{content:"";position:absolute;left:0;right:0;bottom:0;height:42px;z-index:1;pointer-events:none;
+background:linear-gradient(0deg, color-mix(in srgb, var(--dsp-bg) 92%, transparent) 12%, transparent)}
+.dsp-hud{position:absolute;left:9px;right:9px;bottom:7px;z-index:3;display:flex;align-items:baseline;gap:6px;flex-wrap:wrap;row-gap:1px;
+font-family:ui-monospace, "Cascadia Mono", Consolas, monospace;font-size:9.5px;letter-spacing:.13em;text-transform:uppercase;
+color:var(--dsp-muted);text-shadow:0 1px 8px rgba(0,0,0,.5);white-space:nowrap;line-height:1.45}
+.dsp-hud::before{content:"";width:4px;height:4px;border-radius:50%;background:var(--dsp-accent);flex:none;align-self:center;
+box-shadow:0 0 7px color-mix(in srgb, var(--dsp-accent) 90%, transparent)}
+.dsp-hud b{font-size:11px;letter-spacing:.1em;color:var(--dsp-fg);font-weight:600}
+.dsp-card[data-state="fire"] .dsp-hud b{font-size:12px;color:color-mix(in srgb, var(--dsp-danger) 55%, #fff)}
+.dsp-card[data-state="fire"] .dsp-hud::before{background:var(--dsp-danger);box-shadow:0 0 7px color-mix(in srgb, var(--dsp-danger) 90%, transparent)}
+.dsp-card[data-state="off"] .dsp-hud::before,.dsp-card[data-state="fired"] .dsp-hud::before{background:var(--dsp-muted);box-shadow:none}
+.dsp-v-c{display:flex;flex-direction:column;height:100%;padding:6px 0 0}
+.dsp-screen{flex:1;min-height:0;border-radius:6px;padding:6px 8px;background:#0b0d10;border:1px solid rgba(255,255,255,.08);font-family:ui-monospace, "Cascadia Mono", Consolas, monospace;font-size:9.5px;line-height:1.5;color:#9ef0a8;overflow:hidden}
+.dsp-term-line{white-space:nowrap;overflow:hidden;text-overflow:ellipsis;color:#c9f7d2}
+.dsp-pr{color:#5d8f6b;margin-right:4px}
+.dsp-caret{display:inline-block;width:5px;height:9px;margin-left:2px;background:#9ef0a8;animation:dsp-blink 1s steps(1) infinite;vertical-align:-1px}
+.dsp-card[data-state="fire"] .dsp-screen{background:#2a0d0d;border-color:rgba(255,77,79,.4);color:#ffb3b0}
+.dsp-card[data-state="fire"] .dsp-term-line{color:#ffd0cc}
+.dsp-card[data-state="fire"] .dsp-caret{background:#ff4d4f}
+.dsp-led{display:flex;gap:4px;margin-top:6px;flex:0 0 auto}
+.dsp-led-seg{flex:1 1 0;height:4px;border-radius:2px;background:var(--dsp-track)}
+.dsp-led-seg.on{background:var(--dsp-accent)}
+.dsp-card[data-state="fire"] .dsp-led-seg.on{background:var(--dsp-danger)}
+.dsp-code{margin-top:5px;font-size:9px;line-height:12px;color:var(--dsp-muted);flex:0 0 auto;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.dsp-settings{display:flex;flex-direction:column;padding:4px 0 0;font-size:13px;line-height:20px;color:var(--dsw-alias-label-primary, #f4f4f5)}
+.dsp-srow{display:flex;align-items:center;justify-content:space-between;gap:12px 8px;padding:14px 0;border-top:.5px solid var(--dsw-alias-border-l2, rgba(128,128,128,.22))}
+.dsp-srow:first-child{border-top:none}
+.dsp-srow-text{flex:1 1 140px;min-width:0;display:flex;flex-direction:column;gap:3px;padding-right:28px}
+.dsp-stitle{font-size:14px;line-height:22px}
+.dsp-sdesc{font-size:12px;line-height:18px;color:var(--dsw-alias-label-tertiary, #8f8d84)}
+.dsp-sgroup-box{display:flex;flex-direction:column;padding-top:16px;margin-top:16px;border-top:.5px solid var(--dsw-alias-border-l2, rgba(128,128,128,.22))}
+.dsp-sgroup-box:first-child{padding-top:0;margin-top:0;border-top:none}
+.dsp-sgroup{font-size:12px;font-weight:600;letter-spacing:.06em;color:var(--dsw-alias-label-secondary, #b0aea5);padding:0 0 2px}
+.dsp-sgroup + .dsp-srow{border-top:none}
+.dsp-srow{padding:12px 0}
+.dsp-srow-stack{align-items:flex-start;flex-direction:column;gap:6px}
+.dsp-srow-stack .dsp-srow-text{flex:0 0 auto;padding-right:0;width:100%}
+.dsp-srow-stack .dsp-sval{font-size:12px;line-height:18px;white-space:normal}
+.dsp-srow-ro .dsp-sval{max-width:58%;text-align:right;white-space:normal}
+.dsp-sval-dim{opacity:.55}
+.dsp-shead{margin:16px 0 -2px;padding-top:14px;border-top:.5px solid var(--dsw-alias-border-l2, rgba(128,128,128,.22));font-size:12px;font-weight:600;letter-spacing:.03em;color:var(--dsw-alias-label-secondary, #b9b9b4)}
+.dsp-seg{display:flex;gap:4px;flex:none;flex-wrap:wrap;justify-content:flex-end}
+.dsp-segbtn{height:30px;padding:0 11px;border-radius:8px;border:1px solid var(--dsw-alias-border-l1, rgba(128,128,128,.25));background:transparent;color:var(--dsw-alias-label-secondary, #b9b9b4);font:inherit;font-size:13px;cursor:pointer}
+.dsp-segbtn:hover{background:var(--dsw-alias-interactive-bg-hover, rgba(255,255,255,.06))}
+.dsp-segbtn.on{background:var(--dsw-alias-button-primary-fill, #f5a623);border-color:transparent;color:var(--dsw-alias-label-inverse, #201500);font-weight:600}
+.dsp-switch{flex:none;width:36px;height:20px;border-radius:10px;border:0;background:var(--dsw-alias-interactive-bg-hover, rgba(128,128,128,.3));position:relative;cursor:pointer;padding:0}
+.dsp-switch i{position:absolute;left:2px;top:2px;width:16px;height:16px;border-radius:50%;background:var(--dsw-alias-bg-overlay, #fff);transition:.16s}
+.dsp-switch.on{background:var(--dsw-alias-brand-primary, #d97757)}
+.dsp-switch.on i{left:18px}
+.dsp-shint{font-size:12px;line-height:18px;color:var(--dsw-alias-label-tertiary, #8f8d84)}
+.dsp-sval{font-size:12px;color:var(--dsw-alias-label-tertiary, #8f8d84)}
+.dsp-sgroup-note{margin-left:6px;font-weight:400;letter-spacing:0;opacity:.7}
+.dsp-slotbar{display:flex;gap:4px;flex-wrap:wrap;justify-content:flex-end}
+.dsp-slotbtn{width:30px;height:26px;border-radius:7px;border:1px solid var(--dsw-alias-border-l1, rgba(128,128,128,.25));background:transparent;color:var(--dsw-alias-label-secondary, #b9b9b4);font:inherit;font-size:11px;cursor:pointer;padding:0}
+.dsp-slotbtn:hover:not(:disabled){background:var(--dsw-alias-interactive-bg-hover, rgba(255,255,255,.06))}
+.dsp-slotbtn.on{background:var(--dsw-alias-button-primary-fill, #f5a623);border-color:transparent;color:var(--dsw-alias-label-inverse, #201500);font-weight:600}
+.dsp-slotbtn.locked{opacity:.35;cursor:not-allowed}
+.dsp-evlog{display:flex;flex-direction:column;gap:2px;max-height:150px;overflow:auto;font-family:ui-monospace, "Cascadia Mono", Consolas, monospace;font-size:11px;line-height:16px}
+.dsp-ev{display:flex;gap:8px;align-items:baseline}
+.dsp-ev-time{flex:none;opacity:.5}
+.dsp-ev-text{min-width:0;word-break:break-word}
+.dsp-ev-config .dsp-ev-text{color:var(--dsw-alias-brand-primary, #d97757)}
+.dsp-ev-skip .dsp-ev-text{color:var(--dsw-alias-state-warning-primary, #d8a12a)}
+.dsp-ev-empty{opacity:.45}
+.dsp-switch:disabled{opacity:.4;cursor:not-allowed}
+@keyframes dsp-slide{to{transform:translateX(28.28px)}}
+@keyframes dsp-spin{to{transform:rotate(360deg)}}
+@keyframes dsp-blink{50%{opacity:0}}
+@keyframes dsp-dotpulse{0%,100%{opacity:1}50%{opacity:.35}}
+@keyframes dsp-pulse-red{0%{box-shadow:0 0 0 0 rgba(239,83,80,.7)}70%{box-shadow:0 0 0 6px rgba(239,83,80,0)}100%{box-shadow:0 0 0 0 rgba(239,83,80,0)}}
+  
+.dsp-card[data-state="blocked"]{--dsp-blocked:#7e8aa3;--dsp-blocked-soft:rgba(126,138,163,.16)}
+.dsp-card[data-lum="light"][data-state="blocked"]{--dsp-blocked:#5a6b8c;--dsp-blocked-soft:rgba(90,107,140,.12)}
+.dsp-card[data-state="blocked"] .dsp-live{background:var(--dsp-blocked);box-shadow:0 0 0 3px var(--dsp-blocked-soft);animation:none}
+.dsp-card[data-state="blocked"] .dsp-tag{color:var(--dsp-blocked);border-color:var(--dsp-blocked-soft);background:var(--dsp-blocked-soft)}
+.dsp-card[data-state="blocked"] .dsp-big{color:var(--dsp-blocked)}
+.dsp-card[data-state="blocked"] .dsp-btn{color:var(--dsp-fg);border-color:color-mix(in srgb,var(--dsp-blocked) 55%,transparent);background:var(--dsp-blocked-soft)}
+.dsp-card[data-state="blocked"] .dsp-hazard{opacity:.28;filter:grayscale(1)}
+.dsp-card[data-state="blocked"] .dsp-hazard::before{animation-play-state:paused}
+.dsp-card[data-state="blocked"] .dsp-rings{opacity:.30;filter:grayscale(1)}
+.dsp-card[data-state="blocked"] .dsp-sweep{display:none}
+.dsp-card[data-state="blocked"] .dsp-ping{display:none}
+.dsp-card[data-state="blocked"] .dsp-dot{opacity:.22}
+.dsp-card[data-state="blocked"] .dsp-hud b{color:var(--dsp-blocked)}
+.dsp-card[data-state="blocked"] .dsp-hud::before{background:var(--dsp-blocked);box-shadow:none}
+.dsp-card[data-state="blocked"] .dsp-screen{background:color-mix(in srgb,var(--dsp-blocked) 10%,#0b0d10);border-color:color-mix(in srgb,var(--dsp-blocked) 40%,transparent);color:#c3cbdc}
+.dsp-card[data-state="blocked"] .dsp-pr{color:var(--dsp-blocked)}
+.dsp-card[data-state="blocked"] .dsp-led-seg.on{background:var(--dsp-blocked)}
+.dsp-card[data-state="blocked"] .dsp-code{color:var(--dsp-blocked)}
+
+/* waiting: something outside is recovering, the plugin keeps retrying */
+.dsp-card[data-level="waiting"]{--dsp-blocked:#6f8f7a;--dsp-blocked-soft:rgba(111,143,122,.16)}
+.dsp-card[data-lum="light"][data-level="waiting"]{--dsp-blocked:#4a7059;--dsp-blocked-soft:rgba(74,112,89,.12)}
+.dsp-card[data-level="waiting"] .dsp-live{animation:dsp-wait 1.6s ease-in-out infinite}
+@keyframes dsp-wait{0%,100%{opacity:.45;box-shadow:0 0 0 2px var(--dsp-blocked-soft)}50%{opacity:1;box-shadow:0 0 0 5px transparent}}
+
+/* stuck: no progress for a while, a human has to judge */
+.dsp-card[data-level="stuck"]{--dsp-blocked:#8a7391;--dsp-blocked-soft:rgba(138,115,145,.16)}
+.dsp-card[data-lum="light"][data-level="stuck"]{--dsp-blocked:#6b5473;--dsp-blocked-soft:rgba(107,84,115,.12)}
+.dsp-card[data-level="stuck"] .dsp-live{animation:none}
+.dsp-card[data-level="stuck"] .dsp-hazard{opacity:.5;filter:grayscale(.6)}
+
+.dsp-ev-blocked .dsp-ev-time{color:var(--dsp-blocked,#7e8aa3)}
+
+</style></head><body>
+<div class="app">
+  <div class="list" id="list"></div>
+  <div class="stage">
+    <div class="col">
+      <div class="explain" id="explain"></div>
+      <div class="segs" id="segs">
+        <button data-v="A" class="on">A</button><button data-v="B">B</button><button data-v="C">C</button>
+        <button data-m="fold">折叠</button><button data-m="light">浅色</button>
+      </div>
+      <div id="card"></div>
+      <div id="card2"></div>
+    </div>
+    <div class="panel"><div id="settings"></div></div>
+  </div>
+</div>
+<script>
+const STATES = [{"key":"quota","level":"halted","code":"QUOTA","name":"额度不足","big":"已暂停","meta":"额度不足，充值后解除再武装","btn":"解除并重试","why":"账户余额或配额耗尽。重试没有意义，充值后解除再武装即可恢复。"},{"key":"account-quota","level":"halted","code":"ACCOUNT_QUOTA","name":"账户额度用尽","big":"已暂停","meta":"账户额度用尽，充值后解除再武装","btn":"解除并重试","why":"账户级 token 配额耗尽，需要在账户页补充。"},{"key":"invalid-credential","level":"halted","code":"INVALID_CREDENTIAL","name":"凭证无效","big":"已暂停","meta":"凭证无效，修复后解除再武装","btn":"解除并重试","why":"密钥是非法的（不是缺失）。每次请求都会得到同样的拒绝，重试无意义。"},{"key":"missing-credential","level":"halted","code":"MISSING_CREDENTIAL","name":"缺少凭证","big":"已暂停","meta":"缺少凭证，配置后解除再武装","btn":"解除并重试","why":"没有配置密钥。属于配置问题，不是运行时故障。"},{"key":"context","level":"halted","code":"CONTEXT_WINDOW_EXCEEDED","name":"上下文超限","big":"已暂停","meta":"上下文已超出模型窗口，建议新开会话","btn":"解除并重试","why":"压缩也无法腾出空间。继续注入只会立刻再次超限，收尾报告也写不完。"},{"key":"capability","level":"halted","code":"CAPABILITY_UNSUPPORTED","name":"模型不支持该能力","big":"已暂停","meta":"当前模型不支持这项操作，换模型后再试","btn":"解除并重试","why":"例如要求读图但模型没有视觉能力。换模型才有效，重试不会变好。"},{"key":"disk","level":"halted","code":"DISK_FULL","name":"写入失败","big":"已暂停","meta":"写盘失败，清理空间后解除再武装","btn":"解除并重试","why":"「收尾落盘」本身就会失败，等于恢复流程不可用，必须人工处理。"},{"key":"rate-limit","level":"waiting","code":"RATE_LIMIT","name":"持续限流","big":"等待恢复","meta":"被限流，30 秒后自动重试（第 3 次）","btn":"解除","why":"服务是好的，只是暂时拒绝。自动退避重试，恢复后照常继续，不需要人。"},{"key":"server","level":"waiting","code":"SERVER","name":"服务端故障","big":"等待恢复","meta":"服务端 5xx，30 秒后自动重试（第 2 次）","btn":"解除","why":"对方故障，通常几分钟内自愈。等待比重试更省额度。"},{"key":"transport","level":"waiting","code":"TRANSPORT","name":"网络中断","big":"等待恢复","meta":"连接中断，30 秒后自动重试（第 1 次）","btn":"解除","why":"本地网络或代理问题。恢复后自动继续。"},{"key":"empty","level":"waiting","code":"EMPTY_RESPONSE","name":"空响应重试耗尽","big":"等待恢复","meta":"模型返回了空内容，30 秒后重试","btn":"解除","why":"供应商偶发的退化补全，重试策略本身会处理，只是这次用完了次数。"},{"key":"approval","level":"stuck","code":"—","name":"审批无人应答","big":"疑似卡住","meta":"等待审批已 12 分钟，没有新进展","btn":"强制关机","why":"工具审批等了太久。会话仍是 running，但已经不产生任何事件。"},{"key":"job-stop","level":"stuck","code":"—","name":"后台任务卡在 stopping","big":"疑似卡住","meta":"1 个后台任务停止中已 8 分钟","btn":"强制关机","why":"job 一直报 stopping 而不是 settled，插件会永远算它「在跑」。"},{"key":"frozen","level":"stuck","code":"—","name":"会话状态不刷新","big":"疑似卡住","meta":"会话状态 15 分钟没有变化","btn":"强制关机","why":"agent 已经死了但 status 没翻到 idle，关机条件永远不满足。"},{"key":"off","level":"normal","state":"off","name":"未开启（对照）"},{"key":"armed","level":"normal","state":"armed","name":"待命（对照）"},{"key":"hold","level":"normal","state":"hold","name":"等待后台任务（对照）"},{"key":"fire","level":"normal","state":"fire","name":"倒计时（对照）"}];
+const LEVEL_LABEL = {"halted":"停住 · 只有人能解除","waiting":"等待 · 会自动恢复","stuck":"疑似卡住 · 需人判断","normal":"对照 · 正常运行"};
+const DOTS = "<i class=\"dsp-dot dsp-dot-job\" style=\"left:38%;top:34%\"></i><i class=\"dsp-dot dsp-dot-job\" style=\"left:64%;top:62%\"></i><i class=\"dsp-dot dsp-dot-run\" style=\"left:52%;top:72%\"></i><i class=\"dsp-dot dsp-dot-run\" style=\"left:30%;top:58%\"></i>";
+const RING = "<circle cx=\"119\" cy=\"101\" r=\"23\" fill=\"none\" stroke=\"var(--dsp-accent)\" stroke-width=\"1\" stroke-opacity=\"0.42\"></circle><circle cx=\"119\" cy=\"101\" r=\"35\" fill=\"none\" stroke=\"var(--dsp-accent)\" stroke-width=\"1\" stroke-opacity=\"0.39\"></circle><circle cx=\"119\" cy=\"101\" r=\"47\" fill=\"none\" stroke=\"var(--dsp-accent)\" stroke-width=\"1\" stroke-opacity=\"0.36\"></circle><circle cx=\"119\" cy=\"101\" r=\"59\" fill=\"none\" stroke=\"var(--dsp-accent)\" stroke-width=\"1\" stroke-opacity=\"0.32\"></circle><circle cx=\"119\" cy=\"101\" r=\"71\" fill=\"none\" stroke=\"var(--dsp-accent)\" stroke-width=\"1\" stroke-opacity=\"0.29\"></circle><circle cx=\"119\" cy=\"101\" r=\"83\" fill=\"none\" stroke=\"var(--dsp-accent)\" stroke-width=\"1\" stroke-opacity=\"0.26\"></circle><circle cx=\"119\" cy=\"101\" r=\"95\" fill=\"none\" stroke=\"var(--dsp-accent)\" stroke-width=\"1\" stroke-opacity=\"0.23\"></circle><circle cx=\"119\" cy=\"101\" r=\"107\" fill=\"none\" stroke=\"var(--dsp-accent)\" stroke-width=\"1\" stroke-opacity=\"0.20\"></circle><circle cx=\"119\" cy=\"101\" r=\"119\" fill=\"none\" stroke=\"var(--dsp-accent)\" stroke-width=\"1\" stroke-opacity=\"0.16\"></circle>";
+let cur = 'quota', variant = 'A', folded = false, light = false;
+
+function esc(s){return String(s).replace(/&/g,'&amp;').replace(/</g,'&lt;')}
+function isBlocked(it){return it.level==='halted'||it.level==='waiting'||it.level==='stuck'}
+
+function bodyHtml(item, variant){
+  const blocked = isBlocked(item);
+  if(variant==='B'){
+    const hud = blocked
+      ? '<b>'+(item.level==='waiting'?'Retrying':'Paused')+'</b><span>'+esc(item.name)+'</span>'
+      : item.state==='hold' ? '<b>Holding</b><span>jobs 2 · agent 3</span>'
+      : item.state==='fire' ? '<b>00:42</b><span>T-minus</span>'
+      : '<b>Standby</b><span>jobs 0 · agent 1</span>';
+    return '<div class="dsp-cbody dsp-v-b"><div class="dsp-disc"><div class="dsp-sweep"></div>'
+      +'<div class="dsp-rings"><svg class="dsp-radar-svg" viewBox="0 0 238 202">'+RING+'</svg></div>'
+      +'<div class="dsp-ping"></div><div class="dsp-dots">'+DOTS+'</div>'
+      +'<div class="dsp-hud">'+hud+'</div></div></div>';
+  }
+  if(variant==='C'){
+    const lines = blocked
+      ? '<div class="dsp-term-line"><span class="dsp-pr">&gt;</span>shutdown --when idle</div>'
+      +'<div class="dsp-term-line"><span class="dsp-pr">&gt;</span><span style="color:var(--dsp-blocked)">error '+esc(item.code)+'</span></div>'
+      +'<div class="dsp-term-line"><span class="dsp-pr">&gt;</span><span style="color:var(--dsp-blocked)">shutdown '+(item.level==='waiting'?'retrying':'halted')+'</span><i class="dsp-caret"></i></div>'
+      : '<div class="dsp-term-line"><span class="dsp-pr">&gt;</span>shutdown --when idle</div>'
+      +'<div class="dsp-term-line"><span class="dsp-pr">&gt;</span><span class="dsp-l2">'+(item.state==='fire'?'countdown 42s':'waiting holders')+'</span></div>'
+      +'<div class="dsp-term-line"><span class="dsp-pr">&gt;</span><span class="dsp-l3"></span><i class="dsp-caret"></i></div>';
+    const on = blocked?3:4;
+    let led=''; for(let i=0;i<6;i++) led+='<i class="dsp-led-seg'+(i<on?' on':'')+'" data-i="'+i+'"></i>';
+    return '<div class="dsp-cbody dsp-v-c"><div class="dsp-screen">'+lines+'</div><div class="dsp-led">'+led+'</div>'
+      +'<div class="dsp-code">'+(blocked?(item.level==='waiting'?'waiting · 自动重试':'halted · 需人工处理'):'agent 3 · running')+'</div></div>';
+  }
+  const big = blocked ? item.big : ({off:'未开启',armed:'待命',hold:'等待后台任务',fire:'00:42'})[item.state];
+  const meta = blocked ? item.meta : ({
+    off:'仅在点击「武装」后才会运行程序',
+    armed:'所有任务已结束 · 等待下一次触发',
+    hold:'2 个后台任务 · 3 个会话，完成后关机',
+    fire:'系统关机指令已下发'})[item.state];
+  return '<div class="dsp-cbody dsp-v-a"><div class="dsp-big">'+esc(big)+'</div><div class="dsp-meta">'+esc(meta)+'</div></div>';
+}
+
+function cardHtml(item, variant, folded, light){
+  const blocked = isBlocked(item);
+  const tag = blocked ? (item.level==='waiting'?'RETRY':item.level==='stuck'?'STUCK':'PAUSED')
+    : ({off:'OFF',armed:'ARMED',hold:'WAIT',fire:'FIRE'})[item.state];
+  const dataState = blocked ? 'blocked' : item.state;
+  const lum = light ? 'light' : 'dark';
+  let inner='';
+  if(!folded){
+    let btn;
+    if(!blocked) btn = item.state==='off' ? '<button class="dsp-btn dsp-btn-primary">武装</button>'
+      : '<button class="dsp-btn dsp-btn-danger">'+(item.state==='fire'?'取消关机':'解除')+'</button>';
+    else if(item.level==='waiting') btn='<button class="dsp-btn">解除</button>';
+    else btn='<button class="dsp-btn">'+esc(item.btn)+'</button>';
+    inner = bodyHtml(item,variant)+'<div class="dsp-cbtns">'+btn+'</div><div class="dsp-hazard"></div>';
+  }
+  return '<div class="dsp-card'+(folded?' is-folded':'')+'" data-state="'+dataState+'" data-variant="'+variant+'" data-lum="'+lum+'"'
+    +(blocked?' data-level="'+item.level+'"':'')+'>'
+    +'<div class="dsp-chead"><i class="dsp-live"></i><span class="dsp-ctitle">任务完成后关机</span><span class="dsp-tag">'+tag+'</span>'
+    +'<svg class="dsp-chev'+(folded?' is-folded':'')+'" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><path d="M6 9l6 6 6-6"/></svg>'
+    +'</div>'+inner+'</div>';
+}
+
+function settingsHtml(item){
+  const blocked = isBlocked(item);
+  const now = blocked ? esc(item.big+'：'+item.name) : '无';
+  const evs = blocked
+    ? [['12:00:31', 'blocked', '会话 root-1 的错误：'+item.code+' → '+item.meta],
+       ['11:58:02','skip','还有 2 个后台任务在运行，暂不关机（模式保持开启）'],
+       ['11:57:40','info','已开启：任务完成后自动关机']]
+    : [['12:02:55','skip','还有 2 个后台任务在运行，暂不关机（模式保持开启）'],
+       ['12:02:31','info','已开启：任务完成后自动关机']];
+  const evlog = '<div class="dsp-evlog">'+evs.map(e=>'<div class="dsp-ev dsp-ev-'+e[1]+'"><span class="dsp-ev-time">'+e[0]+'</span><span class="dsp-ev-text">'+esc(e[2])+'</span></div>').join('')+'</div>';
+  const color = blocked ? 'var(--dsp-blocked)' : 'inherit';
+  return '<div class="dsp-settings"><div class="dsp-sgroup-box"><div class="dsp-sgroup">状态</div>'
+    +'<div class="dsp-srow"><div class="dsp-srow-text"><span class="dsp-stitle">当前阻断</span>'
+    +'<span class="dsp-sdesc">'+(blocked?'阻断期间不会下发关机指令。':'没有阻断，条件满足就会正常倒计时。')+'</span></div>'
+    +'<span class="dsp-sval" style="color:'+color+';max-width:300px;text-align:right">'+now+'</span></div>'
+    +'<div class="dsp-srow dsp-srow-stack"><div class="dsp-srow-text"><span class="dsp-stitle">上次为什么没关机</span></div>'
+    +'<span class="dsp-sval'+(blocked?'':' dsp-sval-dim')+'">'+(blocked?esc(item.meta):'还没发生过')+'</span></div>'
+    +'<div class="dsp-srow dsp-srow-stack"><div class="dsp-srow-text"><span class="dsp-stitle">事件日志</span>'
+    +'<span class="dsp-sdesc">'+(blocked?'最近 '+evs.length+' 条':'暂无阻断记录')+'，完整记录在插件 data/events.log。</span></div>'+evlog+'</div>'
+    +'</div></div>';
+}
+
+function renderList(){
+  const order=['halted','waiting','stuck','normal'];
+  const cls={halted:'dot-h',waiting:'dot-w',stuck:'dot-s',normal:'dot-n'};
+  let html='';
+  for(const lv of order){
+    html+='<div class="lg">'+LEVEL_LABEL[lv]+'</div>';
+    for(const it of STATES.filter(s=>s.level===lv)){
+      html+='<div class="item'+(it.key===cur?' on':'')+'" data-k="'+it.key+'">'
+        +'<i class="'+cls[lv]+'"></i><div><div class="nm">'+esc(it.name)+'</div>'
+        +'<div class="cd">'+esc(it.code)+'</div></div></div>';
+    }
+  }
+  document.getElementById('list').innerHTML=html;
+  document.querySelectorAll('.item').forEach(el=>el.onclick=()=>{cur=el.dataset.k;renderAll()});
+}
+
+function renderAll(){
+  const item=STATES.find(s=>s.key===cur);
+  renderList();
+  document.getElementById('card').innerHTML=cardHtml(item,variant,false,light);
+  document.getElementById('card2').innerHTML=light?'':cardHtml(item,variant,true,false);
+  document.getElementById('settings').innerHTML=settingsHtml(item);
+  document.getElementById('explain').innerHTML='<b>'+esc(item.name)+'</b>'
+    +(item.code&&item.code!=='—'?' <code style="font-size:11.5px;color:#8b887e">'+esc(item.code)+'</code>':'')
+    +'<br>'+(item.why?esc(item.why):'正常运行状态，用于对照。');
+  document.querySelectorAll('#segs button').forEach(b=>{
+    if(b.dataset.v) b.classList.toggle('on',b.dataset.v===variant);
+    if(b.dataset.m==='fold') b.classList.toggle('on',folded);
+    if(b.dataset.m==='light') b.classList.toggle('on',light);
+  });
+}
+
+document.querySelectorAll('#segs button').forEach(b=>{
+  b.onclick=()=>{
+    if(b.dataset.v) variant=b.dataset.v;
+    if(b.dataset.m==='fold') folded=!folded;
+    if(b.dataset.m==='light') light=!light;
+    renderAll();
+  };
+});
+renderAll();
+</script></body></html>
