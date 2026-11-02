@@ -1,41 +1,99 @@
-# Renders every docs/screenshots/*.html into a PNG using headless Edge.
+# Renders every docs/screenshots/*.html into its own PNG using headless Edge.
 #
-#   pwsh -File scripts/screenshot.ps1
+#   powershell -NoProfile -ExecutionPolicy Bypass -File scripts/screenshot.ps1
 #
-# Each run gets a throwaway user-data-dir: reusing the default profile makes
-# headless Edge exit silently without writing the file.
+# Two details make this reproducible:
+#  * each run gets a throwaway user-data-dir; reusing the default profile makes
+#    headless Edge exit silently without writing the file;
+#  * --default-background-color=00000000 keeps the page transparent, so the
+#    images drop straight onto any README background. The alpha border is then
+#    trimmed away, which is why the window is deliberately oversized.
 $ErrorActionPreference = 'Stop'
+Add-Type -AssemblyName System.Drawing
+
 $root = Split-Path -Parent $PSScriptRoot
 $shots = Join-Path $root 'docs/screenshots'
 $edge = 'C:\Program Files (x86)\Microsoft\Edge\Application\msedge.exe'
 if (-not (Test-Path $edge)) { throw "Edge not found at $edge" }
 
-# page -> viewport height that fits the whole gallery without a scrollbar
-$sizes = @{
-  '01-hero'     = @(1330, 1120)
-  '02-states'   = @(1060, 680)
-  '03-variants' = @(1180, 730)
-  '04-blocked'  = @(1330, 1560)
-  '05-settings' = @(1330, 1560)
-  '06-light'    = @(1180, 1080)
+# Oversized on purpose: Trim-Png cuts it down to the ink.
+function Get-Size($name) {
+  if ($name -like '*settings*') { return @(760, 1640) }
+  if ($name -like '*sidebar*') { return @(420, 660) }
+  return @(430, 380)
 }
 
-foreach ($name in ($sizes.Keys | Sort-Object)) {
-  $html = Join-Path $shots "$name.html"
-  if (-not (Test-Path $html)) { Write-Warning "missing $html"; continue }
+function Trim-Png($path) {
+  $src = [System.Drawing.Bitmap]::FromFile($path)
+  try {
+    # GetPixel over a 760x1640 canvas is far too slow; copy to a 32bpp buffer
+    # and walk its bytes instead.
+    $buf = New-Object System.Drawing.Bitmap($src.Width, $src.Height, [System.Drawing.Imaging.PixelFormat]::Format32bppArgb)
+    $g = [System.Drawing.Graphics]::FromImage($buf)
+    $g.DrawImage($src, 0, 0, $src.Width, $src.Height)
+    $g.Dispose()
+
+    $rect0 = New-Object System.Drawing.Rectangle(0, 0, $buf.Width, $buf.Height)
+    $data = $buf.LockBits($rect0, [System.Drawing.Imaging.ImageLockMode]::ReadOnly, [System.Drawing.Imaging.PixelFormat]::Format32bppArgb)
+    $stride = $data.Stride
+    $bytes = New-Object byte[] ($stride * $buf.Height)
+    [System.Runtime.InteropServices.Marshal]::Copy($data.Scan0, $bytes, 0, $bytes.Length)
+    $buf.UnlockBits($data)
+
+    $minX = $buf.Width; $minY = $buf.Height; $maxX = -1; $maxY = -1
+    for ($y = 0; $y -lt $buf.Height; $y++) {
+      $row = $y * $stride
+      for ($x = 0; $x -lt $buf.Width; $x++) {
+        $alpha = $bytes[$row + $x * 4 + 3]
+        if ($alpha -gt 8) {
+          if ($x -lt $minX) { $minX = $x }
+          if ($x -gt $maxX) { $maxX = $x }
+          if ($y -lt $minY) { $minY = $y }
+          if ($y -gt $maxY) { $maxY = $y }
+        }
+      }
+    }
+    if ($maxX -lt 0) { $buf.Dispose(); return }
+
+    $pad = 4
+    $minX = [Math]::Max(0, $minX - $pad); $minY = [Math]::Max(0, $minY - $pad)
+    $maxX = [Math]::Min($buf.Width - 1, $maxX + $pad); $maxY = [Math]::Min($buf.Height - 1, $maxY + $pad)
+    $keep = New-Object System.Drawing.Rectangle($minX, $minY, ($maxX - $minX + 1), ($maxY - $minY + 1))
+    $dst = $buf.Clone($keep, [System.Drawing.Imaging.PixelFormat]::Format32bppArgb)
+    $buf.Dispose()
+
+    # GDI+ refuses to write over the file its source was loaded from, so the
+    # trimmed copy lands on a sibling and swaps in afterwards. The source bitmap
+    # must be released before the swap on Windows.
+    $tmp = "$path.trim.png"
+    try {
+      $dst.Save($tmp, [System.Drawing.Imaging.ImageFormat]::Png)
+    } finally { $dst.Dispose() }
+  } finally { $src.Dispose() }
+  Move-Item -LiteralPath $tmp -Destination $path -Force
+}
+
+$pages = Get-ChildItem $shots -Filter *.html | Sort-Object Name
+foreach ($page in $pages) {
+  $name = [System.IO.Path]::GetFileNameWithoutExtension($page.Name)
   $png = Join-Path $shots "$name.png"
-  $w, $h = $sizes[$name]
+  $w, $h = Get-Size $name
   $profile = Join-Path $env:TEMP ('edge-shot-' + [guid]::NewGuid().ToString('N'))
-  $uri = 'file:///' + ($html -replace '\\', '/')
+  $uri = 'file:///' + ($page.FullName -replace '\\', '/')
   # headless Edge exits 1 even on success and writes noise to stderr; only the
   # written file matters, so both are swallowed on purpose.
   $ErrorActionPreference = 'Continue'
   & $edge --headless=new --disable-gpu --no-sandbox --hide-scrollbars `
-    --force-device-scale-factor=2 "--user-data-dir=$profile" `
-    "--window-size=$w,$h" "--screenshot=$png" $uri 2>&1 | Out-Null
+    --force-device-scale-factor=2 --default-background-color=00000000 `
+    "--user-data-dir=$profile" --window-size=$w,$h `
+    "--screenshot=$png" $uri 2>&1 | Out-Null
   $ErrorActionPreference = 'Stop'
   if (Test-Path $png) {
-    Write-Host ("{0}  {1}x{2}  {3} KB" -f $name, $w, $h, [int]((Get-Item $png).Length / 1KB))
+    Trim-Png $png
+    $img = [System.Drawing.Image]::FromFile($png)
+    $size = "{0}x{1}" -f $img.Width, $img.Height
+    $img.Dispose()
+    Write-Host ("{0,-22} {1,-12} {2} KB" -f $name, $size, [int]((Get-Item $png).Length / 1KB))
   } else {
     Write-Warning "not written: $png"
   }

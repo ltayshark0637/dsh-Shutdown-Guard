@@ -216,86 +216,51 @@ function page(title, sub, inner, extraCss = '') {
 <div class="h1">${esc(title)}</div><div class="sub">${esc(sub)}</div>${inner}</div></body></html>`
 }
 
-const shots = {}
+// ---------------------------------------------------------------- one image per state
+// The release page wants individual pictures, not contact sheets: every entry
+// below renders exactly one card (or one panel) on its own canvas, so the
+// filename doubles as the image caption and nothing is cropped by its
+// neighbours.
+const single = (inner, extra = '') => `<!doctype html><html lang="zh"><head><meta charset="utf-8">
+<style>${BASE_CSS}${SIDEBAR_CSS}body{display:inline-block;background:transparent}
+.wrap{padding:16px}.bare .frame{background:transparent;padding:0;width:auto}</style>
+<style>${extra}</style><style>${CSS}</style></head><body><div class="wrap bare">${inner}</div></body></html>`
 
-// 1. hero: sidebar in place + settings
-shots['01-hero'] = page(
-  '任务完成后关机 · 侧边栏卡片',
-  '卡片固定在「技能中心」下方、会话列表上方；右侧是设置页。渲染自插件真实 CSS。',
-  `<div class="grid">
-    ${sidebar(card({ view: 'hold', variant: 'A' }))}
-    ${sidebar(card({ view: 'fire', variant: 'A' }), { s1: '重构关机插件', s2: '周报数据整理' })}
-    <div style="background:#1a1a19;border-radius:14px;padding:6px 20px 16px;width:560px">${settingsPanel()}</div>
-  </div>`,
-)
+const frame = (html, cls = '') => `<div class="frame ${cls}">${html}</div>`
+const cardOnly = (c) => single(frame(card(c)))
+const sidebarOnly = (c) => single(`<div style="padding:8px">${sidebar(frame(card(c)))}</div>`)
 
-// 2. states
-shots['02-states'] = page(
-  '五种运行状态',
-  '未开启 / 待命 / 等待后台任务 / 倒计时 / 已下发。三种外观共享同一套状态与判定。',
-  `<div class="grid">
-    ${['off', 'armed', 'hold'].map((v) => `<div class="cell"><div class="cap">${v}</div><div class="frame">${card({ view: v, variant: 'A' })}</div></div>`).join('')}
-  </div>
-  <div class="grid" style="margin-top:26px">
-    ${['fire', 'fired'].map((v) => `<div class="cell"><div class="cap">${v}</div><div class="frame">${card({ view: v, variant: 'A' })}</div></div>`).join('')}
-  </div>`,
-)
+const shots = {
+  // 1-5: the five running states, one picture each
+  '01-off': cardOnly({ view: 'off', variant: 'A' }),
+  '02-armed': cardOnly({ view: 'armed', variant: 'A' }),
+  '03-hold': cardOnly({ view: 'hold', variant: 'A' }),
+  '04-fire': cardOnly({ view: 'fire', variant: 'A' }),
+  '05-fired': cardOnly({ view: 'fired', variant: 'A' }),
 
-// 3. variants
-shots['03-variants'] = page(
-  '三种外观',
-  'A 警戒带 / B 雷达 / C 终端。雷达点只随数量增删，不会整批重排。',
-  `<div class="grid">
-    ${['A', 'B', 'C'].map((v) => `<div class="cell"><div class="cap">${v} · armed</div><div class="frame">${card({ view: 'armed', variant: v })}</div></div>`).join('')}
-    ${['A', 'B', 'C'].map((v) => `<div class="cell"><div class="cap">${v} · 倒计时</div><div class="frame">${card({ view: 'fire', variant: v })}</div></div>`).join('')}
-  </div>`,
-)
+  // 6-7: the other two skins
+  '06-variant-b-radar': cardOnly({ view: 'armed', variant: 'B' }),
+  '07-variant-c-terminal': cardOnly({ view: 'armed', variant: 'C' }),
 
-// 4. blocked
-shots['04-blocked'] = page(
-  '阻断态',
-  'halted 只有人能处理；waiting 会按策略自动重试；卡住（stuck）已归档，暂未实现。',
-  `<div class="grid">
-    <div class="cell"><div class="cap">halted · 额度不足</div><div class="frame">${card({ view: 'blocked', variant: 'A', big: '已暂停', meta: '账户额度不足，需充值后解除', btn: '解除并重试' })}</div></div>
-    <div class="cell"><div class="cap">halted · 上下文超限</div><div class="frame">${card({ view: 'blocked', variant: 'A', big: '已暂停', meta: '上下文超出模型窗口，需人工处理', btn: '解除并重试' })}</div></div>
-    <div class="cell"><div class="cap">waiting · 限流</div><div class="frame">${card({ view: 'blocked', variant: 'A', retry: true, big: '等待恢复', meta: '请求过于频繁，30 秒后自动重试（第 1 次）' })}</div></div>
-    <div class="cell"><div class="cap">waiting · 服务端故障</div><div class="frame">${card({ view: 'blocked', variant: 'A', retry: true, big: '等待恢复', meta: '服务端暂时不可用，20 秒后重试（第 2 次）' })}</div></div>
-  </div>
-  <div class="sechead">在三种外观下</div>
-  <div class="grid">
-    ${['B', 'C'].map((v) => `<div class="cell"><div class="cap">halted · ${v}</div><div class="frame">${card({ view: 'blocked', variant: v, big: '已暂停', meta: '账户额度不足', btn: '解除并重试' })}</div></div>`).join('')}
-    ${['B', 'C'].map((v) => `<div class="cell"><div class="cap">waiting · ${v}</div><div class="frame">${card({ view: 'blocked', variant: v, retry: true, big: '等待恢复', meta: '限流，自动重试' })}</div></div>`).join('')}
-  </div>
-  <div class="sechead">折叠</div>
-  <div class="grid">
-    ${['blocked'].map((v) => `<div class="cell"><div class="cap">halted · 折叠</div><div class="frame">${card({ view: v, variant: 'A', folded: true })}</div></div>`).join('')}
-    <div class="cell"><div class="cap">writing · 折叠</div><div class="frame">${card({ view: 'blocked', variant: 'A', folded: true, retry: true })}</div></div>
-  </div>`,
-)
+  // 8-9: blocked, halted vs waiting
+  '08-blocked-halted': cardOnly({ view: 'blocked', variant: 'A', big: '已暂停', meta: '账户额度不足，需充值后解除', btn: '解除并重试' }),
+  '09-blocked-waiting': cardOnly({ view: 'blocked', variant: 'A', retry: true, big: '等待恢复', meta: '请求过于频繁，30 秒后自动重试（第 1 次）' }),
 
-// 5. settings
-shots['05-settings'] = page(
-  '设置页',
-  '三组：外观 / 何时关机 / 状态。设置项立即生效，无需重启。',
-  `<div class="grid">
-    <div style="background:#1a1a19;border-radius:14px;padding:6px 20px 16px;width:560px">${settingsPanel()}</div>
-    <div class="theme-light" style="background:#fff;color:#1b2030;border-radius:14px;padding:6px 20px 16px;width:560px;--dsp-fg:#1b2030;--dsp-muted:#5b6472;--dsp-line:rgba(0,0,0,.15);--dsp-accent:#e08f13;--dsp-danger:#d92d20;--dsp-track:rgba(0,0,0,.13);--dsw-alias-label-primary:#1b2030;--dsw-alias-label-secondary:#3d4859;--dsw-alias-label-tertiary:#5b6472;--dsw-alias-border-l2:rgba(0,0,0,.12);--dsw-alias-border-l3:rgba(0,0,0,.18);--dsw-alias-bg-layer-2:#f7f8fa;--dsw-alias-button-primary-fill:#e08f13">${settingsPanel({ theme: 2 })}</div>
-  </div>`,
-)
+  // 10-11: the card where it actually lives
+  '10-sidebar-hold': sidebarOnly({ view: 'hold', variant: 'A' }),
+  '11-sidebar-fire': sidebarOnly({ view: 'fire', variant: 'A' }),
 
-// 6. light
-shots['06-light'] = page(
-  '浅色主题',
-  '卡片自带调色板，按宿主表面亮度自动取色；也可以在外观里强制锁定深色 / 浅色 / Claude。',
-  `<div class="grid">
-    ${['armed', 'fire', 'blocked'].map((v) => `<div class="cell"><div class="cap">${v} · 浅色</div><div class="frame light">${card({ view: v, variant: 'A', lum: 'light', retry: v === 'blocked' })}</div></div>`).join('')}
-    ${['B', 'C'].map((v) => `<div class="cell"><div class="cap">${v} · 浅色</div><div class="frame light">${card({ view: 'armed', variant: v, lum: 'light' })}</div></div>`).join('')}
-  </div>
-  <div class="sechead">Claude Style 配色</div>
-  <div class="grid">
-    ${['armed', 'fire'].map((v) => `<div class="cell"><div class="cap">${v} · claude</div><div class="frame">${card({ view: v, variant: 'A', claude: true })}</div></div>`).join('')}
-  </div>`,
-)
+  // 12-13: settings, dark and light
+  '12-settings-dark': single(`<div style="background:#1a1a19;border-radius:14px;padding:6px 20px 16px;width:560px">${settingsPanel()}</div>`),
+  '13-settings-light': single(`<div class="theme-light" style="background:#fff;color:#1b2030;border-radius:14px;padding:6px 20px 16px;width:560px;--dsp-fg:#1b2030;--dsp-muted:#5b6472;--dsp-line:rgba(0,0,0,.15);--dsp-accent:#e08f13;--dsp-danger:#d92d20;--dsp-track:rgba(0,0,0,.13);--dsw-alias-label-primary:#1b2030;--dsw-alias-label-secondary:#3d4859;--dsw-alias-label-tertiary:#5b6472;--dsw-alias-border-l2:rgba(0,0,0,.12);--dsw-alias-border-l3:rgba(0,0,0,.18);--dsw-alias-bg-layer-2:#f7f8fa;--dsw-alias-button-primary-fill:#e08f13">${settingsPanel({ theme: 2 })}</div>`),
+
+  // 14-15: light and Claude palettes
+  '14-light': single(frame(card({ view: 'armed', variant: 'A', lum: 'light' }), 'light')),
+  '15-claude': cardOnly({ view: 'fire', variant: 'A', claude: true }),
+
+  // 16: folded
+  '16-folded': cardOnly({ view: 'armed', variant: 'A', folded: true }),
+}
 
 for (const [name, html] of Object.entries(shots)) {
   fs.writeFileSync(path.join(OUT, name + '.html'), html)

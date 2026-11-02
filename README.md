@@ -7,7 +7,7 @@
 
 把「所有任务完成后自动关机」做成侧边栏里的一张卡片——位于「技能中心」下方、会话列表上方，随任务状态实时变化。
 
-![侧边栏卡片与设置页](docs/screenshots/01-hero.png)
+<p align="center"><img src="docs/screenshots/anim-hazard.gif" width="330" alt="武装状态，底部警戒带滚动"></p>
 
 不是右下角那个浮动按钮。卡片就长在侧边栏里，武装、倒计时、等待、暂停都写在卡片上，点一下就展开面板。
 
@@ -33,30 +33,41 @@
 
 ### 五种运行状态
 
-![五种状态](docs/screenshots/02-states.png)
+| 未开启 | 待命 | 等待后台任务 |
+| :---: | :---: | :---: |
+| <img src="docs/screenshots/01-off.png" width="250"> | <img src="docs/screenshots/02-armed.png" width="250"> | <img src="docs/screenshots/03-hold.png" width="250"> |
+
+| 倒计时 | 已下发 |
+| :---: | :---: |
+| <img src="docs/screenshots/04-fire.png" width="250"> | <img src="docs/screenshots/05-fired.png" width="250"> |
 
 `未开启` → `待命` → `等待后台任务` → `倒计时` → `已下发`。倒计时期间随时可取消，取消后仍保持武装。
 
 ### 三种外观
 
-![三种外观](docs/screenshots/03-variants.png)
+| A · 警戒带 | B · 雷达 | C · 终端 |
+| :---: | :---: | :---: |
+| <img src="docs/screenshots/03-hold.png" width="250"> | <img src="docs/screenshots/06-variant-b-radar.png" width="250"> | <img src="docs/screenshots/07-variant-c-terminal.png" width="250"> |
+| 大字状态 + 底部滚动的红黄警戒条 | 同心圆 + 扫描光束，会话/后台任务以圆点呈现 | 命令行摘要 + 6 段判定条件指示灯 |
 
-| | 外观 | 特点 |
-| --- | --- | --- |
-| **A** | 警戒带 | 大字状态 + 底部滚动的红黄警戒条 |
-| **B** | 雷达 | 同心圆 + 扫描光束，会话/后台任务以圆点呈现，数量变化只增删不重排 |
-| **C** | 终端 | 命令行摘要 + 6 段判定条件指示灯 |
+雷达里的圆点按数量增删、不重排，数量变化时你正在看的那几个点不会跳位置：
+
+<p align="center"><img src="docs/screenshots/anim-radar.gif" width="330" alt="雷达扫描"></p>
 
 设置里切换，立即生效，无需重启。
 
 ### 阻断态
 
-![阻断态](docs/screenshots/04-blocked.png)
+| halted · 需人工处理 | waiting · 自动重试 |
+| :---: | :---: |
+| <img src="docs/screenshots/08-blocked-halted.png" width="250"> | <img src="docs/screenshots/09-blocked-waiting.png" width="250"> |
 
 遇到没法当普通失败处理的错误，插件**不解除武装**，卡片转色、把原因写出来：
 
 - **`halted`**（灰蓝）——额度不足、凭证失效、上下文超限、能力不支持、磁盘写满。只有人能处理，点「解除并重试」。
 - **`waiting`**（灰绿，圆点呼吸）——限流、5xx、网络中断、空响应、超时、图片卸载。按策略自动重试，到点注入「继续原计划」指令。
+
+<p align="center"><img src="docs/screenshots/anim-blocked.gif" width="380" alt="等待恢复，状态点呼吸"></p>
 
 重试节奏按故障类型分别配置，见 [重试策略](#重试策略)。
 
@@ -70,13 +81,23 @@
 
 ### 其他
 
-- **纵向折叠**：收起只留标题和状态，点标题展开。
+- **纵向折叠**：收起只留标题和状态，点标题展开。 <img src="docs/screenshots/16-folded.png" width="250" align="right" alt="折叠态">
 - **主题自适应**：卡片自带 `--dsp-*` 调色板，按宿主表面亮度自动取深浅色；也可强制锁定深色 / 浅色 / Claude Style 配色。
 - **事件日志**：设置页里能看最近的事件与「上次为什么没关机」，完整流水在 `data/events.log`。
 
+<br clear="all">
+
+### 在侧边栏里的样子
+
+| 武装 | 倒计时 |
+| :---: | :---: |
+| <img src="docs/screenshots/10-sidebar-hold.png" width="250"> | <img src="docs/screenshots/11-sidebar-fire.png" width="250"> |
+
 ## 设置页
 
-![设置页](docs/screenshots/05-settings.png)
+| 深色 | 浅色 |
+| :---: | :---: |
+| <img src="docs/screenshots/12-settings-dark.png" width="380"> | <img src="docs/screenshots/13-settings-light.png" width="380"> |
 
 分三组：外观 / 何时关机 / 状态。所有开关立即生效。
 
@@ -86,7 +107,9 @@
 
 ## 浅色与第三方主题
 
-![浅色主题](docs/screenshots/06-light.png)
+| 浅色卡片 | Claude Style |
+| :---: | :---: |
+| <img src="docs/screenshots/14-light.png" width="250"> | <img src="docs/screenshots/15-claude.png" width="250"> |
 
 卡片不套用宿主配色，自带调色板；设置页则跟宿主主题走。第三方的 Claude Style 也有对应配色。
 
@@ -165,10 +188,11 @@ UI 偏好存在浏览器 `localStorage`：`dsh-shutdown-guard.variant` / `.theme
 node test/host.test.mjs        # 服务端：27 项断言，mock ctx，不真的关机
 node test/client.test.cjs      # 客户端 bundle smoke
 node scripts/gen-gallery.cjs   # 从 lib/client.js 真实 CSS 生成截图页
-pwsh scripts/screenshot.ps1    # headless Edge 渲染 PNG
+pwsh scripts/screenshot.ps1    # headless Edge 渲染 PNG（透明背景 + 自动裁边）
+node scripts/gen-gif.cjs       # 生成 README 里的三张动图
 ```
 
-截图全部由 `lib/client.js` 里的真实 CSS 生成，不会与产品脱节。
+截图全部由 `lib/client.js` 里的真实 CSS 生成，不会与产品脱节。动图同理：把 CSS 动画用 `animation-delay` 冻结在若干时间点逐帧截图，再用内置的 GIF89a 编码器合成——本机不需要 ffmpeg 或 ImageMagick。
 
 ## 常见问题
 
