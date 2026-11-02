@@ -2,7 +2,7 @@
 
 「所有任务完成后自动关机」，做成侧边栏里的一张卡片。
 
-![侧边栏卡片](https://raw.githubusercontent.com/USER/dsh-shutdown-guard/v1.5.0/docs/screenshots/01-hero.png)
+<p align="center"><img src="https://raw.githubusercontent.com/USER/dsh-shutdown-guard/v1.5.0/docs/screenshots/anim-radar.gif" width="330" alt="雷达外观，武装状态"></p>
 
 ## 亮点
 
@@ -13,13 +13,30 @@
 - **阻断态**：额度/凭证/上下文超限等 `halted` 只有人能处理；限流/5xx/网络等 `waiting` 按策略自动重试。
 - **按故障类型分策略**：限流走退避（高频重试会延长限流），瞬时故障走固定间隔，图片卸载只等 5 秒。
 
+## 五种状态
+
+| 未开启 | 待命 | 等待后台任务 |
+| :---: | :---: | :---: |
+| <img src="https://raw.githubusercontent.com/USER/dsh-shutdown-guard/v1.5.0/docs/screenshots/01-off.png" width="220"> | <img src="https://raw.githubusercontent.com/USER/dsh-shutdown-guard/v1.5.0/docs/screenshots/02-armed.png" width="220"> | <img src="https://raw.githubusercontent.com/USER/dsh-shutdown-guard/v1.5.0/docs/screenshots/03-hold.png" width="220"> |
+
+| 倒计时 | 已下发 | 阻断 |
+| :---: | :---: | :---: |
+| <img src="https://raw.githubusercontent.com/USER/dsh-shutdown-guard/v1.5.0/docs/screenshots/04-fire.png" width="220"> | <img src="https://raw.githubusercontent.com/USER/dsh-shutdown-guard/v1.5.0/docs/screenshots/05-fired.png" width="220"> | <img src="https://raw.githubusercontent.com/USER/dsh-shutdown-guard/v1.5.0/docs/screenshots/08-blocked-halted.png" width="220"> |
+
 ## 这个版本
 
-- README 按 v1.4 重写，含六张由真实 CSS 渲染的截图
+- **改名**：`dsh-shutdown-panel` → `dsh-shutdown-guard`，版本跳到 1.5.0
+- README 重写，配 16 张透明背景单图 + 3 张动图，全部由 `lib/client.js` 的真实 CSS 渲染
 - 新增 `CONTRIBUTING.md`、`LICENSE`（MIT）
-- 新增 `test/`（服务端 27 项断言 + 客户端 smoke）与 `scripts/`（图库生成 + 截图）
+- 新增 `test/`（服务端 27 项断言 + 客户端 smoke）与 `scripts/`（图库生成、截图、动图）
 - 修 README 早前被写坏的乱码
 - 清理过期的 preview 页面与 STATUS.md
+
+## 升级注意
+
+包名变了，`localStorage` 键也跟着变（`dsh-shutdown-guard.variant` / `.theme` / `.folded`）。从旧版升级的话，外观偏好会回到默认 A / 跟随系统 —— 重新选一次即可，不影响任何判定逻辑。
+
+HTTP 前缀也改为 `/api/dsh-shutdown-guard`。
 
 ## 安装
 
@@ -28,17 +45,3 @@
 手工兜底见 README 的「安装」一节。
 
 > ⚠️ 客户端 bundle 只在 DSH 启动时编入模块图，改代码后必须重启，刷新页面无效。
-
-## 约束
-
-- 仅 Windows（非 `win32` 平台早退不挂载）
-- 零运行时依赖
-- 不修改 `app.asar` 或 DSH 源码
-
-## 完整变更
-
-见 [CHANGELOG.md](CHANGELOG.md)。
-
----
-
-**Full Changelog**: https://github.com/USER/dsh-shutdown-guard/compare/v1.4.1...v1.5.0
