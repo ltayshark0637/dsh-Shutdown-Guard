@@ -14,36 +14,35 @@
 .dsp-card.dsp-claude{--dsp-bg:#1f1d1a;--dsp-fg:#f5f1ea;--dsp-muted:#b3a99c;--dsp-line:rgba(255,255,255,.12);--dsp-accent:#d97757;--dsp-danger:#e5674f;--dsp-tape-a:#e08a5f;--dsp-tape-b:#b8483a}
 .dsp-card[data-lum="light"]{--dsp-bg:#ffffff;--dsp-fg:#1b2030;--dsp-muted:#5b6472;--dsp-line:rgba(0,0,0,.15);
 --dsp-accent:#e08f13;--dsp-danger:#d92d20;--dsp-track:rgba(0,0,0,.13);--dsp-tape-a:#f0b03a;--dsp-tape-b:#e0483c}
-.dsp-card{position:relative;display:flex;flex-direction:column;box-sizing:border-box;width:100%;margin:0;padding:10px 8px 0;border-radius:12px;
+.dsp-card{position:relative;display:flex;flex-direction:column;box-sizing:border-box;width:100%;height:178px;margin:0;padding:10px 12px 0;border-radius:12px;
 border:1px solid var(--dsp-line);background:var(--dsp-bg);color:var(--dsp-fg);
 font-family:var(--dsw-font-family, system-ui);overflow:hidden;transition:height .18s ease}
 .dsp-card[data-state="off"]{background:color-mix(in srgb, var(--dsp-fg) 2.5%, var(--dsp-bg))}
 .dsp-card[data-state="fire"]{border-color:var(--dsp-danger)}
-.dsp-card.is-folded{padding-bottom:6px}
-.dsp-chead{display:flex;align-items:center;gap:7px;height:22px;cursor:pointer;user-select:none}
-.dsp-live{width:6px;height:6px;border-radius:50%;flex:0 0 auto;background:var(--dsp-muted)}
+.dsp-card.is-folded{height:auto;padding-bottom:8px}
+.dsp-chead{display:flex;align-items:center;gap:7px;height:22px;line-height:22px;cursor:pointer;user-select:none}
+.dsp-live{width:6px;height:6px;margin-top:0;border-radius:50%;flex:0 0 6px;align-self:center;background:var(--dsp-muted)}
 .dsp-card[data-state="armed"] .dsp-live,.dsp-card[data-state="hold"] .dsp-live{background:var(--dsp-accent);box-shadow:0 0 8px var(--dsp-accent)}
 .dsp-card[data-state="fire"] .dsp-live,.dsp-card[data-state="fired"] .dsp-live{background:var(--dsp-danger);animation:dsp-pulse-red .9s infinite}
-.dsp-ctitle{flex:1 1 auto;min-width:0;font-size:12.5px;line-height:17px;color:var(--dsp-muted);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.dsp-ctitle{flex:1 1 auto;min-width:0;font-size:12.5px;line-height:22px;color:var(--dsp-muted);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
 .dsp-tag{flex:0 0 auto;font-family:ui-monospace, "Cascadia Mono", Consolas, monospace;font-size:9px;letter-spacing:.08em;
 padding:1px 5px;border-radius:5px;border:1px solid color-mix(in srgb, var(--dsp-muted) 40%, transparent);color:var(--dsp-muted)}
 .dsp-card[data-state="armed"] .dsp-tag,.dsp-card[data-state="hold"] .dsp-tag{color:var(--dsp-accent);border-color:color-mix(in srgb, var(--dsp-accent) 50%, transparent)}
 .dsp-card[data-state="fire"] .dsp-tag,.dsp-card[data-state="fired"] .dsp-tag{color:var(--dsp-danger);border-color:color-mix(in srgb, var(--dsp-danger) 50%, transparent)}
-.dsp-chev{flex:0 0 auto;color:var(--dsp-muted);transition:transform .18s}
+.dsp-chev{flex:0 0 auto;display:block;color:var(--dsp-muted);transition:transform .18s}
 .dsp-chev.is-folded{transform:rotate(-90deg)}
 .dsp-cbody{position:relative;flex:1;min-height:0}
-.dsp-v-a{padding:6px 0 0}
-.dsp-big{font-family:ui-monospace, "Cascadia Mono", Consolas, "Microsoft YaHei", monospace;font-size:26px;line-height:1.15;font-weight:650;letter-spacing:-.5px}
+.dsp-v-a{display:flex;flex-direction:column;justify-content:center;height:100%;padding:0}
+.dsp-big{font-family:ui-monospace, "Cascadia Mono", Consolas, "Microsoft YaHei", monospace;font-size:26px;line-height:1.15;font-weight:650;letter-spacing:-.2px}
 .dsp-card[data-state="fire"] .dsp-big{color:var(--dsp-danger)}
 .dsp-meta{margin-top:5px;font-size:11.5px;line-height:16px;color:var(--dsp-muted);min-height:15px}
 .dsp-card[data-state="hold"] .dsp-meta{color:var(--dsp-accent)}
-.dsp-cbtns{display:flex;align-items:center;gap:8px;padding:7px 0 10px}
-.dsp-btn{flex:1 1 auto;height:30px;border-radius:8px;border:1px solid var(--dsp-line);background:transparent;color:inherit;font:inherit;font-size:12.5px;cursor:pointer}
+.dsp-cbtns{display:flex;align-items:center;gap:6px;padding:8px 0 10px;flex:0 0 auto}
+.dsp-btn{flex:1 1 auto;min-width:0;height:30px;border-radius:8px;border:1px solid var(--dsp-line);background:transparent;color:inherit;font:inherit;font-size:12.5px;cursor:pointer}
 .dsp-btn:hover{background:color-mix(in srgb, var(--dsp-fg) 7%, transparent)}
 .dsp-btn-primary{border-color:transparent;background:var(--dsp-accent);color:#1a1200;font-weight:600}
 .dsp-btn-danger{border-color:color-mix(in srgb, var(--dsp-danger) 45%, transparent);color:var(--dsp-danger);background:color-mix(in srgb, var(--dsp-danger) 6%, transparent)}
-.dsp-note{flex:0 0 auto;font-size:10px;color:var(--dsp-muted)}
-.dsp-hazard{position:relative;height:10px;margin:0 -8px;overflow:hidden}
+.dsp-hazard{position:relative;height:10px;margin:0 -12px;overflow:hidden}
 .dsp-hazard::before{content:"";position:absolute;top:0;bottom:0;left:-48px;right:-48px;
 background:repeating-linear-gradient(45deg,var(--dsp-tape-a) 0 10px,var(--dsp-tape-b) 10px 20px);
 animation:dsp-slide var(--dsp-haz-dur, 1.15s) linear infinite;animation-delay:var(--dsp-haz-phase, 0s)}
@@ -53,7 +52,6 @@ animation:dsp-slide var(--dsp-haz-dur, 1.15s) linear infinite;animation-delay:va
 .dsp-card[data-state="off"] .dsp-hazard::before{animation-play-state:paused}
 .dsp-card[data-state="fired"] .dsp-hazard{opacity:.45}
 .dsp-card[data-state="fired"] .dsp-hazard::before{animation-play-state:paused}
-.dsp-card[data-variant="B"]{height:178px}
 .dsp-v-b{display:block;height:100%;padding:6px 0 0}
 .dsp-disc{position:relative;height:100%;min-height:66px;border-radius:10px;border:1px solid var(--dsp-line);overflow:hidden;
 background:radial-gradient(circle at 50% 50%, color-mix(in srgb, var(--dsp-accent) 9%, transparent), transparent 66%), color-mix(in srgb, var(--dsp-bg) 94%, var(--dsp-fg))}
@@ -90,19 +88,19 @@ box-shadow:0 0 7px color-mix(in srgb, var(--dsp-accent) 90%, transparent)}
 .dsp-card[data-state="fire"] .dsp-hud b{font-size:12px;color:color-mix(in srgb, var(--dsp-danger) 55%, #fff)}
 .dsp-card[data-state="fire"] .dsp-hud::before{background:var(--dsp-danger);box-shadow:0 0 7px color-mix(in srgb, var(--dsp-danger) 90%, transparent)}
 .dsp-card[data-state="off"] .dsp-hud::before,.dsp-card[data-state="fired"] .dsp-hud::before{background:var(--dsp-muted);box-shadow:none}
-.dsp-v-c{padding:6px 0 0}
-.dsp-screen{border-radius:6px;padding:6px 7px;background:#0b0d10;border:1px solid rgba(255,255,255,.08);font-family:ui-monospace, "Cascadia Mono", Consolas, monospace;font-size:9.5px;line-height:1.5;color:#9ef0a8;min-height:58px}
+.dsp-v-c{display:flex;flex-direction:column;height:100%;padding:6px 0 0}
+.dsp-screen{flex:1;min-height:0;border-radius:6px;padding:6px 8px;background:#0b0d10;border:1px solid rgba(255,255,255,.08);font-family:ui-monospace, "Cascadia Mono", Consolas, monospace;font-size:9.5px;line-height:1.5;color:#9ef0a8;overflow:hidden}
 .dsp-term-line{white-space:nowrap;overflow:hidden;text-overflow:ellipsis;color:#c9f7d2}
 .dsp-pr{color:#5d8f6b;margin-right:4px}
 .dsp-caret{display:inline-block;width:5px;height:9px;margin-left:2px;background:#9ef0a8;animation:dsp-blink 1s steps(1) infinite;vertical-align:-1px}
 .dsp-card[data-state="fire"] .dsp-screen{background:#2a0d0d;border-color:rgba(255,77,79,.4);color:#ffb3b0}
 .dsp-card[data-state="fire"] .dsp-term-line{color:#ffd0cc}
 .dsp-card[data-state="fire"] .dsp-caret{background:#ff4d4f}
-.dsp-led{display:flex;gap:4px;margin-top:6px}
-.dsp-led-seg{flex:1 1 0;height:3px;border-radius:2px;background:var(--dsp-track)}
+.dsp-led{display:flex;gap:4px;margin-top:6px;flex:0 0 auto}
+.dsp-led-seg{flex:1 1 0;height:4px;border-radius:2px;background:var(--dsp-track)}
 .dsp-led-seg.on{background:var(--dsp-accent)}
 .dsp-card[data-state="fire"] .dsp-led-seg.on{background:var(--dsp-danger)}
-.dsp-code{margin-top:5px;font-size:9px;color:var(--dsp-muted)}
+.dsp-code{margin-top:5px;font-size:9px;line-height:12px;color:var(--dsp-muted);flex:0 0 auto;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
 .dsp-settings{display:flex;flex-direction:column;padding:4px 0 0;font-size:13px;line-height:20px;color:var(--dsw-alias-label-primary, #f4f4f5)}
 .dsp-srow{display:flex;align-items:center;justify-content:space-between;gap:12px 8px;padding:14px 0;border-top:.5px solid var(--dsw-alias-border-l2, rgba(128,128,128,.22))}
 .dsp-srow:first-child{border-top:none}
@@ -149,15 +147,16 @@ box-shadow:0 0 7px color-mix(in srgb, var(--dsp-accent) 90%, transparent)}
 @keyframes dsp-blink{50%{opacity:0}}
 @keyframes dsp-dotpulse{0%,100%{opacity:1}50%{opacity:.35}}
 @keyframes dsp-pulse-red{0%{box-shadow:0 0 0 0 rgba(239,83,80,.7)}70%{box-shadow:0 0 0 6px rgba(239,83,80,0)}100%{box-shadow:0 0 0 0 rgba(239,83,80,0)}}
-</style></head><body><div class="wrap">
+</style><style>.dsp-card{width:236px}.grid{display:flex;flex-wrap:wrap;gap:18px;align-items:flex-start}</style>
+</head><body><div class="wrap">
   <div class="col"><p class="lbl">A · off</p><div class="dsp-card" data-state="off" data-variant="A" data-lum="dark">
     <div class="dsp-chead"><i class="dsp-live"></i><span class="dsp-ctitle">任务完成后关机</span><span class="dsp-tag">OFF</span>
       <svg class="dsp-chev" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><path d="M6 9l6 6 6-6"/></svg>
-    </div><div class="dsp-cbody dsp-v-a"><div class="dsp-big">未开启</div><div class="dsp-meta">仅在点击「武装」后才会运行程序</div></div><div class="dsp-cbtns"><button class="dsp-btn dsp-btn-primary">武装</button><span class="dsp-note"></span></div>
+    </div><div class="dsp-cbody dsp-v-a"><div class="dsp-big">未开启</div><div class="dsp-meta">仅在点击「武装」后才会运行程序</div></div><div class="dsp-cbtns"><button class="dsp-btn dsp-btn-primary">武装</button></div>
       <div class="dsp-hazard"></div></div><p class="lbl">A · armed</p><div class="dsp-card" data-state="armed" data-variant="A" data-lum="dark">
     <div class="dsp-chead"><i class="dsp-live"></i><span class="dsp-ctitle">任务完成后关机</span><span class="dsp-tag">ARMED</span>
       <svg class="dsp-chev" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><path d="M6 9l6 6 6-6"/></svg>
-    </div><div class="dsp-cbody dsp-v-a"><div class="dsp-big">待命</div><div class="dsp-meta">所有任务已结束 · 等待下一次触发</div></div><div class="dsp-cbtns"><button class="dsp-btn dsp-btn-danger">解除</button><span class="dsp-note">守候中</span></div>
+    </div><div class="dsp-cbody dsp-v-a"><div class="dsp-big">待命</div><div class="dsp-meta">所有任务已结束 · 等待下一次触发</div></div><div class="dsp-cbtns"><button class="dsp-btn dsp-btn-danger">解除</button></div>
       <div class="dsp-hazard"></div></div><p class="lbl">A · folded</p><div class="dsp-card is-folded" data-state="armed" data-variant="A" data-lum="dark">
     <div class="dsp-chead"><i class="dsp-live"></i><span class="dsp-ctitle">任务完成后关机</span><span class="dsp-tag">ARMED</span>
       <svg class="dsp-chev is-folded" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><path d="M6 9l6 6 6-6"/></svg>
@@ -172,7 +171,7 @@ box-shadow:0 0 7px color-mix(in srgb, var(--dsp-accent) 90%, transparent)}
         <div class="dsp-ping"></div>
         <div class="dsp-dots"><i class="dsp-dot dsp-dot-job" style="left:38%;top:34%"></i><i class="dsp-dot dsp-dot-job" style="left:64%;top:62%"></i><i class="dsp-dot dsp-dot-run" style="left:52%;top:72%"></i><i class="dsp-dot dsp-dot-run" style="left:30%;top:58%"></i></div>
         <div class="dsp-hud"><b>Holding</b><span>jobs 2 · agent 3</span></div>
-      </div></div><div class="dsp-cbtns"><button class="dsp-btn dsp-btn-danger">解除</button><span class="dsp-note">等任务结束</span></div>
+      </div></div><div class="dsp-cbtns"><button class="dsp-btn dsp-btn-danger">解除</button></div>
       <div class="dsp-hazard"></div></div><p class="lbl">C · fire</p><div class="dsp-card" data-state="fire" data-variant="C" data-lum="dark">
     <div class="dsp-chead"><i class="dsp-live"></i><span class="dsp-ctitle">任务完成后关机</span><span class="dsp-tag">FIRE</span>
       <svg class="dsp-chev" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><path d="M6 9l6 6 6-6"/></svg>
@@ -181,16 +180,16 @@ box-shadow:0 0 7px color-mix(in srgb, var(--dsp-accent) 90%, transparent)}
         <div class="dsp-term-line"><span class="dsp-pr">&gt;</span><span class="dsp-l2">countdown 42s</span></div>
         <div class="dsp-term-line"><span class="dsp-pr">&gt;</span><span class="dsp-l3"></span><i class="dsp-caret"></i></div>
         </div><div class="dsp-led"><i class="dsp-led-seg on" data-i="0"></i><i class="dsp-led-seg on" data-i="1"></i><i class="dsp-led-seg on" data-i="2"></i><i class="dsp-led-seg on" data-i="3"></i><i class="dsp-led-seg on" data-i="4"></i><i class="dsp-led-seg on" data-i="5"></i></div>
-        <div class="dsp-code">agent 3 · running</div></div><div class="dsp-cbtns"><button class="dsp-btn dsp-btn-danger">取消关机</button><span class="dsp-note">点取消可撤销本次</span></div>
+        <div class="dsp-code">agent 3 · running</div></div><div class="dsp-cbtns"><button class="dsp-btn dsp-btn-danger">取消关机</button></div>
       <div class="dsp-hazard"></div></div></div>
   <div class="col"><p class="lbl">A · fire</p><div class="dsp-card" data-state="fire" data-variant="A" data-lum="dark">
     <div class="dsp-chead"><i class="dsp-live"></i><span class="dsp-ctitle">任务完成后关机</span><span class="dsp-tag">FIRE</span>
       <svg class="dsp-chev" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><path d="M6 9l6 6 6-6"/></svg>
-    </div><div class="dsp-cbody dsp-v-a"><div class="dsp-big">00:42</div><div class="dsp-meta">系统关机指令已下发</div></div><div class="dsp-cbtns"><button class="dsp-btn dsp-btn-danger">取消关机</button><span class="dsp-note">点取消可撤销本次</span></div>
+    </div><div class="dsp-cbody dsp-v-a"><div class="dsp-big">00:42</div><div class="dsp-meta">系统关机指令已下发</div></div><div class="dsp-cbtns"><button class="dsp-btn dsp-btn-danger">取消关机</button></div>
       <div class="dsp-hazard"></div></div><p class="lbl">A · claude</p><div class="dsp-card dsp-claude" data-state="hold" data-variant="A" data-lum="dark">
     <div class="dsp-chead"><i class="dsp-live"></i><span class="dsp-ctitle">任务完成后关机</span><span class="dsp-tag">WAIT</span>
       <svg class="dsp-chev" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><path d="M6 9l6 6 6-6"/></svg>
-    </div><div class="dsp-cbody dsp-v-a"><div class="dsp-big">等待后台任务</div><div class="dsp-meta">2 个后台任务 · 3 个会话，完成后关机</div></div><div class="dsp-cbtns"><button class="dsp-btn dsp-btn-danger">解除</button><span class="dsp-note">等任务结束</span></div>
+    </div><div class="dsp-cbody dsp-v-a"><div class="dsp-big">等待后台任务</div><div class="dsp-meta">2 个后台任务 · 3 个会话，完成后关机</div></div><div class="dsp-cbtns"><button class="dsp-btn dsp-btn-danger">解除</button></div>
       <div class="dsp-hazard"></div></div><p class="lbl">A · folded off</p><div class="dsp-card is-folded" data-state="off" data-variant="A" data-lum="dark">
     <div class="dsp-chead"><i class="dsp-live"></i><span class="dsp-ctitle">任务完成后关机</span><span class="dsp-tag">OFF</span>
       <svg class="dsp-chev is-folded" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><path d="M6 9l6 6 6-6"/></svg>
@@ -205,7 +204,7 @@ box-shadow:0 0 7px color-mix(in srgb, var(--dsp-accent) 90%, transparent)}
         <div class="dsp-ping"></div>
         <div class="dsp-dots"><i class="dsp-dot dsp-dot-job" style="left:38%;top:34%"></i><i class="dsp-dot dsp-dot-job" style="left:64%;top:62%"></i><i class="dsp-dot dsp-dot-run" style="left:52%;top:72%"></i><i class="dsp-dot dsp-dot-run" style="left:30%;top:58%"></i></div>
         <div class="dsp-hud"><b>Standby</b><span>jobs 2 · agent 3</span></div>
-      </div></div><div class="dsp-cbtns"><button class="dsp-btn dsp-btn-danger">解除</button><span class="dsp-note">守候中</span></div>
+      </div></div><div class="dsp-cbtns"><button class="dsp-btn dsp-btn-danger">解除</button></div>
       <div class="dsp-hazard"></div></div></div>
   <div class="panel"><p class="lbl">设置 · 深色</p><div class="dsp-settings">
   <div class="dsp-sgroup-box">
