@@ -6,4 +6,5 @@
         countdownSec: 60
         marginSec: 5
         onlyOnSuccess: true
+        debugHooks: true
         blockOnJobs: true
