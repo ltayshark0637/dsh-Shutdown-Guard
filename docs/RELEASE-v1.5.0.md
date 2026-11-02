@@ -1,8 +1,8 @@
-# v1.4.2
+# v1.5.0 — 改名 Shutdown Guard
 
 「所有任务完成后自动关机」，做成侧边栏里的一张卡片。
 
-![侧边栏卡片](https://raw.githubusercontent.com/USER/dsh-shutdown-guard/v1.4.2/docs/screenshots/01-hero.png)
+![侧边栏卡片](https://raw.githubusercontent.com/USER/dsh-shutdown-guard/v1.5.0/docs/screenshots/01-hero.png)
 
 ## 亮点
 
@@ -41,4 +41,4 @@
 
 ---
 
-**Full Changelog**: https://github.com/USER/dsh-shutdown-guard/compare/v1.4.1...v1.4.2
+**Full Changelog**: https://github.com/USER/dsh-shutdown-guard/compare/v1.4.1...v1.5.0
