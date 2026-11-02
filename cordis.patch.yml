@@ -7,3 +7,15 @@
         marginSec: 5
         onlyOnSuccess: true
         blockOnJobs: true
+        retryPolicies:
+          rate-limit: { mode: backoff, base: 30, max: 300 }
+          transient: { mode: fixed, every: 20 }
+          empty: { mode: fixed, every: 30 }
+          offload: { mode: fixed, every: 5 }
+        retryAssign:
+          RATE_LIMIT: rate-limit
+          SERVER: transient
+          TRANSPORT: transient
+          TIMEOUT: transient
+          EMPTY_RESPONSE: empty
+          IMAGE_OFFLOAD_REQUIRED: offload

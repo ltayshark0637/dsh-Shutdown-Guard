@@ -60,7 +60,51 @@
 - 恢复延迟变大：封顶 300s 时，最坏情况要等 5 分钟才发现服务回来了
 - 依赖 `n` 的存储：进程重启会归零，退避节奏重置（这里是可接受的）
 
-### 本版的选择：有上限的指数退避
+### v1.4.1：按故障类型分别选策略
+
+同一组内的最优节奏并不一样，所以每种 code 指定一个**策略名**，策略本身可配：
+
+| 策略 | 节奏 | 用在哪 | 为什么 |
+|---|---|---|---|
+| ate-limit | backoff 30→60→120→240→300 封顶 | RATE_LIMIT | 高频重试会**延长**限流 |
+| 	ransient | 固定 20 秒 | SERVER / TRANSPORT / TIMEOUT | 几十秒内自愈，退避反而慢 |
+| empty | 固定 30 秒 | EMPTY_RESPONSE | 偶发退化，与限流无关 |
+| offload | 固定 5 秒 | IMAGE_OFFLOAD_REQUIRED | 本地磁盘操作，立即重试即可 |
+
+IMAGE_OFFLOAD_REQUIRED 的语义（据 dsh-llm/lib/types/error.js）：一条支持图片的请求
+要先把最老的若干张图片卸载到磁盘才能发送，error.offloadImages 指出要卸载几张，
+dsh-compaction-image-offload 记录 image/offload 选择后由 agent 用新输入重试。
+**这是本地磁盘操作，与外部服务无关，所以给最短间隔。**
+
+配置面（cordis.patch.yml，默认值已写在包里）：
+
+`yaml
+retryPolicies:
+  rate-limit: { mode: backoff, base: 30, max: 300 }
+  transient:  { mode: fixed, every: 20 }
+  empty:      { mode: fixed, every: 30 }
+  offload:    { mode: fixed, every: 5 }
+retryAssign:
+  RATE_LIMIT: rate-limit
+  SERVER: transient
+  TRANSPORT: transient
+  TIMEOUT: transient
+  EMPTY_RESPONSE: empty
+  IMAGE_OFFLOAD_REQUIRED: offload
+`
+
+想给单个 code 特殊待遇，加一行即可（例如让限流等更久）：
+
+`yaml
+retryAssign:
+  RATE_LIMIT: slow-limit
+retryPolicies:
+  slow-limit: { mode: backoff, base: 60, max: 900 }
+`
+
+未知 code 统一回落 	ransient；策略表里写错的形状会被丢弃并保留默认值。
+
+### 退避的数学
 
 ```
 delay = min(base × 2^min(attempt, 4), max(base, 300s))

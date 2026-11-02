@@ -1,6 +1,6 @@
 {
   "name": "dsh-shutdown-panel",
-  "version": "1.4.0",
+  "version": "1.4.1",
   "description": "所有任务结束后自动关机：侧边栏卡片（三种外观 / 可折叠）+ 后台任务守卫",
   "main": "lib/index.mjs",
   "files": [
