@@ -1,17 +1,13 @@
 # Shutdown Guard · 任务完成后关机
 
-<p align="center"><img src="docs/screenshots/banner.png" width="880" alt="Shutdown Guard — 任务跑完，电脑自己关"></p>
+<p align="center"><img src="docs/screenshots/banner.png" width="880" alt="Shutdown Guard — 任务完成后自动关机，侧边栏守夜卡片"></p>
 
 [![version](https://img.shields.io/badge/version-1.5.0-2ea44f)](CHANGELOG.md)
 [![DSH](https://img.shields.io/badge/DSH-%E2%89%A50.1.5--rc.1-4a90d9)](https://github.com/deepseek-ai)
 [![platform](https://img.shields.io/badge/platform-Windows-0078d4)](#约束)
 [![license](https://img.shields.io/badge/license-MIT-blue)](LICENSE)
 
-为Deepseek Harness中的侧边栏添加「所有任务完成后自动关机」卡片，拥有更好的视觉效果、判定逻辑与自定义控件。位于「技能中心」下方、会话列表上方，随任务状态实时变化。
-
-<p align="center"><img src="docs/screenshots/anim-hazard.gif" width="330" alt="武装状态，底部警戒带滚动"></p>
-
-不是右下角那个浮动按钮。卡片就长在侧边栏里，武装、倒计时、等待、暂停都写在卡片上，点一下就展开面板。
+为Deepseek Harness中的侧边栏添加「所有任务完成后自动关机」卡片，拥有更好且多样的视觉效果、判定逻辑与个性化定制。位于「技能中心」下方、会话列表上方，随任务状态实时变化。
 
 ## 为什么需要它
 
@@ -60,9 +56,9 @@
 
 ### 阻断态
 
-| halted · 需人工处理                                            | waiting · 自动重试                                              |
-|:--------------------------------------------------------------:|:---------------------------------------------------------------:|
-| <img src="docs/screenshots/08-blocked-halted.png" width="250"> | <img src="docs/screenshots/09-blocked-waiting.png" width="250"> |
+| halted · 需人工处理                                            | waiting · 自动重试                                                                |
+|:--------------------------------------------------------------:|:---------------------------------------------------------------------------------:|
+| <img src="docs/screenshots/08-blocked-halted.png" width="250"> | <img title="" src="docs/screenshots/09-blocked-waiting.png" alt="" width="316" /> |
 
 遇到没法当普通失败处理的错误，插件**不解除武装**，卡片转色、把原因写出来：
 
@@ -85,8 +81,10 @@
 
 - **纵向折叠**：收起只留标题和状态，点标题展开。
 
-   <img src="docs/screenshots/16-folded.png" width="250" align="right" alt="折叠态">
+  <img src="docs/screenshots/16-folded.png" width="250" align="right" alt="折叠态">
+
 - **主题自适应**：卡片自带 `--dsp-*` 调色板，按宿主表面亮度自动取深浅色；也可强制锁定深色 / 浅色 / Claude Style 配色。
+
 - **事件日志**：设置页里能看最近的事件与「上次为什么没关机」，完整流水在 `data/events.log`。
 
 <br clear="all">
