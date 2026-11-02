@@ -2,7 +2,7 @@
 
 「所有任务完成后自动关机」，做成侧边栏里的一张卡片。
 
-<p align="center"><img src="https://raw.githubusercontent.com/USER/dsh-shutdown-guard/v1.5.0/docs/screenshots/anim-radar.gif" width="330" alt="雷达外观，武装状态"></p>
+<p align="center"><img src="https://raw.githubusercontent.com/ltayshark0637/dsh-Shutdown-Guard/v1.5.0/docs/screenshots/anim-radar.gif" width="330" alt="雷达外观，武装状态"></p>
 
 ## 亮点
 
@@ -17,11 +17,11 @@
 
 | 未开启 | 待命 | 等待后台任务 |
 | :---: | :---: | :---: |
-| <img src="https://raw.githubusercontent.com/USER/dsh-shutdown-guard/v1.5.0/docs/screenshots/01-off.png" width="220"> | <img src="https://raw.githubusercontent.com/USER/dsh-shutdown-guard/v1.5.0/docs/screenshots/02-armed.png" width="220"> | <img src="https://raw.githubusercontent.com/USER/dsh-shutdown-guard/v1.5.0/docs/screenshots/03-hold.png" width="220"> |
+| <img src="https://raw.githubusercontent.com/ltayshark0637/dsh-Shutdown-Guard/v1.5.0/docs/screenshots/01-off.png" width="220"> | <img src="https://raw.githubusercontent.com/ltayshark0637/dsh-Shutdown-Guard/v1.5.0/docs/screenshots/02-armed.png" width="220"> | <img src="https://raw.githubusercontent.com/ltayshark0637/dsh-Shutdown-Guard/v1.5.0/docs/screenshots/03-hold.png" width="220"> |
 
 | 倒计时 | 已下发 | 阻断 |
 | :---: | :---: | :---: |
-| <img src="https://raw.githubusercontent.com/USER/dsh-shutdown-guard/v1.5.0/docs/screenshots/04-fire.png" width="220"> | <img src="https://raw.githubusercontent.com/USER/dsh-shutdown-guard/v1.5.0/docs/screenshots/05-fired.png" width="220"> | <img src="https://raw.githubusercontent.com/USER/dsh-shutdown-guard/v1.5.0/docs/screenshots/08-blocked-halted.png" width="220"> |
+| <img src="https://raw.githubusercontent.com/ltayshark0637/dsh-Shutdown-Guard/v1.5.0/docs/screenshots/04-fire.png" width="220"> | <img src="https://raw.githubusercontent.com/ltayshark0637/dsh-Shutdown-Guard/v1.5.0/docs/screenshots/05-fired.png" width="220"> | <img src="https://raw.githubusercontent.com/ltayshark0637/dsh-Shutdown-Guard/v1.5.0/docs/screenshots/08-blocked-halted.png" width="220"> |
 
 ## 这个版本
 
