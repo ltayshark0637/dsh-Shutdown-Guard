@@ -69,20 +69,20 @@ h1 em{font-style:normal;color:#f0a83a}
 .slot{position:absolute;z-index:2}
 .zoom{width:264px;height:178px;transform-origin:top left}
 
-.slot-a{left:588px;top:256px;width:360px;height:243px}
+.slot-a{left:553px;top:256px;width:360px;height:243px}
 .slot-a .zoom{transform:scale(1.364)}
-.slot-b{left:966px;top:104px;width:289px;height:195px}
+.slot-b{left:931px;top:104px;width:289px;height:195px}
 .slot-b .zoom{transform:scale(1.095)}
-.slot-c{left:966px;top:330px;width:289px;height:195px}
+.slot-c{left:931px;top:330px;width:289px;height:195px}
 .slot-c .zoom{transform:scale(1.095)}
 
-.halo{position:absolute;left:548px;top:216px;width:440px;height:323px;z-index:0;pointer-events:none;
+.halo{position:absolute;left:513px;top:216px;width:440px;height:323px;z-index:0;pointer-events:none;
   background:radial-gradient(ellipse at 50% 50%,rgba(239,83,80,.15),rgba(240,168,58,.07) 46%,transparent 70%)}
 
 .cap{position:absolute;z-index:3;font-size:10.5px;letter-spacing:.14em;color:#7d7b72;white-space:nowrap}
-.cap-a{left:590px;top:512px}
-.cap-b{left:968px;top:308px}
-.cap-c{left:968px;top:534px}
+.cap-a{left:555px;top:512px}
+.cap-b{left:933px;top:308px}
+.cap-c{left:933px;top:534px}
 
 /* ---- bottom hazard rule ---- */
 .rule{position:absolute;left:0;top:635px;width:1280px;height:5px;z-index:4;overflow:hidden;background:#141413}
