@@ -214,7 +214,8 @@ box-shadow:0 0 7px color-mix(in srgb, var(--dsp-accent) 90%, transparent)}
     <div class="dsp-srow"><div class="dsp-srow-text"><span class="dsp-stitle">默认折叠</span><span class="dsp-sdesc">折叠后只保留标题和状态。</span></div><button class="dsp-switch"><i></i></button></div>
   </div>
   <div class="dsp-sgroup-box">
-    <div class="dsp-sgroup">什么时候才关机</div>
+    <div class="dsp-sgroup">何时关机</div>
+    <div class="dsp-srow"><div class="dsp-srow-text"><span class="dsp-stitle">AFK 自动回答</span><span class="dsp-sdesc">武装后 agent 若向你提问，自动代为回复：告知你处于 AFK、先完成已交代的任务、汇总报告并落盘，不碰未交代的分支。</span></div><button class="dsp-switch on"><i></i></button></div>
     <div class="dsp-srow"><div class="dsp-srow-text"><span class="dsp-stitle">自定义配置</span><span class="dsp-sdesc">正在使用自定义配置，默认配置暂时挂起。</span></div><button class="dsp-switch on"><i></i></button></div>
     <div class="dsp-srow"><div class="dsp-srow-text"><span class="dsp-stitle">选择配置</span><span class="dsp-sdesc">当前：自定义 3（120 秒）</span></div><div class="dsp-slotbar"><button class="dsp-slotbtn">默认</button><button class="dsp-slotbtn">1</button><button class="dsp-slotbtn">2</button><button class="dsp-slotbtn on">3</button><button class="dsp-slotbtn">4</button><button class="dsp-slotbtn">5</button><button class="dsp-slotbtn">6</button><button class="dsp-slotbtn">7</button><button class="dsp-slotbtn">8</button></div></div>
     <div class="dsp-srow dsp-srow-ro"><div class="dsp-srow-text"><span class="dsp-stitle">会话都停下来</span><span class="dsp-sdesc">底线条件，始终开启。</span></div><span class="dsp-sval">总是开启</span></div>
@@ -226,6 +227,13 @@ box-shadow:0 0 7px color-mix(in srgb, var(--dsp-accent) 90%, transparent)}
     <div class="dsp-sgroup">状态</div>
     <div class="dsp-srow dsp-srow-stack"><div class="dsp-srow-text"><span class="dsp-stitle">上次为什么没关机</span></div><span class="dsp-sval">还有 2 个后台任务在运行，暂不关机（模式保持开启）</span></div>
     <div class="dsp-srow dsp-srow-stack"><div class="dsp-srow-text"><span class="dsp-stitle">事件日志</span><span class="dsp-sdesc">最近 4 条，完整记录在插件 data/events.log。</span></div><div class="dsp-evlog"><div class="dsp-ev dsp-ev-config"><span class="dsp-ev-time">12:03:11</span><span class="dsp-ev-text">配置「自定义 3」更新：120s / 成功才关机=false / 后台任务拦截=true</span></div><div class="dsp-ev dsp-ev-config"><span class="dsp-ev-time">12:03:09</span><span class="dsp-ev-text">切换配置：自定义 3</span></div><div class="dsp-ev dsp-ev-skip"><span class="dsp-ev-time">12:02:55</span><span class="dsp-ev-text">还有 2 个后台任务在运行，暂不关机（模式保持开启）</span></div><div class="dsp-ev dsp-ev-info"><span class="dsp-ev-time">12:02:31</span><span class="dsp-ev-text">已开启：任务完成后自动关机</span></div></div></div>
+  </div>
+</div><div style="height:22px"></div><p class="lbl">设置 · 默认配置（倒计时锁定）</p><div class="dsp-settings">
+  <div class="dsp-sgroup-box">
+    <div class="dsp-sgroup">何时关机</div>
+    <div class="dsp-srow"><div class="dsp-srow-text"><span class="dsp-stitle">AFK 自动回答</span><span class="dsp-sdesc">武装后 agent 若向你提问，自动代为回复。</span></div><button class="dsp-switch on"><i></i></button></div>
+    <div class="dsp-srow"><div class="dsp-srow-text"><span class="dsp-stitle">自定义配置</span><span class="dsp-sdesc">关闭时只用默认配置。</span></div><button class="dsp-switch"><i></i></button></div>
+    <div class="dsp-srow"><div class="dsp-srow-text"><span class="dsp-stitle">倒计时时长</span><span class="dsp-sdesc">默认配置固定 60 秒，不能修改。切到自定义配置后可以调。</span></div><span class="dsp-sval">60 秒 · 固定</span></div>
   </div>
 </div><div style="height:22px"></div><p class="lbl">设置 · C 模式外观组</p><div class="dsp-sgroup-box"><div class="dsp-sgroup">外观</div>
   <div class="dsp-srow"><div class="dsp-srow-text"><span class="dsp-stitle">卡片外观</span><span class="dsp-sdesc">三种外观共用同一套判定逻辑。</span></div><div class="dsp-seg"><button class="dsp-segbtn">A</button><button class="dsp-segbtn">B</button><button class="dsp-segbtn on">C</button></div></div>

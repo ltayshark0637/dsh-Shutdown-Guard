@@ -1,4 +1,4 @@
-# dsh-shutdown-panel v1.0
+# dsh-shutdown-panel v1.3
 
 把「所有任务完成后自动关机」做成侧边栏里的一张卡片：位于「技能中心」下方、会话列表上方，随任务状态实时变化。
 
@@ -16,16 +16,18 @@
   - C 终端：命令行摘要 + 6 段判定条件指示灯
 - **纵向折叠**：收起后只保留标题与状态标签，点击标题展开；默认折叠可在设置里开启。
 - **浅色 / 深色 / 第三方主题自适应**：颜色走 `--dsw-alias-*` token，Claude Style 等主题自动跟随。
+- **AFK 自动回答**（默认开）：武装期间 agent 若向你提问，插件替用户作答，告诉 agent 你处于 AFK、先完成已交代的任务、汇总报告落盘，不触碰未交代的分支。返回 `selected: []` + `custom` 说明文本，所以不会替你选中任何选项；关掉后提问照常抛给用户。
 - 卡片按钮：武装 / 取消关机 / 解除，每秒刷新状态。
 
 ## 配置（`cordis.patch.yml`）
 
 | 键 | 范围 | 默认 | 说明 |
 | --- | --- | --- | --- |
-| `countdownSec` | 10–600 | 60 | 关机前倒计时秒数 |
+| `countdownSec` | 10–600 | 60 | 关机前倒计时秒数（**默认配置固定 60 秒，不可改**） |
 | `marginSec` | 0–60 | 5 | 传给 `shutdown /t` 的额外余量 |
 | `onlyOnSuccess` | bool | true | 本批次有会话报错时跳过关机 |
 | `blockOnJobs` | bool | true | 有运行中的后台任务（`ctx.jobs`）时跳过关机 |
+| `afkAutoAnswer` | bool | true | 武装期间替用户回答 agent 提问（AFK 说明） |
 
 卡片外观（A/B/C）与默认折叠存在浏览器 `localStorage`：`dsh-shutdown-panel.variant`、`dsh-shutdown-panel.folded`。
 
