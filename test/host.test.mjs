@@ -1,0 +1,503 @@
+import assert from 'node:assert'
+import { apply } from '../lib/index.mjs'
+
+const spawns = []
+const timers = new Map()
+// Each run starts from a clean profile store: an earlier run may have left
+// customEnabled / activeProfileId in data/config.json.
+{
+  const fs = await import('node:fs')
+  const pathMod = await import('node:path')
+  const cfg = pathMod.join(pathMod.dirname(new URL(import.meta.url).pathname).replace(/^\//,''),'..','data','config.json')
+  try { fs.unlinkSync(cfg) } catch { /* absent on a first run */ }
+}
+const routes = new Map()
+let statusHandler = null
+let errorHandler = null
+let sessionHandler = null
+
+const nudges = []
+const rootAgent = { id: 'root-1', status: 'idle', followup: (message) => { nudges.push(message) } }
+let rootsValue = [rootAgent]
+
+const agents = {
+  roots: () => rootsValue,
+}
+const subprocess = {
+  resolveExecutable: async (name) => `C:\\Windows\\System32\\${name}.exe`,
+  spawn: (options) => {
+    spawns.push(options.argv)
+    return { done: Promise.resolve({ code: 0 }) }
+  },
+}
+const webServer = {
+  register(route) {
+    assert.ok(!routes.has(route.path), `duplicate route ${route.path}`)
+    routes.set(route.path, route.handler)
+    return () => routes.delete(route.path)
+  },
+}
+let jobListener = null
+let questionHandler = null
+let questionOptions = null
+let jobFilterSeen = null
+const jobs = {
+  events: {
+    subscribe(filter, listener) {
+      jobFilterSeen = filter
+      jobListener = listener
+      return () => { jobListener = null }
+    },
+  },
+}
+function emitJob(event) {
+  assert.ok(jobListener, 'job event subscription is live')
+  jobListener(event)
+}
+
+let timerSeq = 0
+const ctx = {
+  get(name) {
+    if (name === 'agents') return agents
+    if (name === 'subprocess') return subprocess
+    if (name === 'webServer') return webServer
+    if (name === 'jobs') return jobs
+    return undefined
+  },
+  on(name, cb) {
+    if (name === 'agent/status') statusHandler = cb
+    if (name === 'agent/error') errorHandler = cb
+    if (name === 'session/event') sessionHandler = cb
+    if (name === 'user-questions/request') { questionHandler = cb; questionOptions = arguments[2] }
+    return () => {}
+  },
+  setTimeout(cb) {
+    const id = ++timerSeq
+    timers.set(id, cb)
+    return () => timers.delete(id)
+  },
+}
+
+const dispose = apply(ctx, { countdownSec: 10, marginSec: 5, onlyOnSuccess: true }) // default profile is locked to 60s
+
+const calls = []
+function request(method, path, origin, payload) {
+  return new Promise((resolve) => {
+    const res = {
+      status: 0,
+      headers: {},
+      body: '',
+      writeHead(status, headers) { this.status = status; this.headers = headers },
+      end(body) { this.body = body; resolve(this) },
+    }
+    // Minimal readable-stream stand-in so handlers can read a JSON body.
+    const listeners = {}
+    const req = {
+      method,
+      url: path,
+      headers: origin === undefined ? {} : { origin },
+      on(event, fn) { (listeners[event] = listeners[event] || []).push(fn) },
+      destroy() {},
+    }
+    const handler = routes.get(path.split('?')[0])
+    assert.ok(handler, `route ${path} registered`)
+    handler(req, res)
+    if (payload !== undefined) {
+      const text = JSON.stringify(payload)
+      setImmediate(() => {
+        ;(listeners.data || []).forEach((fn) => fn(text))
+        ;(listeners.end || []).forEach((fn) => fn())
+      })
+    }
+  })
+}
+
+const flush = () => new Promise((resolve) => setImmediate(resolve))
+
+assert.deepStrictEqual(
+  [...routes.keys()].sort(),
+  ['/api/dsh-shutdown-panel/arm', '/api/dsh-shutdown-panel/cancel', '/api/dsh-shutdown-panel/config', '/api/dsh-shutdown-panel/disarm', '/api/dsh-shutdown-panel/events', '/api/dsh-shutdown-panel/state'],
+)
+
+// 1. initial state
+let res = await request('GET', '/api/dsh-shutdown-panel/state')
+assert.strictEqual(res.status, 200)
+let body = JSON.parse(res.body)
+assert.strictEqual(body.armed, false)
+assert.strictEqual(body.state, 'idle')
+assert.strictEqual(body.countdownSec, 60) // default profile is locked to 60s
+assert.strictEqual(body.countdownLocked, true)
+calls.push('initial-state-ok')
+
+// 2. method guard
+res = await request('GET', '/api/dsh-shutdown-panel/arm')
+assert.strictEqual(res.status, 405)
+calls.push('method-guard-ok')
+
+// 3. foreign origin rejected
+res = await request('POST', '/api/dsh-shutdown-panel/arm', 'http://evil.example.com')
+assert.strictEqual(res.status, 403)
+calls.push('origin-guard-ok')
+
+// 4. arm from loopback
+res = await request('POST', '/api/dsh-shutdown-panel/arm', 'http://127.0.0.1:43129')
+assert.strictEqual(res.status, 200)
+assert.strictEqual(JSON.parse(res.body).armed, true)
+calls.push('arm-ok')
+
+// 5. last agent goes idle -> countdown + real /s /t 15
+rootAgent.status = 'idle'
+statusHandler({ agent: rootAgent, status: 'idle' })
+assert.strictEqual(spawns.length, 0, 'spawn is async')
+await flush()
+assert.deepStrictEqual(spawns[0], ['C:\\Windows\\System32\\shutdown.exe', '/s', '/t', '65'])
+res = await request('GET', '/api/dsh-shutdown-panel/state')
+body = JSON.parse(res.body)
+assert.strictEqual(body.state, 'countdown')
+assert.ok(body.deadline > Date.now() - 1000)
+calls.push('countdown-ok')
+
+// 6. a new task starts -> /a, stays armed
+rootAgent.status = 'running'
+statusHandler({ agent: rootAgent, status: 'running' })
+await flush()
+assert.deepStrictEqual(spawns[1], ['C:\\Windows\\System32\\shutdown.exe', '/a'])
+body = JSON.parse((await request('GET', '/api/dsh-shutdown-panel/state')).body)
+assert.strictEqual(body.state, 'idle')
+assert.strictEqual(body.armed, true, 'running keeps the mode armed')
+calls.push('auto-cancel-keeps-armed-ok')
+
+// 7. error in the batch -> skip
+rootAgent.status = 'running'
+statusHandler({ agent: rootAgent, status: 'running' })
+errorHandler({ agent: rootAgent })
+rootAgent.status = 'idle'
+statusHandler({ agent: rootAgent, status: 'idle' })
+await flush()
+body = JSON.parse((await request('GET', '/api/dsh-shutdown-panel/state')).body)
+assert.strictEqual(body.state, 'idle', 'skipped because of the error')
+assert.strictEqual(body.erroredCount, 1)
+assert.ok(body.lastSkip && /出错/.test(body.lastSkip.reason))
+calls.push('error-skip-ok')
+
+// 8. clean batch -> countdown, then fired timer, then /cancel keeps armed
+statusHandler({ agent: rootAgent, status: 'running' })
+rootAgent.status = 'idle'
+statusHandler({ agent: rootAgent, status: 'idle' })
+await flush()
+body = JSON.parse((await request('GET', '/api/dsh-shutdown-panel/state')).body)
+assert.strictEqual(body.state, 'countdown')
+assert.strictEqual(body.erroredCount, 0)
+
+const lastTimer = [...timers.values()].pop()
+assert.ok(lastTimer, 'fired timer registered')
+lastTimer()
+body = JSON.parse((await request('GET', '/api/dsh-shutdown-panel/state')).body)
+assert.strictEqual(body.state, 'fired')
+
+const before = spawns.length
+res = await request('POST', '/api/dsh-shutdown-panel/cancel', 'http://localhost:43129')
+await flush()
+const cancelBody = JSON.parse(res.body)
+assert.strictEqual(cancelBody.ok, true)
+assert.deepStrictEqual(spawns[before], ['C:\\Windows\\System32\\shutdown.exe', '/a'])
+body = JSON.parse((await request('GET', '/api/dsh-shutdown-panel/state')).body)
+assert.strictEqual(body.state, 'idle')
+assert.strictEqual(body.armed, true, 'cancel keeps the mode armed')
+calls.push('fired-and-cancel-ok')
+
+// 9. a running background job blocks arming (no /s), and settles -> arm
+assert.deepStrictEqual(jobFilterSeen, { owners: 'all' }, 'subscribes to every owner')
+emitJob({ type: 'registered', job: { id: 'bash-1', kind: 'bash', label: '后台构建', status: 'running' } })
+let beforeJobs = spawns.length
+rootAgent.status = 'running'
+statusHandler({ agent: rootAgent, status: 'running' })
+rootAgent.status = 'idle'
+statusHandler({ agent: rootAgent, status: 'idle' })
+await flush()
+assert.strictEqual(spawns.length, beforeJobs, 'no shutdown while a background job runs')
+body = JSON.parse((await request('GET', '/api/dsh-shutdown-panel/state')).body)
+assert.strictEqual(body.state, 'idle')
+assert.strictEqual(body.armed, true)
+assert.strictEqual(body.jobsRunning, 1)
+assert.ok(body.lastSkip && /后台任务/.test(body.lastSkip.reason), 'skip reason mentions background jobs')
+calls.push('job-blocks-arm-ok')
+
+emitJob({ type: 'settled', job: { id: 'bash-1', kind: 'bash', label: '后台构建', status: 'completed' } })
+await flush()
+body = JSON.parse((await request('GET', '/api/dsh-shutdown-panel/state')).body)
+assert.strictEqual(body.state, 'countdown', 'settling the last job arms the shutdown')
+assert.strictEqual(body.jobsRunning, 0)
+calls.push('job-settle-arms-ok')
+
+// 10. a job starting during the countdown cancels /a but keeps the mode armed
+const beforeJobCancel = spawns.length
+emitJob({ type: 'registered', job: { id: 'bash-2', kind: 'bash', label: '后台测试', status: 'running' } })
+await flush()
+assert.deepStrictEqual(spawns[beforeJobCancel], ['C:\\Windows\\System32\\shutdown.exe', '/a'])
+body = JSON.parse((await request('GET', '/api/dsh-shutdown-panel/state')).body)
+assert.strictEqual(body.state, 'idle')
+assert.strictEqual(body.armed, true)
+assert.strictEqual(body.jobsRunning, 1)
+emitJob({ type: 'settled', job: { id: 'bash-2', kind: 'bash', label: '后台测试', status: 'completed' } })
+await flush()
+calls.push('job-during-countdown-cancels-ok')
+
+// 11. disarm
+res = await request('POST', '/api/dsh-shutdown-panel/disarm', 'http://127.0.0.1:43129')
+assert.strictEqual(JSON.parse(res.body).armed, false)
+calls.push('disarm-ok')
+
+// 12. profiles: default + 8 custom slots, config persists to data/config.json
+body = JSON.parse((await request('GET', '/api/dsh-shutdown-panel/state')).body)
+assert.strictEqual(body.profiles.length, 9, 'one default plus eight custom slots')
+assert.strictEqual(body.activeProfileId, 'default')
+assert.strictEqual(body.customEnabled, false)
+calls.push('profiles-listed-ok')
+
+res = await request('POST', '/api/dsh-shutdown-panel/config', 'http://127.0.0.1:43129', { profileId: 'c3', patch: { countdownSec: 120, onlyOnSuccess: false } })
+body = JSON.parse(res.body)
+const c3 = body.profiles.find((p) => p.id === 'c3')
+assert.strictEqual(c3.countdownSec, 120, 'custom slot stores countdown')
+assert.strictEqual(c3.onlyOnSuccess, false, 'custom slot stores success rule')
+calls.push('custom-profile-write-ok')
+
+res = await request('POST', '/api/dsh-shutdown-panel/config', 'http://127.0.0.1:43129', { activeProfileId: 'c3' })
+assert.strictEqual(res.status, 400, 'custom slot unusable while custom profiles are off')
+res = await request('POST', '/api/dsh-shutdown-panel/config', 'http://127.0.0.1:43129', { customEnabled: true, activeProfileId: 'c3' })
+body = JSON.parse(res.body)
+assert.strictEqual(body.customEnabled, true)
+assert.strictEqual(body.activeProfileId, 'c3')
+assert.strictEqual(body.countdownSec, 120, 'active profile drives the countdown')
+assert.strictEqual(body.onlyOnSuccess, false)
+calls.push('profile-switch-ok')
+
+const fsx = await import('node:fs')
+const cfgPath = (await import('node:path')).join((await import('node:path')).dirname(new URL(import.meta.url).pathname).replace(/^\//,''),'..','data','config.json')
+assert.ok(fsx.existsSync(cfgPath), 'config.json is written next to the plugin')
+const saved = JSON.parse(fsx.readFileSync(cfgPath, 'utf8'))
+assert.strictEqual(saved.activeProfileId, 'c3')
+assert.strictEqual(saved.profiles.find((p) => p.id === 'c3').countdownSec, 120)
+calls.push('config-persisted-ok')
+
+// 13. events ring buffer
+res = await request('GET', '/api/dsh-shutdown-panel/events?limit=5')
+body = JSON.parse(res.body)
+assert.ok(Array.isArray(body.events) && body.events.length > 0, 'events are served')
+assert.ok(body.events.every((e) => typeof e.text === 'string' && typeof e.at === 'number'))
+calls.push('events-ok')
+
+await request('POST', '/api/dsh-shutdown-panel/config', 'http://127.0.0.1:43129', { customEnabled: false, activeProfileId: 'default' })
+
+// 14. default profile is locked to 60s
+res = await request('POST', '/api/dsh-shutdown-panel/config', 'http://127.0.0.1:43129', { profileId: 'default', patch: { countdownSec: 300 } })
+body = JSON.parse(res.body)
+assert.strictEqual(body.profiles.find((p) => p.id === 'default').countdownSec, 60, 'default countdown is locked')
+calls.push('default-locked-ok')
+
+// 15. AFK auto answer while armed
+await request('POST', '/api/dsh-shutdown-panel/arm', 'http://127.0.0.1:43129')
+assert.ok(questionHandler, 'user-questions/request is subscribed')
+assert.deepStrictEqual(questionOptions, { prepend: true }, 'listener must run before the built-in web answerer')
+let handedOff = false
+let canned = questionHandler({ questions: [{ id: 'q1', question: '继续吗？', options: [{ id: 'a', label: '继续' }] }] }, () => { handedOff = true })
+assert.strictEqual(handedOff, false, 'afk answer intercepts the question')
+assert.ok(Array.isArray(canned.answers) && canned.answers.length === 1)
+assert.strictEqual(canned.answers[0].id, 'q1')
+assert.deepStrictEqual(canned.answers[0].selected, [])
+assert.ok(canned.answers[0].custom.includes('AFK'), 'custom answer explains AFK state')
+await request('POST', '/api/dsh-shutdown-panel/config', 'http://127.0.0.1:43129', { afkAutoAnswer: false })
+handedOff = false
+canned = questionHandler({ questions: [{ id: 'q2', question: '继续吗？' }] }, () => { handedOff = true })
+assert.strictEqual(handedOff, true, 'switching afk off hands the question back')
+await request('POST', '/api/dsh-shutdown-panel/config', 'http://127.0.0.1:43129', { afkAutoAnswer: true })
+calls.push('afk-answer-ok')
+
+// 16. AFK error recovery: first failure asks the agent to investigate and
+// continue, the second asks it to wrap up, and the third stops nudging.
+await request('POST', '/api/dsh-shutdown-panel/disarm', 'http://127.0.0.1:43129')
+await request('POST', '/api/dsh-shutdown-panel/arm', 'http://127.0.0.1:43129')
+nudges.length = 0
+rootAgent.status = 'running'
+statusHandler({ agent: rootAgent, status: 'running' })
+errorHandler({ agent: rootAgent })
+await flush()
+assert.strictEqual(nudges.length, 1, 'first failure queues one recovery turn')
+assert.ok(nudges[0].content[0].text.includes('AFK 自动接管'), 'recovery text asks the agent to investigate')
+assert.ok(nudges[0].content[0].text.includes('按原计划继续'), 'recovery text keeps the original plan')
+rootAgent.status = 'idle'
+statusHandler({ agent: rootAgent, status: 'idle' })
+errorHandler({ agent: rootAgent })
+await flush()
+assert.strictEqual(nudges.length, 2, 'second failure queues a wrap-up turn')
+assert.ok(nudges[1].content[0].text.includes('AFK 收尾'), 'wrap-up text asks for a written report')
+errorHandler({ agent: rootAgent })
+await flush()
+assert.strictEqual(nudges.length, 2, 'third failure does not nudge again')
+calls.push('afk-recover-ok')
+
+// 17. "有会话报错就跳过" off + AFK on: once the wrap-up turn ends, the errored
+// batch no longer blocks the shutdown.
+await request('POST', '/api/dsh-shutdown-panel/config', 'http://127.0.0.1:43129', {
+  profileId: 'default',
+  patch: { onlyOnSuccess: false },
+})
+await request('POST', '/api/dsh-shutdown-panel/disarm', 'http://127.0.0.1:43129')
+await request('POST', '/api/dsh-shutdown-panel/arm', 'http://127.0.0.1:43129')
+nudges.length = 0
+const beforeWrap = spawns.length
+rootAgent.status = 'running'
+statusHandler({ agent: rootAgent, status: 'running' })
+errorHandler({ agent: rootAgent })
+await flush()
+assert.strictEqual(nudges.length, 1, 'first failure still asks to investigate')
+rootAgent.status = 'idle'
+statusHandler({ agent: rootAgent, status: 'idle' })
+assert.strictEqual(spawns.length, beforeWrap, 'recovery in progress must not shut down')
+errorHandler({ agent: rootAgent })
+await flush()
+assert.strictEqual(nudges.length, 2, 'second failure asks for the wrap-up')
+rootAgent.status = 'idle'
+statusHandler({ agent: rootAgent, status: 'idle' })
+await flush()
+assert.strictEqual(spawns.length, beforeWrap + 1, 'wrap-up finished: shutdown is armed')
+assert.deepStrictEqual(spawns[beforeWrap].slice(1, 3), ['/s', '/t'])
+await request('POST', '/api/dsh-shutdown-panel/cancel', 'http://127.0.0.1:43129')
+calls.push('afk-wrap-shutdown-ok')
+
+// 18. Quota errors park the plugin: no nudge, and the shutdown never arms.
+await request('POST', '/api/dsh-shutdown-panel/config', 'http://127.0.0.1:43129', {
+  profileId: 'c3',
+  patch: { onlyOnSuccess: false },
+})
+await request('POST', '/api/dsh-shutdown-panel/disarm', 'http://127.0.0.1:43129')
+await request('POST', '/api/dsh-shutdown-panel/arm', 'http://127.0.0.1:43129')
+nudges.length = 0
+const beforeQuota = spawns.length
+rootAgent.status = 'running'
+statusHandler({ agent: rootAgent, status: 'running' })
+errorHandler({ agent: rootAgent, error: { code: 'QUOTA', message: 'no quota' } })
+await flush()
+assert.strictEqual(nudges.length, 0, 'quota errors must not be re-prompted')
+res = await request('GET', '/api/dsh-shutdown-panel/state')
+body = JSON.parse(res.body)
+assert.ok(typeof body.blocked === 'string' && body.blocked.includes('额度不足'), 'state reports the block')
+rootAgent.status = 'idle'
+statusHandler({ agent: rootAgent, status: 'idle' })
+await flush()
+assert.strictEqual(spawns.length, beforeQuota, 'a blocked batch never arms the shutdown')
+await request('POST', '/api/dsh-shutdown-panel/disarm', 'http://127.0.0.1:43129')
+res = await request('GET', '/api/dsh-shutdown-panel/state')
+assert.strictEqual(JSON.parse(res.body).blocked, null, 'disarming clears the block')
+calls.push('quota-block-ok')
+// 19. A cancelled turn is not a failure: no nudge, no errored entry.
+await request('POST', '/api/dsh-shutdown-panel/disarm', 'http://127.0.0.1:43129')
+await request('POST', '/api/dsh-shutdown-panel/arm', 'http://127.0.0.1:43129')
+nudges.length = 0
+rootAgent.status = 'running'
+statusHandler({ agent: rootAgent, status: 'running' })
+errorHandler({ agent: rootAgent, error: Object.assign(new Error('aborted'), { name: 'AbortError' }) })
+await flush()
+assert.strictEqual(nudges.length, 0, 'a cancelled turn is never re-prompted')
+res = await request('GET', '/api/dsh-shutdown-panel/state')
+assert.strictEqual(JSON.parse(res.body).erroredCount, 0, 'a cancelled turn is not an errored batch')
+calls.push('abort-ignored-ok')
+
+// 20. Context-window overflow parks the plugin with its own reason.
+await request('POST', '/api/dsh-shutdown-panel/arm', 'http://127.0.0.1:43129')
+rootAgent.status = 'running'
+statusHandler({ agent: rootAgent, status: 'running' })
+errorHandler({ agent: rootAgent, error: { code: 'CONTEXT_WINDOW_EXCEEDED', message: 'too long' } })
+await flush()
+res = await request('GET', '/api/dsh-shutdown-panel/state')
+assert.ok(JSON.parse(res.body).blocked.includes('上下文'), 'context overflow has its own reason')
+await request('POST', '/api/dsh-shutdown-panel/disarm', 'http://127.0.0.1:43129')
+calls.push('context-window-block-ok')
+
+// 21. A user cancel also ends at status=idle. The session log records the abort
+// cause, and an interrupted batch must never arm the shutdown.
+await request('POST', '/api/dsh-shutdown-panel/disarm', 'http://127.0.0.1:43129')
+await request('POST', '/api/dsh-shutdown-panel/arm', 'http://127.0.0.1:43129')
+const beforeAbort = spawns.length
+rootAgent.status = 'running'
+statusHandler({ agent: rootAgent, status: 'running' })
+sessionHandler({}, { type: 'turn/start', data: { turn: 1 } })
+  sessionHandler({}, { type: 'turn/end', data: { turn: 1, cause: { kind: 'user' } } })
+rootAgent.status = 'idle'
+statusHandler({ agent: rootAgent, status: 'idle' })
+await flush()
+assert.strictEqual(spawns.length, beforeAbort, 'an interrupted batch never arms the shutdown')
+res = await request('GET', '/api/dsh-shutdown-panel/state')
+assert.strictEqual(JSON.parse(res.body).state, 'idle', 'the plugin stays idle')
+// A fresh turn clears the flag, so the next completed batch behaves normally.
+rootAgent.status = 'running'
+statusHandler({ agent: rootAgent, status: 'running' })
+rootAgent.status = 'idle'
+statusHandler({ agent: rootAgent, status: 'idle' })
+await flush()
+assert.strictEqual(spawns.length, beforeAbort + 1, 'the next completed run may arm again')
+await request('POST', '/api/dsh-shutdown-panel/cancel', 'http://127.0.0.1:43129')
+calls.push('interrupt-ignored-ok')
+
+// 22. Provider-side failures wait and retry instead of asking a human.
+await request('POST', '/api/dsh-shutdown-panel/disarm', 'http://127.0.0.1:43129')
+await request('POST', '/api/dsh-shutdown-panel/arm', 'http://127.0.0.1:43129')
+nudges.length = 0
+const beforeLimit = spawns.length
+rootAgent.status = 'running'
+statusHandler({ agent: rootAgent, status: 'running' })
+errorHandler({ agent: rootAgent, error: { code: 'RATE_LIMIT', message: 'slow down' } })
+await flush()
+res = await request('GET', '/api/dsh-shutdown-panel/state')
+body = JSON.parse(res.body)
+assert.ok(typeof body.blocked === 'string' && body.blocked.includes('限流'), 'rate limit parks with a retry reason')
+assert.strictEqual(body.retryAttempt, 1, 'first provider failure counts one attempt')
+assert.ok(body.retryAt > Date.now() - 1000, 'a retry deadline is published')
+assert.strictEqual(nudges.length, 0, 'the first failure does not nudge immediately')
+rootAgent.status = 'idle'
+statusHandler({ agent: rootAgent, status: 'idle' })
+await flush()
+assert.strictEqual(spawns.length, beforeLimit, 'a waiting batch never arms the shutdown')
+const retryTimer = [...timers.entries()].pop()
+timers.delete(retryTimer[0])
+retryTimer[1]()
+await flush()
+assert.strictEqual(nudges.length, 1, 'the retry timer nudges the agent')
+assert.ok(nudges[0].content[0].text.includes('自动重试'), 'retry text mentions the automatic retry')
+res = await request('GET', '/api/dsh-shutdown-panel/state')
+assert.strictEqual(JSON.parse(res.body).blocked, null, 'the retry clears the park')
+
+// 23. Different failures wait differently: a rate limit backs off, a dropped
+// connection polls at a fixed short interval, an offload request is fastest.
+async function delayFor(code, attemptPad) {
+  await request('POST', '/api/dsh-shutdown-panel/disarm', 'http://127.0.0.1:43129')
+  await request('POST', '/api/dsh-shutdown-panel/arm', 'http://127.0.0.1:43129')
+  rootAgent.status = 'running'
+  statusHandler({ agent: rootAgent, status: 'running' })
+  for (let i = 0; i < attemptPad; i += 1) {
+    errorHandler({ agent: rootAgent, error: { code, message: 'again' } })
+    await flush()
+  }
+  errorHandler({ agent: rootAgent, error: { code, message: 'again' } })
+  await flush()
+  const r = await request('GET', '/api/dsh-shutdown-panel/state')
+  const b = JSON.parse(r.body)
+  const m = /(\d+) 秒后重试/.exec(b.blocked || '')
+  return m ? Number(m[1]) : -1
+}
+const rateFirst = await delayFor('RATE_LIMIT', 0)
+assert.strictEqual(rateFirst, 30, 'rate limit starts at its 30s base')
+const rateSecond = await delayFor('RATE_LIMIT', 1)
+assert.strictEqual(rateSecond, 60, 'rate limit backs off to 60s on the second try')
+const serverFirst = await delayFor('SERVER', 0)
+assert.strictEqual(serverFirst, 20, 'server errors poll at a fixed 20s')
+const serverSecond = await delayFor('SERVER', 1)
+assert.strictEqual(serverSecond, 20, 'server polling does not grow')
+const offloadFirst = await delayFor('IMAGE_OFFLOAD_REQUIRED', 0)
+assert.strictEqual(offloadFirst, 5, 'image offload retries quickly')
+calls.push('retry-policy-ok')
+
+dispose()
+assert.strictEqual(routes.size, 0, 'disposer removes HTTP routes')
+
+console.log('PASS: ' + calls.join(', '))

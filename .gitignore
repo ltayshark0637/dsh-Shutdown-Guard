@@ -2,3 +2,4 @@ node_modules/
 *.log
 preview/*.png
 data/
+docs/screenshots/*.html

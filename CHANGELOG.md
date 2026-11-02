@@ -1,13 +1,54 @@
 # Changelog
 
+## v1.4.2 — 2026-11-02
+
+- 文档补齐：README 按 v1.4 重写（截图、功能矩阵、重试策略、FAQ），新增 CONTRIBUTING.md、LICENSE。
+- 修复 README 早前被 PowerShell 写坏的问题（	ransient 被吞成 ansient，反引号丢失）。
+- 新增 	est/（服务端 27 项断言 + 客户端 bundle smoke，路径改为相对插件根）与 scripts/（从真实 CSS 生成图库、headless Edge 截图）。
+
+## v1.4.1 — 2026-11-02
+
+- 重试节奏改为按故障类型分别配置：etryPolicies 定义策略，etryAssign 把错误码映射到策略，两者都可从 cordis.patch.yml 覆盖。
+- 默认分配：RATE_LIMIT → ate-limit（backoff 30→300）；SERVER/TRANSPORT/TIMEOUT → 	ransient（固定 20s）；EMPTY_RESPONSE → empty（30s）；IMAGE_OFFLOAD_REQUIRED → offload（5s）。
+- WAITING_CODES 增至 6 项，补 TIMEOUT 与 IMAGE_OFFLOAD_REQUIRED。
+- 修 bug：setArmed() 只清 locked、没清 etryAttempt/etryAt 也没取消挂起的重试定时器，导致「解除再武装」后新一轮退避直接从第 2 档（60s）开始。
+
+## v1.4.0 — 2026-11-02
+
+- 新增阻断态（blocked），插件不因此解除武装：卡片转色、状态行写原因，三种外观都有对应暂停外观。
+- halted（灰蓝）：额度、凭证、上下文超限、能力不支持、磁盘写满 —— 只有人能处理，按钮变「解除并重试」。
+- waiting（灰绿、圆点呼吸）：限流、5xx、网络、空响应 —— 到点自动重试，并向会话注入「继续原计划」指令。
+- /state 新增 locked、etryAttempt、etryAt；设置页「状态」组新增「当前阻断」行。
+- 设计文档 docs/blocked-states.md（分级语义、错误码表、重试节奏分析、stuck 归档理由）。
+
+## v1.3.9 — 2026-11-02
+
+- 修复：在分支对话里手动终止任务仍会触发关机。取消和正常结束都表现为 gent/status = idle，插件此前只看到后者。
+- 新增 session/event 监听（宿主签名 (session, event)），按两条独立信号识别中断：	urn/end 带取消原因；或本轮从 	urn/start 到 	urn/end 没追加过任何 ssistant/message。
+- 命中中断时不武装，并记「已检测到用户中断，本轮不关机」。
+
+## v1.3.8 — 2026-11-02
+
+- 尝试用 AbortError 拦截用户中断。事后证明打不中 —— 终止不走 gent/error，被 v1.3.9 取代。
+
+## v1.3.7 — 2026-11-02
+
+- 引入 HALTED_CODES：额度、凭证、上下文超限等不可恢复错误不再当成普通失败处理（否则会在用户不在场时照常关机），改为置 locked，并在 	ryArm() 最前面拦截。
+
+## v1.3.6 — 2026-11-02
+
+- 新语义：当「有会话报错就跳过」关闭、且 AFK 自动回答开启时，出错批次不再永久阻止关机。第 1 次报错让 agent 排查，第 2 次下「收尾」指令；收尾那一轮结束后该会话的错误不再计入拦截条件。
+- 仅在「报错就跳过」关闭时生效；该开关打开时出错的批次照旧整轮跳过。
+- 重试计数与收尾标记都在武装/解除时清零。
 ## v1.3.5 — 2026-11-02
 
 - 新增调试钩子 POST /api/dsh-shutdown-panel/error-test，仅在 cordis.patch.yml 里设置 debugHooks: true 时注册。它用第一个 root 会话走一遍真实的 AFK 报错恢复链路（注入 + 日志 + 不关机），便于在没有真实崩溃时演练 T4。
 - 错误处理逻辑抽成 handleAgentError(agent)，事件监听与调试端点共用同一条代码路径。
+
 ## v1.3.4 — 2026-11-02
 
 - AFK 错误恢复：武装且 AFK 开关打开时，root 会话报错不再直接跳过/关机，而是向该会话注入一条恢复指令——先定位并修复报错、按原计划继续；同一会话第二次报错则要求它停止重试、把结果与失败原因写成报告落盘后收尾；第三次不再注入。
-- 注入走 gent.followup(message)（等价于追加一轮用户消息），失败回落 gent.steer，都不可用则只记日志、不触发关机。
+- 注入走 `agent.followup(message)`（等价于追加一轮用户消息），失败回落 `agent.steer`，都不可用则只记日志、不触发关机。
 - 重试次数只在武装/解除时清空，避免「注入 → 重跑 → 再报错」无限循环。
 - 另加一层保险：AFK 开关打开时，只要本批次存在报错会话就不武装关机（即使「有会话报错就跳过」是关的），等恢复成功、报错集合清空后再走正常流程。
 
