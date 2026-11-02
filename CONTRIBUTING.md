@@ -36,7 +36,7 @@ README 里的图全部由 `lib/client.js` 里的真实 CSS 生成，避免文档
 
 ```bash
 node scripts/gen-gallery.cjs    # 生成 docs/screenshots/*.html
-pwsh scripts/screenshot.ps1     # 渲染成 PNG（需要 Edge）
+powershell -NoProfile -ExecutionPolicy Bypass -File scripts/screenshot.ps1     # 渲染成 PNG（需要 Edge）
 ```
 
 改了样式就重新跑这两条，别手工 P 图。

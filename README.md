@@ -190,7 +190,7 @@ UI 偏好存在浏览器 `localStorage`：`dsh-shutdown-guard.variant` / `.theme
 node test/host.test.mjs        # 服务端：27 项断言，mock ctx，不真的关机
 node test/client.test.cjs      # 客户端 bundle smoke
 node scripts/gen-gallery.cjs   # 从 lib/client.js 真实 CSS 生成截图页
-pwsh scripts/screenshot.ps1    # headless Edge 渲染 PNG（透明背景 + 自动裁边）
+powershell -NoProfile -ExecutionPolicy Bypass -File scripts/screenshot.ps1    # headless Edge 渲染 PNG（透明背景 + 自动裁边）
 node scripts/gen-gif.cjs       # 生成 README 里的三张动图
 node scripts/gen-banner.cjs    # 生成 1280x640 的社交预览图
 ```
