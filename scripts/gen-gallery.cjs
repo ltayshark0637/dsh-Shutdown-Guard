@@ -67,19 +67,23 @@ function bodyHtml(c) {
       <div class="dsp-hud">${hud}</div></div></div>`
   }
   if (c.variant === 'C') {
-    const l2 = c.view === 'fire' ? 'countdown 42s'
-      : c.view === 'fired' ? 'shutdown issued'
-        : c.view === 'off' ? 'standby'
-          : c.view === 'hold' ? 'waiting holders'
-            : c.view === 'blocked' ? `shutdown ${c.retry ? 'retrying' : 'halted'}` : 'idle'
+    // Mirrors lib/client.js: line 2 is the live counts, line 3 is the phase.
+    const jobs = c.view === 'off' ? 0 : 2
+    const agent = c.view === 'off' ? 1 : 3
+    const l2 = `jobs ${jobs} · agent ${agent}`
+    const l3 = c.view === 'fire' ? 'T-minus 00:42'
+      : c.view === 'hold' ? 'holding'
+        : c.view === 'off' ? 'offline'
+          : c.view === 'blocked' ? (c.retry ? 'retrying' : 'halted')
+            : c.view === 'fired' ? 'done' : 'waiting'
     const lines = `<div class="dsp-term-line"><span class="dsp-pr">&gt;</span>shutdown --when idle</div>
       <div class="dsp-term-line"><span class="dsp-pr">&gt;</span><span class="dsp-l2">${l2}</span></div>
-      <div class="dsp-term-line"><span class="dsp-pr">&gt;</span><span class="dsp-l3"></span><i class="dsp-caret"></i></div>`
-    const on = c.view === 'blocked' ? (c.retry ? 3 : 2) : c.view === 'fire' ? 6 : c.view === 'off' ? 1 : 4
-    const led = [0, 1, 2, 3, 4, 5].map((i) => `<i class="dsp-led-seg${i < on ? ' on' : ''}" data-i="${i}"></i>`).join('')
+      <div class="dsp-term-line"><span class="dsp-pr">&gt;</span><span class="dsp-l3">${l3}</span><i class="dsp-caret"></i></div>`
+    const ledState = [c.view !== 'off', true, agent === 0, jobs === 0, true, c.view === 'fire']
+    const led = [0, 1, 2, 3, 4, 5].map((i) => `<i class="dsp-led-seg${ledState[i] ? ' on' : ''}" data-i="${i}"></i>`).join('')
     const code = c.view === 'blocked'
-      ? (c.retry ? 'agent 3 · 自动重试' : 'agent 3 · 需人工处理')
-      : `agent ${c.view === 'off' ? 1 : 3} · running`
+      ? (c.retry ? 'waiting · 自动重试' : 'halted · 需人工处理')
+      : `条件 ${ledState.filter(Boolean).length}/6 已满足`
     return `<div class="dsp-cbody dsp-v-c"><div class="dsp-screen">${lines}</div>
       <div class="dsp-led">${led}</div><div class="dsp-code">${code}</div></div>`
   }

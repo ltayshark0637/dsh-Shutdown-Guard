@@ -73,7 +73,7 @@ function Trim-Png($path) {
   Move-Item -LiteralPath $tmp -Destination $path -Force
 }
 
-$pages = Get-ChildItem $shots -Filter *.html | Sort-Object Name
+$pages = Get-ChildItem $shots -Filter *.html | Where-Object { $_.Name -ne 'banner.html' } | Sort-Object Name
 foreach ($page in $pages) {
   $name = [System.IO.Path]::GetFileNameWithoutExtension($page.Name)
   $png = Join-Path $shots "$name.png"

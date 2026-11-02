@@ -5,6 +5,11 @@
 // The banner reuses the card markup from gen-gallery.cjs, so it always shows
 // the real component rather than a redrawn illustration. All three skins are
 // on stage at once, each in a different state.
+//
+// Every block is laid out with absolute left/top so the page can be opened in
+// any visual HTML editor and dragged around without the flex layout collapsing.
+// The coordinates below were measured from the flex version and reproduce it
+// pixel for pixel: change them freely, that is the point of the file.
 const fs = require('node:fs')
 const path = require('node:path')
 const { CSS, card, BASE_CSS } = require('./gen-gallery.cjs')
@@ -14,48 +19,73 @@ const OUT = path.join(root, 'docs', 'screenshots')
 
 // 1280x640 is what GitHub asks for in Settings → Social preview.
 const BANNER_CSS = `
-body{margin:0;background:#0f0f0e;color:#faf9f5;font-family:'Inter',system-ui,'Microsoft YaHei',sans-serif;-webkit-font-smoothing:antialiased}
-.bn{width:1280px;height:640px;position:relative;overflow:hidden;display:flex;align-items:center;isolation:isolate}
-.glow{position:absolute;border-radius:50%;filter:blur(90px);pointer-events:none;z-index:0}
-.glow-a{width:640px;height:640px;left:-190px;top:-240px;background:radial-gradient(circle,rgba(240,168,58,.20),transparent 68%)}
-.glow-b{width:720px;height:720px;right:-260px;bottom:-320px;background:radial-gradient(circle,rgba(232,69,60,.18),transparent 66%)}
-.grid{position:absolute;inset:0;z-index:0;opacity:.45;
-  background-image:linear-gradient(rgba(255,255,255,.032) 1px,transparent 1px),linear-gradient(90deg,rgba(255,255,255,.032) 1px,transparent 1px);
-  background-size:44px 44px;mask-image:radial-gradient(ellipse at 26% 44%,#000 28%,transparent 76%)}
+body{margin:0;background:#14120f;color:#faf9f5;font-family:'Inter',system-ui,'Microsoft YaHei',sans-serif;-webkit-font-smoothing:antialiased}
+/* Canvas. Everything inside is absolutely positioned against this box. */
+.bn{position:relative;width:1280px;height:640px;overflow:hidden;isolation:isolate}
 
-.copy{position:relative;z-index:2;padding-left:70px;width:592px;flex:0 0 auto;margin-top:-16px}
-.eyebrow{display:inline-flex;align-items:center;gap:8px;font-size:11.5px;letter-spacing:.17em;text-transform:uppercase;color:#9c9a90;margin-bottom:16px;font-weight:600}
-.eyebrow i{width:6px;height:6px;border-radius:50%;background:#f0a83a;box-shadow:0 0 0 4px rgba(240,168,58,.16)}
-h1{margin:0;font-size:53px;line-height:1;letter-spacing:-.034em;font-weight:750;color:#fff}
+/* ---- background layers (full bleed) ---- */
+/* One continuous wash: a single linear field plus two soft lobes. Separate
+   radial blobs left a visible step where they met. */
+.wash{position:absolute;left:0;top:0;width:1280px;height:640px;z-index:0;pointer-events:none;
+  background:linear-gradient(104deg,#14120f 0%,#17140f 34%,#191410 58%,#1b120e 78%,#1c110d 100%)}
+.lobe{position:absolute;left:0;top:0;width:1280px;height:640px;z-index:0;pointer-events:none;
+  background:
+    radial-gradient(1400px 900px at 4% 2%, rgba(240,168,58,.10), transparent 70%),
+    radial-gradient(1400px 900px at 100% 100%, rgba(232,69,60,.10), transparent 70%)}
+/* A faint grain breaks the 8-bit stepping that soft gradients show on large
+   flat areas (the "layered" look). */
+.grain{position:absolute;left:0;top:0;width:1280px;height:640px;z-index:1;pointer-events:none;opacity:.05;mix-blend-mode:overlay;
+  background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='160' height='160'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='.85' numOctaves='3'/%3E%3C/filter%3E%3Crect width='160' height='160' filter='url(%23n)'/%3E%3C/svg%3E")}
+.grid{position:absolute;left:0;top:0;width:1280px;height:640px;z-index:0;opacity:.4;pointer-events:none;
+  background-image:linear-gradient(rgba(255,255,255,.03) 1px,transparent 1px),linear-gradient(90deg,rgba(255,255,255,.03) 1px,transparent 1px);
+  background-size:44px 44px;mask-image:radial-gradient(ellipse 78% 82% at 34% 48%,#000 34%,transparent 82%)}
+
+/* ---- copy block: one box per line of text ---- */
+.eyebrow{position:absolute;left:60px;top:194px;width:225px;height:15px;
+  display:flex;align-items:center;gap:8px;font-size:11.5px;letter-spacing:.17em;
+  text-transform:uppercase;color:#9c9a90;font-weight:600;white-space:nowrap}
+.eyebrow i{width:6px;height:6px;border-radius:50%;background:#f0a83a;box-shadow:0 0 0 4px rgba(240,168,58,.16);flex:0 0 auto}
+
+h1{position:absolute;left:60px;top:225px;width:498px;height:46px;margin:0;
+  font-size:46px;line-height:1;letter-spacing:-.032em;font-weight:750;color:#fff;white-space:nowrap}
 h1 em{font-style:normal;color:#f0a83a}
-.zh{margin:15px 0 0;font-size:21px;font-weight:600;color:#faf9f5}
+
+.zh{position:absolute;left:60px;top:284px;width:498px;height:24px;margin:0;
+  font-size:18.5px;line-height:1.3;font-weight:600;color:#faf9f5;white-space:nowrap}
 .zh span{color:#7d7b72;font-weight:400;margin:0 9px}
-.tag{margin:20px 0 0;font-size:14.5px;line-height:1.86;color:#c2c0b6;width:546px}
-.tag span{white-space:nowrap}
+
+.tag{position:absolute;left:60px;top:326px;width:474px;height:74px;margin:0;
+  font-size:13.5px;line-height:1.82;color:#c2c0b6}
 .tag b{color:#faf9f5;font-weight:600}
-.chips{display:flex;gap:8px;margin-top:26px;flex-wrap:wrap;width:546px}
-.chip{font-size:11.5px;padding:6px 11px;border-radius:999px;border:1px solid rgba(255,255,255,.14);color:#d4d2c8;background:rgba(255,255,255,.045)}
-.pkg{position:absolute;left:70px;bottom:26px;z-index:2;font-family:ui-monospace,'Cascadia Mono',Consolas,monospace;
-  font-size:11.5px;letter-spacing:.03em;color:#6f6d66}
-.pkg b{color:#9c9a90;font-weight:500}
 
-.deck{position:relative;z-index:2;width:584px;height:470px;flex:0 0 auto;margin-left:auto;margin-right:30px}
-.slot{position:absolute}
+.chips{position:absolute;left:60px;top:422px;width:474px;height:29px;
+  display:flex;gap:7px;flex-wrap:nowrap;align-items:flex-start}
+.chip{font-size:11.5px;padding:6px 11px;border-radius:999px;border:1px solid rgba(255,255,255,.14);
+  color:#d4d2c8;background:rgba(255,255,255,.045);white-space:nowrap;flex:0 0 auto}
+
+/* ---- card stage: three cards, each its own draggable box ---- */
+/* .zoom keeps the card at its design size (264x178) and scales it up; that is
+   why a card's slot can be larger than its content. */
+.slot{position:absolute;z-index:2}
 .zoom{width:264px;height:178px;transform-origin:top left}
-.slot-a{left:0;top:186px;width:305px;height:206px}
-.slot-a .zoom{transform:scale(1.155)}
-.slot-b{left:330px;top:52px;width:251px;height:169px}
-.slot-b .zoom{transform:scale(.951)}
-.slot-c{left:330px;top:264px;width:251px;height:169px}
-.slot-c .zoom{transform:scale(.951)}
-.halo{position:absolute;inset:-40px;z-index:-1;border-radius:40px;
-  background:radial-gradient(ellipse at 40% 54%,rgba(239,83,80,.15),rgba(240,168,58,.07) 46%,transparent 70%)}
-.cap{position:absolute;font-size:10.5px;letter-spacing:.14em;color:#7d7b72;white-space:nowrap}
-.cap-a{left:2px;top:397px}
-.cap-b{left:332px;top:228px}
-.cap-c{left:332px;top:440px}
 
-.rule{position:absolute;left:0;bottom:0;height:5px;width:100%;z-index:3;overflow:hidden;background:#141413}
+.slot-a{left:588px;top:256px;width:360px;height:243px}
+.slot-a .zoom{transform:scale(1.364)}
+.slot-b{left:966px;top:104px;width:289px;height:195px}
+.slot-b .zoom{transform:scale(1.095)}
+.slot-c{left:966px;top:330px;width:289px;height:195px}
+.slot-c .zoom{transform:scale(1.095)}
+
+.halo{position:absolute;left:548px;top:216px;width:440px;height:323px;z-index:0;pointer-events:none;
+  background:radial-gradient(ellipse at 50% 50%,rgba(239,83,80,.15),rgba(240,168,58,.07) 46%,transparent 70%)}
+
+.cap{position:absolute;z-index:3;font-size:10.5px;letter-spacing:.14em;color:#7d7b72;white-space:nowrap}
+.cap-a{left:590px;top:512px}
+.cap-b{left:968px;top:308px}
+.cap-c{left:968px;top:534px}
+
+/* ---- bottom hazard rule ---- */
+.rule{position:absolute;left:0;top:635px;width:1280px;height:5px;z-index:4;overflow:hidden;background:#141413}
 .rule::before{content:'';position:absolute;top:0;bottom:0;left:-60px;right:-60px;
   background:repeating-linear-gradient(45deg,#f2b13c 0 10px,#e8453c 10px 20px);
   animation:bn-slide 1.15s linear infinite}
@@ -70,34 +100,30 @@ function banner() {
   const c = card({ view: 'armed', variant: 'C' })
   return `<!doctype html><html lang="zh"><head><meta charset="utf-8">
 <style>${BASE_CSS}</style><style>${BANNER_CSS}</style><style>${CSS}</style></head><body><div class="bn">
-  <div class="glow glow-a"></div><div class="glow glow-b"></div><div class="grid"></div>
+  <div class="wash"></div><div class="lobe"></div><div class="grid"></div>
 
-  <div class="copy">
-    <div class="eyebrow"><i></i>DeepSeek Harness Plugin</div>
-    <h1>Shutdown <em>Guard</em></h1>
-    <div class="zh">任务完成后自动关机<span>·</span>侧边栏守夜卡片</div>
-    <p class="tag">为 DeepSeek Harness 的侧边栏添加「所有任务完成后自动关机」卡片，<br>拥有更好且多样的<b>视觉效果</b>、<b>判定逻辑</b>与<b>个性化定制</b>。<br>位于「技能中心」下方、会话列表上方，随任务状态实时变化。</p>
-    <div class="chips">
-      <span class="chip">五道判定闸</span>
-      <span class="chip">三种外观</span>
-      <span class="chip">个性化定制</span>
-      <span class="chip">AFK 自动接管</span>
-      <span class="chip">阻断态分级</span>
-    </div>
+  <div class="eyebrow"><i></i>DeepSeek Harness Plugin</div>
+  <h1>Shutdown <em>Guard</em></h1>
+  <div class="zh">任务完成后自动关机<span>·</span>侧边栏守夜卡片</div>
+  <p class="tag">为 DeepSeek Harness 的侧边栏添加「所有任务完成后自动关机」卡片，<br>拥有更好且多样的<b>视觉效果</b>、<b>判定逻辑</b>与<b>个性化定制</b>。<br>位于「技能中心」下方、会话列表上方，随任务状态实时变化。</p>
+  <div class="chips">
+    <span class="chip">五道判定闸</span>
+    <span class="chip">三种外观</span>
+    <span class="chip">个性化定制</span>
+    <span class="chip">AFK 自动接管</span>
+    <span class="chip">阻断态分级</span>
   </div>
 
-  <div class="deck">
-    <div class="halo"></div>
-    <div class="slot slot-a"><div class="zoom">${a}</div></div>
-    <div class="cap cap-a">A · 警戒带</div>
-    <div class="slot slot-b"><div class="zoom">${b}</div></div>
-    <div class="cap cap-b">B · 雷达</div>
-    <div class="slot slot-c"><div class="zoom">${c}</div></div>
-    <div class="cap cap-c">C · 终端</div>
-  </div>
+  <div class="halo"></div>
+  <div class="slot slot-a"><div class="zoom">${a}</div></div>
+  <div class="cap cap-a">A · 警戒带</div>
+  <div class="slot slot-b"><div class="zoom">${b}</div></div>
+  <div class="cap cap-b">B · 雷达</div>
+  <div class="slot slot-c"><div class="zoom">${c}</div></div>
+  <div class="cap cap-c">C · 终端</div>
 
-  <div class="pkg"><b>dsh-shutdown-guard</b> · v1.5.0 · MIT</div>
   <div class="rule"></div>
+  <div class="grain"></div>
 </div></body></html>`
 }
 
