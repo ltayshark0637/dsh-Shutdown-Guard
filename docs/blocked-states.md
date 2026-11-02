@@ -138,7 +138,7 @@ base = retrySec（默认 30，可配 10–600）
 
 ## 状态字段
 
-`GET /api/dsh-shutdown-panel/state` 新增：
+`GET /api/dsh-shutdown-guard/state` 新增：
 
 ```json
 {

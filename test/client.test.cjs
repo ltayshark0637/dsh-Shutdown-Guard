@@ -1,4 +1,4 @@
-// Structure smoke test for plugins/dsh-shutdown-panel/lib/client.js (v1.1)
+// Structure smoke test for plugins/dsh-shutdown-guard/lib/client.js (v1.1)
 // The card is a plain DOM node mounted into the sidebar region; only the
 // settings section is a React component, so this test asserts registration
 // shape and that apply() runs without a live DOM.
@@ -28,7 +28,7 @@ global.window = {
 }
 
 require(path.join(__dirname,'..','lib','client.js'))
-assert.strictEqual(global.__captured.id, 'dsh-shutdown-panel')
+assert.strictEqual(global.__captured.id, 'dsh-shutdown-guard')
 
 const React = {
   createElement: (type, props, ...children) => ({ type, props: props || {}, children }),
@@ -48,7 +48,7 @@ assert.ok(slots['settings.section'], 'settings section registered')
 assert.strictEqual(slots['settings.section'].entry.id, 'shutdown-panel-settings')
 assert.strictEqual(slots['settings.section'].entry.order, 40)
 assert.deepStrictEqual(mod.inject, ['slots'])
-assert.strictEqual(mod.name, 'dsh-shutdown-panel')
+assert.strictEqual(mod.name, 'dsh-shutdown-guard')
 
 // --- settings section renders with profiles + events -------------------------
 function flat(node, out) {

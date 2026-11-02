@@ -23,10 +23,10 @@ node test/client.test.cjs
 把插件目录链到 profile 下：
 
 ```
-profiles\web\node_modules\dsh-shutdown-panel  ->  <本插件目录>
+profiles\web\node_modules\dsh-shutdown-guard  ->  <本插件目录>
 ```
 
-并确认 `profiles\web\package.json` 里 `dsh.profile.bundles` 含 `dsh-shutdown-panel`。
+并确认 `profiles\web\package.json` 里 `dsh.profile.bundles` 含 `dsh-shutdown-guard`。
 
 然后**重启 DSH**——客户端 bundle 只在启动时编入模块图，刷新页面不会加载新代码。
 
@@ -61,6 +61,6 @@ pwsh scripts/screenshot.ps1     # 渲染成 PNG（需要 Edge）
 请附上：
 
 1. `data/events.log` 的相关片段（脱敏后）
-2. `GET /api/dsh-shutdown-panel/state` 的返回
+2. `GET /api/dsh-shutdown-guard/state` 的返回
 3. DSH 版本与插件版本
 4. 复现步骤——尤其是「武装后没关机」，这条几乎总是能从日志里读出原因

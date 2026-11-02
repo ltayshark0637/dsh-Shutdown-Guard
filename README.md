@@ -1,6 +1,6 @@
-# 任务完成后关机 · dsh-shutdown-panel
+# Shutdown Guard · 任务完成后关机
 
-[![version](https://img.shields.io/badge/version-1.4.2-2ea44f)](CHANGELOG.md)
+[![version](https://img.shields.io/badge/version-1.5.0-2ea44f)](CHANGELOG.md)
 [![DSH](https://img.shields.io/badge/DSH-%E2%89%A50.1.5--rc.1-4a90d9)](https://github.com/deepseek-ai)
 [![platform](https://img.shields.io/badge/platform-Windows-0078d4)](#约束)
 [![license](https://img.shields.io/badge/license-MIT-blue)](LICENSE)
@@ -94,10 +94,10 @@
 
 **推荐**：DSH 设置 → 插件 → 添加，填入插件目录的**绝对路径** → 安装 → 重启 DSH。
 
-**手工兜底**：在 `profiles\web` 下建 `node_modules\dsh-shutdown-panel` 软链指向本目录，然后在 `profiles\web\package.json` 里：
+**手工兜底**：在 `profiles\web` 下建 `node_modules\dsh-shutdown-guard` 软链指向本目录，然后在 `profiles\web\package.json` 里：
 
 - `dependencies` 与 `pnpm.overrides` 加 `link:<插件绝对路径>`
-- `dsh.profile.bundles` 追加 `dsh-shutdown-panel`
+- `dsh.profile.bundles` 追加 `dsh-shutdown-guard`
 
 重启 DSH。
 
@@ -139,11 +139,11 @@ retryPolicies:
 
 未知 `code` 回落 `transient`；形状写错的策略会被丢弃并保留默认值。当前生效的分配可从 `/state` 的 `retryAssign`、`retryPolicies` 读到。
 
-UI 偏好存在浏览器 `localStorage`：`dsh-shutdown-panel.variant` / `.theme` / `.folded`。
+UI 偏好存在浏览器 `localStorage`：`dsh-shutdown-guard.variant` / `.theme` / `.folded`。
 
 ## HTTP 接口
 
-前缀 `/api/dsh-shutdown-panel`，供卡片自己的同源轮询使用：
+前缀 `/api/dsh-shutdown-guard`，供卡片自己的同源轮询使用：
 
 | 方法 | 路径 | 说明 |
 | --- | --- | --- |
@@ -157,7 +157,7 @@ UI 偏好存在浏览器 `localStorage`：`dsh-shutdown-panel.variant` / `.theme
 ## 日志
 
 - `<插件目录>\data\events.log` —— 人类可读的事件流水（`config` / `afk` / `skip` 分类），设置页「事件日志」即读它
-- `<DSH_HOME>\dsh-shutdown-panel.log` —— 进程级追加日志
+- `<DSH_HOME>\dsh-shutdown-guard.log` —— 进程级追加日志
 
 ## 开发
 

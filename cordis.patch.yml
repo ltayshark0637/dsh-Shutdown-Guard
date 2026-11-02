@@ -1,7 +1,7 @@
-# dsh-shutdown-panel：任务完成后自动关机
+# dsh-shutdown-guard：任务完成后自动关机
 - insert:
-    - id: dsh-shutdown-panel
-      name: 'dsh-shutdown-panel'
+    - id: dsh-shutdown-guard
+      name: 'dsh-shutdown-guard'
       config:
         countdownSec: 60
         marginSec: 5

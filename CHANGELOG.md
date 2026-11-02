@@ -1,5 +1,11 @@
 # Changelog
 
+## v1.5.0 — 2026-11-02
+
+- 改名：`dsh-shutdown-panel` → **`dsh-shutdown-guard`**（Shutdown Guard）。原名只描述了界面，没表达它真正的特长——关机前逐条排除。`shutdown` 仍在包名第二位，市场按关键词搜索时排序不受影响。
+- 同步改名：HTTP 前缀 `/api/dsh-shutdown-guard`、`localStorage` 键前缀、`<style data-dsh-shutdown-guard>`、客户端 bundle id、`cordis.patch.yml` 的行 id。
+- ⚠️ 升级注意：旧版写在浏览器 `localStorage` 里的外观偏好（`dsh-shutdown-panel.variant` 等）不会迁移，升级后回到默认 A / 跟随主题 / 不折叠。如需保留，手动在设置里重选一次。
+
 ## v1.4.2 — 2026-11-02
 
 - 文档补齐：README 按 v1.4 重写（截图、功能矩阵、重试策略、FAQ），新增 CONTRIBUTING.md、LICENSE。
@@ -42,7 +48,7 @@
 - 重试计数与收尾标记都在武装/解除时清零。
 ## v1.3.5 — 2026-11-02
 
-- 新增调试钩子 POST /api/dsh-shutdown-panel/error-test，仅在 cordis.patch.yml 里设置 debugHooks: true 时注册。它用第一个 root 会话走一遍真实的 AFK 报错恢复链路（注入 + 日志 + 不关机），便于在没有真实崩溃时演练 T4。
+- 新增调试钩子 POST /api/dsh-shutdown-guard/error-test，仅在 cordis.patch.yml 里设置 debugHooks: true 时注册。它用第一个 root 会话走一遍真实的 AFK 报错恢复链路（注入 + 日志 + 不关机），便于在没有真实崩溃时演练 T4。
 - 错误处理逻辑抽成 handleAgentError(agent)，事件监听与调试端点共用同一条代码路径。
 
 ## v1.3.4 — 2026-11-02
