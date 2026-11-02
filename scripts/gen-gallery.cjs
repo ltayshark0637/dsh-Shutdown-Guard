@@ -262,7 +262,12 @@ const shots = {
   '16-folded': cardOnly({ view: 'armed', variant: 'A', folded: true }),
 }
 
-for (const [name, html] of Object.entries(shots)) {
-  fs.writeFileSync(path.join(OUT, name + '.html'), html)
-  console.log('wrote', path.relative(root, path.join(OUT, name + '.html')))
+if (require.main === module) {
+  for (const [name, html] of Object.entries(shots)) {
+    fs.writeFileSync(path.join(OUT, name + '.html'), html)
+    console.log('wrote', path.relative(root, path.join(OUT, name + '.html')))
+  }
 }
+
+// gen-banner.cjs reuses these so the banner is built from the same markup.
+module.exports = { CSS, esc, card, sidebar, settingsPanel, single, frame, BASE_CSS, SIDEBAR_CSS }
