@@ -4,3 +4,5 @@ preview/*.png
 data/
 docs/screenshots/*.html
 dist/
+
+scripts/push*.ps1

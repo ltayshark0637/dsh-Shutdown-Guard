@@ -2,6 +2,18 @@
   "name": "dsh-shutdown-guard",
   "version": "1.5.0",
   "description": "任务结束后自动关机 —— 侧边栏守夜卡片：五道判定闸、后台任务守卫、AFK 接管、阻断态分级",
+  "author": {
+    "name": "ltayshark0637",
+    "url": "https://github.com/ltayshark0637"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/ltayshark0637/dsh-Shutdown-Guard.git"
+  },
+  "homepage": "https://github.com/ltayshark0637/dsh-Shutdown-Guard#readme",
+  "bugs": {
+    "url": "https://github.com/ltayshark0637/dsh-Shutdown-Guard/issues"
+  },
   "main": "lib/index.mjs",
   "files": [
     "lib",

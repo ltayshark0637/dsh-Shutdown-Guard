@@ -187,7 +187,7 @@ UI 偏好存在浏览器 `localStorage`：`dsh-shutdown-guard.variant` / `.theme
 ## 开发
 
 ```bash
-node test/host.test.mjs        # 服务端：27 项断言，mock ctx，不真的关机
+node test/host.test.mjs        # 服务端：26 项断言，mock ctx，不真的关机
 node test/client.test.cjs      # 客户端 bundle smoke
 node scripts/gen-gallery.cjs   # 从 lib/client.js 真实 CSS 生成截图页
 powershell -NoProfile -ExecutionPolicy Bypass -File scripts/screenshot.ps1    # headless Edge 渲染 PNG（透明背景 + 自动裁边）
