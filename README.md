@@ -1,4 +1,4 @@
-# dsh-shutdown-panel v1.3
+# dsh-shutdown-panel v1.4
 
 把「所有任务完成后自动关机」做成侧边栏里的一张卡片：位于「技能中心」下方、会话列表上方，随任务状态实时变化。
 
@@ -15,8 +15,14 @@
   - B 雷达：同心圆、扫描光束、会话/后台任务圆点（数量变化只增删，不重排）
   - C 终端：命令行摘要 + 6 段判定条件指示灯
 - **纵向折叠**：收起后只保留标题与状态标签，点击标题展开；默认折叠可在设置里开启。
-- **浅色 / 深色 / 第三方主题自适应**：颜色走 `--dsw-alias-*` token，Claude Style 等主题自动跟随。
+- **浅色 / 深色 / 第三方主题自适应**：卡片自带 `--dsp-*` 调色板并按亮度自动取色，设置页走 `--dsw-alias-*` token。
 - **AFK 自动回答**（默认开）：武装期间 agent 若向你提问，插件替用户作答，告诉 agent 你处于 AFK、先完成已交代的任务、汇总报告落盘，不触碰未交代的分支。返回 `selected: []` + `custom` 说明文本，所以不会替你选中任何选项；关掉后提问照常抛给用户。
+- **AFK 错误恢复**：武装期间会话报错时不直接放弃，先要求 agent 排查并继续原计划；同一会话第二次失败改为「收尾落盘」。仅当「报错就跳过」关闭时，收尾轮跑完即恢复正常的关机判定。
+- **阻断态（blocked）**：遇到不可恢复或需等待的错误时，插件不解除武装，卡片转色并把原因写在状态行。
+  - `halted`（灰蓝 `#7e8aa3`）：额度、凭证、上下文超限、能力不支持、磁盘写满 —— 只有人能处理，需点「解除」。
+  - `waiting`（灰绿 `#6f8f7a`，圆点呼吸）：限流、5xx、网络、空响应、超时、图片卸载 —— 按时自动重试并注入「继续原计划」指令。
+  - 重试节奏按故障类型分别配置，见下。
+- **中断保护**：在会话里手动终止任务不会触发关机；插件通过 `session/event` 识别「本轮没有任何回复」或「`turn/end` 带取消原因」。
 - 卡片按钮：武装 / 取消关机 / 解除，每秒刷新状态。
 
 ## 配置（`cordis.patch.yml`）
@@ -27,9 +33,31 @@
 | `marginSec` | 0–60 | 5 | 传给 `shutdown /t` 的额外余量 |
 | `onlyOnSuccess` | bool | true | 本批次有会话报错时跳过关机 |
 | `blockOnJobs` | bool | true | 有运行中的后台任务（`ctx.jobs`）时跳过关机 |
-| `afkAutoAnswer` | bool | true | 武装期间替用户回答 agent 提问（AFK 说明） |
+| `afkAutoAnswer` | bool | true | 武装期间替用户回答 agent 提问（AFK 说明 + 错误恢复） |
 
-卡片外观（A/B/C）与默认折叠存在浏览器 `localStorage`：`dsh-shutdown-panel.variant`、`dsh-shutdown-panel.folded`。
+### 重试策略（`waiting` 类）
+
+每个错误码分配一个策略名，策略本身可配置：
+
+| 策略 | 默认节奏 | 分配给 |
+| --- | --- | --- |
+| `rate-limit` | backoff 30→60→120→240→300 封顶 | `RATE_LIMIT` |
+| `transient` | 固定 20 秒 | `SERVER` / `TRANSPORT` / `TIMEOUT` |
+| `empty` | 固定 30 秒 | `EMPTY_RESPONSE` |
+| `offload` | 固定 5 秒 | `IMAGE_OFFLOAD_REQUIRED` |
+
+覆盖单个错误码：
+
+```yaml
+retryAssign:
+  RATE_LIMIT: slow-limit
+retryPolicies:
+  slow-limit: { mode: backoff, base: 60, max: 900 }
+```
+
+未知 `code` 回落 `transient`；形状写错的策略会被丢弃并保留默认值。当前生效的分配可从 `/state` 的 `retryAssign`、`retryPolicies` 读到。
+
+卡片外观（A/B/C）、配色与默认折叠存在浏览器 `localStorage`：`dsh-shutdown-panel.variant`、`dsh-shutdown-panel.theme`、`dsh-shutdown-panel.folded`。
 
 ## 安装
 
@@ -45,20 +73,27 @@
 
 `/api/dsh-shutdown-panel`
 
-- `GET /state` → `{ armed, state, deadline, countdownSec, erroredCount, lastSkip, runningCount, rootsCount, jobsRunning, jobsTotal }`，`state ∈ idle|countdown|fired`
+- `GET /state?since=<ms>` → `{ armed, state, deadline, countdownSec, blocked, retryAttempt, retryAt, retryAssign, retryPolicies, erroredCount, lastSkip, runningCount, rootsCount, jobsRunning, jobsTotal, customEnabled, activeProfileId, afkAutoAnswer, countdownLocked, profiles, events }`，`state ∈ idle|countdown|fired`
 - `POST /arm` / `POST /disarm` / `POST /cancel`
+- `POST /config`（`customEnabled`、`activeProfileId`、`profileId` + `patch`、`afkAutoAnswer`）
+- `GET /events?since=&limit=`
 - 非本机 Origin 的 POST 返回 403；非 POST 返回 405。
 
 ## 日志
 
-`<DSH_HOME>\dsh-shutdown-panel.log`（`DSH_HOME` 未设置时落在进程工作目录）。
+- `<插件目录>\data\events.log`：人类可读的事件流水（含 `config` / `afk` / `skip` 分类），设置页「事件日志」即读它。
+- `<DSH_HOME>\dsh-shutdown-panel.log`：进程级追加日志。
 
 ## 版本
 
 - `v0.1`：侧边栏底部一行 + 弹层面板（基础版，判定逻辑已完整）。
-- `v1.0`：卡片迁到 `sidebar.workspaces`，新增三种外观、折叠、设置分区、浅色/第三方主题适配；新增后台任务守卫。
+- `v1.0`：卡片迁到侧边栏工作区，新增三种外观、折叠、设置分区、浅色/第三方主题适配；新增后台任务守卫。
+- `v1.1`：设置改行式、按 Claude Style 对齐字号与控件；设置三组化。
+- `v1.2`：事件日志与多配置（1 默认 + 8 自定义）；默认配置锁定 60 秒。
+- `v1.3`：AFK 自动回答、AFK 错误恢复、收尾轮解除错误拦截、中断保护。
+- `v1.4`：阻断态 `halted` / `waiting`，按故障类型分策略重试。
 
-完整变更见 `CHANGELOG.md`。
+完整变更见 `CHANGELOG.md`；设计细节见 `docs\blocked-states.md`。
 
 ## 卸载
 
@@ -67,5 +102,5 @@
 ## 约束
 
 - 仅 Windows：非 win32 平台直接早退，不挂载。
-- 零运行时依赖：服务端只用 `node:fs` / `node:path`，浏览器只 `require('react')`。
+- 零运行时依赖：服务端只用 `node:fs` / `node:path` / `node:crypto`，浏览器只 `require('react')`。
 - 不修改 `app.asar` 与 DSH 源码。

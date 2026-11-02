@@ -182,6 +182,6 @@ const stalled = [...lastActivityAt].filter(([id, at]) =>
 
 ## Demo
 
-- `preview/blocked-list.html` —— 18 项可切换清单（含归档的 stuck 三项，供以后参考）
+- `preview/blocked-list.html` —— 20 项可切换清单（含归档的 stuck 三项，供以后参考）
 - `preview/blocked-demo.html` —— 首批 8 张卡片 + 设置面板两态
 - 生成器：`_gen_blocked_list.cjs`、`_gen_blocked_preview.cjs`（从 `lib/client.js` 抽真实 CSS）
