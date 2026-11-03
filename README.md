@@ -29,17 +29,17 @@
 
 缺任何一条都不关，并把原因写在卡片和设置页里。
 
-### 五种运行状态
+### 六种运行状态
 
 | 未开启                                              | 待命                                                  | 等待后台任务                                                           |
 |:---------------------------------------------------:|:-----------------------------------------------------:|:----------------------------------------------------------------------:|
 | <img src="https://cdn.jsdelivr.net/gh/ltayshark0637/dsh-Shutdown-Guard@main/docs/screenshots/01-off.png" width="250"> | <img src="https://cdn.jsdelivr.net/gh/ltayshark0637/dsh-Shutdown-Guard@main/docs/screenshots/02-armed.png" width="250"> | <img title="" src="https://cdn.jsdelivr.net/gh/ltayshark0637/dsh-Shutdown-Guard@main/docs/screenshots/03-hold.png" alt="" width="275" /> |
 
-| 倒计时                                               | 已下发                                                                  |
-|:----------------------------------------------------:|:-----------------------------------------------------------------------:|
-| <img src="https://cdn.jsdelivr.net/gh/ltayshark0637/dsh-Shutdown-Guard@main/docs/screenshots/04-fire.png" width="250"> | <img title="" src="https://cdn.jsdelivr.net/gh/ltayshark0637/dsh-Shutdown-Guard@main/docs/screenshots/05-fired.png" alt="" width="257" /> |
+| 倒计时                                               | 已下发                                                                  | 阻断                                                                     |
+|:----------------------------------------------------:|:-----------------------------------------------------------------------:|:------------------------------------------------------------------------:|
+| <img src="https://cdn.jsdelivr.net/gh/ltayshark0637/dsh-Shutdown-Guard@main/docs/screenshots/04-fire.png" width="250"> | <img title="" src="https://cdn.jsdelivr.net/gh/ltayshark0637/dsh-Shutdown-Guard@main/docs/screenshots/05-fired.png" alt="" width="257" /> | <img src="https://cdn.jsdelivr.net/gh/ltayshark0637/dsh-Shutdown-Guard@main/docs/screenshots/08-blocked-halted.png" width="257"> |
 
-`未开启` → `待命` → `等待后台任务` → `倒计时` → `已下发`。倒计时期间随时可取消，取消后仍保持武装。
+`未开启` → `待命` → `等待后台任务` → `倒计时` → `已下发`；任意阶段遇到阻断性错误会进入 `阻断`。倒计时期间随时可取消，取消后仍保持武装。
 
 ### 三种外观
 
