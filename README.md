@@ -7,7 +7,9 @@
 [![platform](https://img.shields.io/badge/platform-Windows-0078d4)](#约束)
 [![license](https://img.shields.io/badge/license-MIT-blue)](LICENSE)
 
-为Deepseek Harness中的侧边栏添加「所有任务完成后自动关机」卡片，拥有更好且多样的视觉效果、判定逻辑与个性化定制。位于「技能中心」下方、会话列表上方，随任务状态实时变化。
+为 DeepSeek Harness 中的侧边栏添加「所有任务完成后自动关机」卡片，拥有更好且多样的视觉效果、判定逻辑与个性化定制。位于「技能中心」下方、会话列表上方，随任务状态实时变化。
+
+**▶ [交互演示页](https://ltayshark0637.github.io/dsh-Shutdown-Guard/demo.html)** —— 不用装插件，先看它长什么样、它怎么判断。左右两页：**了解**（判定、外观、状态）与 **试一试**（随机一个场景，亲手点武装、取消、解除，一路看到关机或阻断）。数据全部本地随机，不联网。
 
 ## 为什么需要它
 
@@ -15,63 +17,61 @@
 
 但「任务结束」不等于「可以关机」——后台任务还在跑、会话报错了、agent 在等你回答问题、你在半路手动终止了……这些情况下关机全是事故。这个插件把这些情况逐个挡下来，只有真的可以关的时候才关。
 
-## 功能
+## 判定：什么时候才关
 
-### 判定：什么时候才关
+处于阻断态（见下文）时直接不下发；其余五道闸门同时满足才下发 `shutdown /s`：
 
-处于阻断态（见下文「阻断态」）时直接不下发；其余五道闸门同时满足才下发 `shutdown /s`：
-
-1. 已武装（你手动点的）
-2. 当前没有倒计时在跑
-3. 所有 root 会话都空闲
-4. 没有运行中 / 停止中的后台任务（`blockOnJobs`，默认开）
-5. 本批次没有会话报错（`onlyOnSuccess`，默认开）
+1. **已武装** —— 你手动点的
+2. **没有倒计时在跑** —— 避免重复下发
+3. **所有 root 会话都空闲** —— 没有任何 agent 还在干活
+4. **没有运行中 / 停止中的后台任务** —— `blockOnJobs`，默认开
+5. **本批次没有会话报错** —— `onlyOnSuccess`，默认开
 
 缺任何一条都不关，并把原因写在卡片和设置页里。
 
-### 六种运行状态
-
-| 未开启                                              | 待命                                                  | 等待后台任务                                                           |
-|:---------------------------------------------------:|:-----------------------------------------------------:|:----------------------------------------------------------------------:|
-| <img src="https://cdn.jsdelivr.net/gh/ltayshark0637/dsh-Shutdown-Guard@main/docs/screenshots/01-off.png" width="250"> | <img src="https://cdn.jsdelivr.net/gh/ltayshark0637/dsh-Shutdown-Guard@main/docs/screenshots/02-armed.png" width="250"> | <img title="" src="https://cdn.jsdelivr.net/gh/ltayshark0637/dsh-Shutdown-Guard@main/docs/screenshots/03-hold.png" alt="" width="275" /> |
-
-| 倒计时                                               | 已下发                                                                  | 阻断                                                                     |
-|:----------------------------------------------------:|:-----------------------------------------------------------------------:|:------------------------------------------------------------------------:|
-| <img src="https://cdn.jsdelivr.net/gh/ltayshark0637/dsh-Shutdown-Guard@main/docs/screenshots/04-fire.png" width="250"> | <img title="" src="https://cdn.jsdelivr.net/gh/ltayshark0637/dsh-Shutdown-Guard@main/docs/screenshots/05-fired.png" alt="" width="257" /> | <img src="https://cdn.jsdelivr.net/gh/ltayshark0637/dsh-Shutdown-Guard@main/docs/screenshots/08-blocked-halted.png" width="257"> |
-
-`未开启` → `待命` → `等待后台任务` → `倒计时` → `已下发`；任意阶段遇到阻断性错误会进入 `阻断`。倒计时期间随时可取消，取消后仍保持武装。
-
-### 三种外观
+## 三种外观
 
 | A · 警戒带                                                             | B · 雷达                                                        | C · 终端                                                                             |
 |:----------------------------------------------------------------------:|:---------------------------------------------------------------:|:------------------------------------------------------------------------------------:|
-| <img title="" src="https://cdn.jsdelivr.net/gh/ltayshark0637/dsh-Shutdown-Guard@main/docs/screenshots/03-hold.png" alt="" width="360" /> | <img src="https://cdn.jsdelivr.net/gh/ltayshark0637/dsh-Shutdown-Guard@main/docs/screenshots/06-variant-b-radar.png" width="250"> | <img title="" src="https://cdn.jsdelivr.net/gh/ltayshark0637/dsh-Shutdown-Guard@main/docs/screenshots/07-variant-c-terminal.png" alt="" width="324" /> |
-| 大字状态 + 底部滚动的红黄警戒条                                        | 同心圆 + 扫描光束，会话/后台任务以圆点呈现                      | 命令行摘要 + 6 段判定条件指示灯                                                      |
+| <img src="https://cdn.jsdelivr.net/gh/ltayshark0637/dsh-Shutdown-Guard@main/docs/screenshots/02-armed.png" width="250"> | <img src="https://cdn.jsdelivr.net/gh/ltayshark0637/dsh-Shutdown-Guard@main/docs/screenshots/06-variant-b-radar.png" width="250"> | <img src="https://cdn.jsdelivr.net/gh/ltayshark0637/dsh-Shutdown-Guard@main/docs/screenshots/07-variant-c-terminal.png" width="250"> |
+| 大字状态 + 底部滚动的红黄斜纹                                          | 同心圆 + 扫描光束，会话与后台任务以圆点呈现                      | 命令行摘要 + 六段判定条件指示灯                                                      |
 
-雷达里的圆点按数量增删、不重排，数量变化时你正在看的那几个点不会跳位置：
+雷达里的圆点按数量增删、不重排：数量变化时，你正在看的那几个点不会跳位置。
 
 <p align="center"><img src="https://cdn.jsdelivr.net/gh/ltayshark0637/dsh-Shutdown-Guard@main/docs/screenshots/anim-radar.gif" width="330" alt="雷达扫描"></p>
 
 设置里切换，立即生效，无需重启。
 
-想自己动手试试？打开 **[交互演示页](https://ltayshark0637.github.io/dsh-Shutdown-Guard/demo.html#try)** —— 换外观、掷状态、看日志，都是本地随机的，不联网。
+## 六种运行状态
 
-### 阻断态
+| 未开启                                              | 待命                                                  | 等待后台任务                                                           |
+|:---------------------------------------------------:|:-----------------------------------------------------:|:----------------------------------------------------------------------:|
+| <img src="https://cdn.jsdelivr.net/gh/ltayshark0637/dsh-Shutdown-Guard@main/docs/screenshots/01-off.png" width="250"> | <img src="https://cdn.jsdelivr.net/gh/ltayshark0637/dsh-Shutdown-Guard@main/docs/screenshots/02-armed.png" width="250"> | <img src="https://cdn.jsdelivr.net/gh/ltayshark0637/dsh-Shutdown-Guard@main/docs/screenshots/03-hold.png" width="250"> |
+
+| 倒计时                                               | 已下发                                                                  | 阻断                                                                     |
+|:----------------------------------------------------:|:-----------------------------------------------------------------------:|:------------------------------------------------------------------------:|
+| <img src="https://cdn.jsdelivr.net/gh/ltayshark0637/dsh-Shutdown-Guard@main/docs/screenshots/04-fire.png" width="250"> | <img src="https://cdn.jsdelivr.net/gh/ltayshark0637/dsh-Shutdown-Guard@main/docs/screenshots/05-fired.png" width="250"> | <img src="https://cdn.jsdelivr.net/gh/ltayshark0637/dsh-Shutdown-Guard@main/docs/screenshots/08-blocked-halted.png" width="250"> |
+
+`未开启` → `待命` → `等待后台任务` → `倒计时` → `已下发`；任意阶段遇到阻断性错误会进入 `阻断`。倒计时期间随时可取消，**取消后仍保持武装**——下一批任务干完照样会关。
+
+想在这六种状态之间来回看？演示页「了解」第 04 节右上角有 `A` `B` `C` 三枚胶囊，切换的是当前预览用哪种外观。
+
+## 阻断态
 
 | halted · 需人工处理                                            | waiting · 自动重试                                                                |
 |:--------------------------------------------------------------:|:---------------------------------------------------------------------------------:|
-| <img src="https://cdn.jsdelivr.net/gh/ltayshark0637/dsh-Shutdown-Guard@main/docs/screenshots/08-blocked-halted.png" width="250"> | <img title="" src="https://cdn.jsdelivr.net/gh/ltayshark0637/dsh-Shutdown-Guard@main/docs/screenshots/09-blocked-waiting.png" alt="" width="316" /> |
+| <img src="https://cdn.jsdelivr.net/gh/ltayshark0637/dsh-Shutdown-Guard@main/docs/screenshots/08-blocked-halted.png" width="250"> | <img src="https://cdn.jsdelivr.net/gh/ltayshark0637/dsh-Shutdown-Guard@main/docs/screenshots/09-blocked-waiting.png" width="250"> |
 
 遇到没法当普通失败处理的错误，插件**不解除武装**，卡片转色、把原因写出来：
 
-- **`halted`**（灰蓝）——额度不足、凭证失效、上下文超限、能力不支持、磁盘写满。只有人能处理，点「解除并重试」。
-- **`waiting`**（灰绿，圆点呼吸）——限流、5xx、网络中断、空响应、超时、图片卸载。按策略自动重试，到点注入「继续原计划」指令。
+- **`halted`**（灰蓝）—— 额度不足、凭证失效、上下文超限、能力不支持、磁盘写满。只有人能处理，点「解除并重试」。
+- **`waiting`**（灰绿，圆点呼吸）—— 限流、5xx、网络中断、空响应、超时、图片卸载。按策略自动重试，到点注入「继续原计划」指令。
 
 <p align="center"><img src="https://cdn.jsdelivr.net/gh/ltayshark0637/dsh-Shutdown-Guard@main/docs/screenshots/anim-blocked.gif" width="380" alt="等待恢复，状态点呼吸"></p>
 
 重试节奏按故障类型分别配置，见 [重试策略](#重试策略)。
 
-### AFK
+## AFK 自动接管
 
 人不在跟前时，插件替你顶三件事：
 
@@ -79,7 +79,15 @@
 - **错误恢复**：会话报错时先要求 agent 排查并继续原计划；同一会话再次失败改为「停止重试、写报告收尾」。
 - **中断保护**：你在半路手动终止任务，不会触发关机。
 
-### 其他
+## 装在哪里
+
+| 武装时：技能中心下方、会话列表上方                                                          | 倒计时：同一位置，整条转红                                                              |
+|:-------------------------------------------------------------------------------------------:|:---------------------------------------------------------------------------------------:|
+| <img src="https://cdn.jsdelivr.net/gh/ltayshark0637/dsh-Shutdown-Guard@main/docs/screenshots/10-sidebar-hold.png" width="250"> | <img src="https://cdn.jsdelivr.net/gh/ltayshark0637/dsh-Shutdown-Guard@main/docs/screenshots/11-sidebar-fire.png" width="250"> |
+
+卡片目前固定在侧边栏的这个位置。后续计划把它做成可以独立出现的形态（设置里给个开关），届时这里会补充说明。
+
+## 其他
 
 - **纵向折叠**：收起只留标题和状态，点标题展开。
 
@@ -91,16 +99,10 @@
 
 <br clear="all">
 
-### 在侧边栏里的样子
-
-| 武装                                                         | 倒计时                                                       |
-|:------------------------------------------------------------:|:------------------------------------------------------------:|
-| <img src="https://cdn.jsdelivr.net/gh/ltayshark0637/dsh-Shutdown-Guard@main/docs/screenshots/10-sidebar-hold.png" width="250"> | <img src="https://cdn.jsdelivr.net/gh/ltayshark0637/dsh-Shutdown-Guard@main/docs/screenshots/11-sidebar-fire.png" width="250"> |
-
 ## 设置页
 
-| 深色                                                          | 浅色                                                           |
-|:-------------------------------------------------------------:|:--------------------------------------------------------------:|
+| 深色                                                                                          | 浅色                                                                                           |
+|:---------------------------------------------------------------------------------------------:|:----------------------------------------------------------------------------------------------:|
 | <img src="https://cdn.jsdelivr.net/gh/ltayshark0637/dsh-Shutdown-Guard@main/docs/screenshots/12-settings-dark.png" width="380"> | <img src="https://cdn.jsdelivr.net/gh/ltayshark0637/dsh-Shutdown-Guard@main/docs/screenshots/13-settings-light.png" width="380"> |
 
 分三组：外观 / 何时关机 / 状态。所有开关立即生效。
@@ -108,6 +110,7 @@
 - **默认配置**锁定 60 秒不可改；另有 8 个自定义档位可自由调。
 - 「会话都停下来」是底线条件，始终开启，不可关。
 - 「后台任务跑完」挡后台任务，「有会话报错就跳过这一轮」挡出错批次。
+- 「AFK 自动回答」控制武装期间是否替你回复提问；说明里写明「回复不会替你选中任何选项，关闭后提问照常弹给你」。
 
 ## 浅色与第三方主题
 
@@ -128,7 +131,7 @@
 
 重启 DSH。
 
-> ⚠️ **客户端 bundle 只在 DSH 启动时编入模块图**：改 `lib\client.js` 后必须重启，刷新页面无效。服务端同理。
+> ⚠️ **客户端 bundle 只在 DSH 启动时编入模块图**：改 `lib/client.js` 后必须重启，刷新页面无效。服务端同理。
 
 ## 配置
 
@@ -195,9 +198,12 @@ node scripts/gen-gallery.cjs   # 从 lib/client.js 真实 CSS 生成截图页
 powershell -NoProfile -ExecutionPolicy Bypass -File scripts/screenshot.ps1    # headless Edge 渲染 PNG（透明背景 + 自动裁边）
 node scripts/gen-gif.cjs       # 生成 README 里的三张动图
 node scripts/gen-banner.cjs    # 生成 1280x640 的社交预览图
+node scripts/gen-demo.cjs      # 生成 docs/demo.html（交互演示页）
 ```
 
 截图全部由 `lib/client.js` 里的真实 CSS 生成，不会与产品脱节。动图同理：把 CSS 动画用 `animation-delay` 冻结在若干时间点逐帧截图，再用内置的 GIF89a 编码器合成——本机不需要 ffmpeg 或 ImageMagick。
+
+演示页面的「了解」部分同样是实时渲染：六种状态用与产品同一套 `card()` 标记现场生成，不是截图。
 
 ## 常见问题
 
