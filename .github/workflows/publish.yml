@@ -27,7 +27,15 @@ permissions:
 
 jobs:
   publish:
-    runs-on: ubuntu-latest
+    # 插件只在 Windows 上工作：lib/index.mjs 的第 305 行有
+    #   if (process.platform !== 'win32') return
+    # 所以在 Linux runner 上 apply() 会直接退出、测试必然失败。
+    runs-on: windows-latest
+
+    defaults:
+      run:
+        shell: bash # Windows runner 自带 Git Bash，下面的脚本按 bash 写
+
     steps:
       - uses: actions/checkout@v6
 
