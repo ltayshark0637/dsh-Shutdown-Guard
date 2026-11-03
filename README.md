@@ -123,6 +123,14 @@
 
 ## 安装
 
+已发布到 npm，推荐：
+
+```bash
+dsh plugin --profile web add dsh-shutdown-guard
+```
+
+或者直接从 GitHub 装：
+
 ```bash
 dsh plugin --profile web add github:ltayshark0637/dsh-Shutdown-Guard
 ```
@@ -131,7 +139,7 @@ dsh plugin --profile web add github:ltayshark0637/dsh-Shutdown-Guard
 
 > ⚠️ **客户端 bundle 只在 DSH 启动时编入模块图**：改 `lib/client.js` 后必须重启，刷新页面无效。服务端同理。
 
-**网络受限时**：上面这条命令本质是 `pnpm add github:...`，需要 clone 到 GitHub。若 clone 不通，改用本地路径安装——DSH 设置 → 插件 → 添加，填入本目录的**绝对路径** → 安装 → 重启。
+**网络受限时**：GitHub 那条本质是 `pnpm add github:...`，需要 clone。若 clone 不通，优先用 npm 那条（走 registry）；都不通再用本地路径安装——DSH 设置 → 插件 → 添加，填本目录的**绝对路径** → 安装 → 重启。
 
 **手工兜底**：在 `profiles\web` 下建 `node_modules\dsh-shutdown-guard` 软链指向本目录，然后：
 
