@@ -80,7 +80,9 @@ const ctx = {
   },
 }
 
-const dispose = apply(ctx, { countdownSec: 10, marginSec: 5, onlyOnSuccess: true }) // default profile is locked to 60s
+// language: 'zh' pins the assertions below: 'auto' would follow the runner's
+// locale, and CI happens to be en-US.
+const dispose = apply(ctx, { countdownSec: 10, marginSec: 5, onlyOnSuccess: true, language: 'zh' }) // default profile is locked to 60s
 
 const calls = []
 function request(method, path, origin, payload) {
