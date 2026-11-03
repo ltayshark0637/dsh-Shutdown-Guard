@@ -96,8 +96,8 @@ h1 em { font-style: normal; color: #f0a83a }
 
 .lede {
   margin: 15px 0 0;
-  max-width: 620px;
-  font-size: 13.5px;
+  max-width: 680px;
+  font-size: 15px;
   line-height: 1.82;
   color: #c2c0b6;
 }
@@ -180,7 +180,7 @@ h1 em { font-style: normal; color: #f0a83a }
 
 .sect h2 {
   margin: 0 0 12px;
-  font-size: 15.5px;
+  font-size: 17px;
   font-weight: 650;
   letter-spacing: -.005em;
   color: #faf9f5;
@@ -197,8 +197,8 @@ h1 em { font-style: normal; color: #f0a83a }
 }
 
 .sect p {
-  margin: 0 0 12px;
-  font-size: 13px;
+  margin: 0 0 13px;
+  font-size: 14.5px;
   line-height: 1.85;
   color: #b8b6ac;
 }
@@ -226,9 +226,9 @@ h1 em { font-style: normal; color: #f0a83a }
 .gates li {
   counter-increment: gate;
   position: relative;
-  padding: 7px 0 7px 30px;
-  font-size: 13px;
-  line-height: 1.7;
+  padding: 9px 0 9px 32px;
+  font-size: 14.5px;
+  line-height: 1.75;
   color: #b8b6ac;
   border-top: 1px solid rgba(255, 255, 255, .055);
 }
@@ -279,7 +279,7 @@ h1 em { font-style: normal; color: #f0a83a }
 }
 
 .shot span {
-  font-size: 11px;
+  font-size: 12.5px;
   line-height: 1.55;
   color: #7d7b72;
   text-align: center;
@@ -295,9 +295,9 @@ h1 em { font-style: normal; color: #f0a83a }
 }
 
 .levels li {
-  padding: 9px 0;
-  font-size: 12.5px;
-  line-height: 1.75;
+  padding: 11px 0;
+  font-size: 14px;
+  line-height: 1.8;
   color: #b8b6ac;
   border-top: 1px solid rgba(255, 255, 255, .055);
 }
@@ -323,7 +323,7 @@ h1 em { font-style: normal; color: #f0a83a }
   border-radius: 12px;
   border: 1px solid rgba(255, 168, 58, .2);
   background: rgba(240, 168, 58, .055);
-  font-size: 12.5px;
+  font-size: 14px;
   line-height: 1.8;
   color: #c2c0b6;
 }
@@ -494,7 +494,7 @@ h1 em { font-style: normal; color: #f0a83a }
   display: flex;
   gap: 10px;
   padding: 10px 15px;
-  font-size: 12.5px;
+  font-size: 13.5px;
   color: #a8a69d;
   border-top: 1px solid rgba(255, 255, 255, .05);
 }
@@ -537,8 +537,8 @@ h1 em { font-style: normal; color: #f0a83a }
 .tips li {
   counter-increment: tip;
   position: relative;
-  padding: 9px 0 9px 26px;
-  font-size: 12px;
+  padding: 10px 0 10px 28px;
+  font-size: 13.5px;
   line-height: 1.78;
   color: #6f6d66;
   border-top: 1px solid rgba(255, 255, 255, .05);
@@ -631,3 +631,118 @@ h1 em { font-style: normal; color: #f0a83a }
   .tabs { width: 100% }
   .tab { flex: 1 1 auto; justify-content: center }
 }
+
+/* ---------------------------------------------------------------- showcase */
+/* 了解 pane renders real cards here, so the states read as the product rather
+   than as screenshots of it. */
+.strip .cell { min-width: 0 }
+.strip .cell .dsp-card { width: 100% }
+
+.cell-cap {
+  display: block;
+  margin-top: 9px;
+  font-size: 12px;
+  line-height: 1.6;
+  color: #7d7b72;
+  text-align: center;
+}
+
+.cell-cap b { display: block; color: #a8a69d; font-weight: 600 }
+
+/* heading row that carries the variant pills for the states block */
+.sect h2.with-pills {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 16px;
+}
+
+.pills {
+  display: inline-flex;
+  gap: 5px;
+  padding: 3px;
+  border-radius: 999px;
+  border: 1px solid rgba(255, 255, 255, .1);
+  background: rgba(255, 255, 255, .03);
+  flex: 0 0 auto;
+}
+
+.pills button {
+  appearance: none;
+  border: 0;
+  width: 30px;
+  height: 24px;
+  border-radius: 999px;
+  background: transparent;
+  color: #8b887e;
+  font: inherit;
+  font-size: 12px;
+  font-weight: 650;
+  cursor: pointer;
+  transition: background .14s, color .14s;
+}
+
+.pills button:hover { color: #faf9f5 }
+
+.pills button.on {
+  background: rgba(240, 168, 58, .18);
+  color: #f0a83a;
+}
+
+/* the arrow that points at the card until 武装 is clicked */
+.armhint {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin: 12px 0 0;
+  padding: 11px 14px;
+  border-radius: 10px;
+  border: 1px solid rgba(240, 168, 58, .3);
+  background: rgba(240, 168, 58, .09);
+  font-size: 13px;
+  font-weight: 600;
+  color: #f0a83a;
+}
+
+.armhint[hidden] { display: none }
+
+.armhint svg { flex: 0 0 auto; animation: tap-nudge 2.2s ease-in-out infinite }
+
+/* secondary control next to the main button */
+.stop {
+  appearance: none;
+  display: block;
+  width: 100%;
+  margin-top: 10px;
+  padding: 10px 16px;
+  border-radius: 10px;
+  border: 1px solid rgba(255, 255, 255, .12);
+  background: transparent;
+  color: #8b887e;
+  font: inherit;
+  font-size: 13px;
+  cursor: pointer;
+  transition: color .14s, border-color .14s;
+}
+
+.stop:hover { color: #faf9f5; border-color: rgba(255, 255, 255, .22) }
+
+/* the 武装 button pulses while the demo waits for that click */
+.dsp-btn-hint {
+  animation: arm-pulse 1.9s ease-in-out infinite;
+}
+
+@keyframes arm-pulse {
+  0%, 100% { box-shadow: 0 0 0 0 rgba(240, 168, 58, .55) }
+  55% { box-shadow: 0 0 0 7px rgba(240, 168, 58, 0) }
+}
+
+.sect a { color: #f0a83a; text-decoration: none; border-bottom: 1px solid rgba(240, 168, 58, .4) }
+.sect a:hover { color: #ffc469 }
+.stop:disabled {
+  color: #5c5a54;
+  border-color: rgba(255, 255, 255, .06);
+  cursor: default;
+}
+
+.stop:disabled:hover { color: #5c5a54; border-color: rgba(255, 255, 255, .06) }

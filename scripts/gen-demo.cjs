@@ -72,26 +72,27 @@ const aboutPane = `<div class="about">
   </div>
 
   <div class="sect full">
-    <h2><span>03</span>六种运行状态</h2>
+    <h2><span>03</span>三种外观</h2>
     <div class="strip three">
-      ${img('01-off.png', '<b>未开启</b> · 什么都没做')}
-      ${img('02-armed.png', '<b>待命</b> · 已武装，等任务结束')}
-      ${img('03-hold.png', '<b>等待后台任务</b> · 任务还在跑，先不关')}
-      ${img('04-fire.png', '<b>倒计时</b> · 已下发，可撤销')}
-      ${img('05-fired.png', '<b>已下发</b> · 指令生效，无法取消')}
-      ${img('08-blocked-halted.png', '<b>阻断</b> · 遇到必须人处理的事')}
+      ${img('02-armed.png', '<b>A · 警戒带</b>大字状态 + 底部滚动的红黄斜纹')}
+      ${img('06-variant-b-radar.png', '<b>B · 雷达</b>同心圆 + 扫描光束，任务以圆点呈现')}
+      ${img('07-variant-c-terminal.png', '<b>C · 终端</b>命令行摘要 + 六段判定指示灯')}
     </div>
-    <p>倒计时期间随时可取消，<b>取消后仍保持武装</b>——下一批任务干完照样会关。</p>
+    <p>雷达里的圆点按数量增删、不重排：数量变化时，你正在看的那几个点不会跳位置。设置里切换，立即生效，无需重启。</p>
+    <p>想自己动手试试？打开 <a href="#try">试一试</a> —— 换外观、掷状态、看日志，都是本地随机的，不联网。</p>
   </div>
 
   <div class="sect full">
-    <h2><span>04</span>三种外观</h2>
-    <div class="strip three">
-      ${img('02-armed.png', '<b>A · 警戒带</b> —— 大字状态 + 底部红黄斜纹')}
-      ${img('06-variant-b-radar.png', '<b>B · 雷达</b> —— 同心圆 + 扫描光束')}
-      ${img('07-variant-c-terminal.png', '<b>C · 终端</b> —— 命令行摘要 + 六段指示灯')}
-    </div>
-    <p>雷达里的圆点按数量增删、不重排：数量变化时，你正在看的那几个点不会跳位置。设置里切换，立即生效，无需重启。</p>
+    <h2 class="with-pills">
+      <span><span>04</span>六种运行状态</span>
+      <span class="pills" id="show-variant-pills" role="group" aria-label="用哪种外观预览">
+        <button data-v="A" class="on">A</button>
+        <button data-v="B">B</button>
+        <button data-v="C">C</button>
+      </span>
+    </h2>
+    <div class="strip three" id="show-states"></div>
+    <p>倒计时期间随时可取消，<b>取消后仍保持武装</b>——下一批任务干完照样会关。</p>
   </div>
 
   <div class="sect">
@@ -122,11 +123,9 @@ const aboutPane = `<div class="about">
     <p>卡片目前固定在侧边栏的这个位置。后续计划把它做成可以独立出现的形态，届时这里会补充说明。</p>
   </div>
 
-  <div class="slide full">
-    <div class="install">
-      <span>设置 → 插件 → 添加，填<b>插件目录的绝对路径</b> → 安装 → 重启 DSH。客户端的 bundle 只在启动时编入模块图，改完代码必须重启，刷新页面无效。</span>
-      <span class="go"><a href="https://github.com/ltayshark0637/dsh-Shutdown-Guard">完整说明在 GitHub →</a></span>
-    </div>
+  <div class="install full">
+    <span>设置 → 插件 → 添加，填<b>插件目录的绝对路径</b> → 安装 → 重启 DSH。客户端的 bundle 只在启动时编入模块图，改完代码必须重启，刷新页面无效。</span>
+    <span class="go"><a href="https://github.com/ltayshark0637/dsh-Shutdown-Guard">完整说明在 GitHub →</a></span>
   </div>
 
 </div>`
@@ -148,24 +147,25 @@ const tryPane = `<div class="main">
     </div>
 
     <div class="block">
-      <div class="blabel">状态</div>
-      <div class="tryhint">
-        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 5v14M5 12l7 7 7-7"/></svg>
-        点这里试一试
+      <div class="blabel">场景</div>
+      <button class="roll" id="roll">随机一个场景</button>
+      <div class="armhint" id="arm-hint" hidden>
+        <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M19 12H5M11 18l-6-6 6-6"/></svg>
+        去左边点卡片上的「武装」开始检测
       </div>
-      <button class="roll" id="roll">随机一个状态</button>
-      <div class="now" id="now" role="status" aria-live="polite">正在模拟 <b>等待后台任务</b></div>
+      <div class="now" id="now" role="status" aria-live="polite">当前 <b>未开启</b></div>
+      <button class="stop" id="stop">解除</button>
     </div>
 
     <div class="block">
-      <div class="blabel">运行日志</div>
+      <div class="blabel">模拟日志</div>
       <ul class="log" id="log"><li class="empty">还没有记录</li></ul>
       <ol class="tips">
-        <li><b>左边是它真正待的地方</b>：技能中心下方、会话列表上方。目前卡片固定在这个位置；后续会支持让它独立出现，届时这里的交互会跟着变。卡片上的按钮在这页只是样子，真正的交互在右边。</li>
-        <li>每次点击掷一次：<b>三成概率</b>落进阻断态，其余在未开启 / 待命 / 等待后台任务 / 倒计时 / 已下发之间分布。</li>
-        <li>后台任务数与会话数各自 <b>0–9 随机</b>；两者都大于 0 时才会进入「等待后台任务」。</li>
-        <li>抽到倒计时会真的走秒，走完自动转为「已下发」并记一条日志。</li>
-        <li>真实插件的日志在 <code>设置 → 状态</code>，完整流水写在 <code>data/events.log</code>。</li>
+        <li><b>左边是它真正待的地方</b>：技能中心下方、会话列表上方。目前卡片固定在这个位置；后续会支持让它独立出现，届时这里的交互会跟着变。<b>这页的卡片可以点</b>，武装、取消、解除都在左边操作。</li>
+        <li>流程：<b>随机场景</b> → 点卡片上的<b>武装</b> → 开始检测 → 后台任务与会话逐个减少 → 全部结束后进入倒计时 → 下发。</li>
+        <li>检测途中会有小概率撞上阻断态：<code>halted</code> 要你点「解除并重试」，<code>waiting</code> 过几秒自己恢复。</li>
+        <li>倒计时期间你可以随时「取消关机」，模式仍保持武装；也可能撞上阻断。</li>
+        <li>真实插件的日志在 <code>设置 → 状态</code>，完整流水写在 <code>data/events.log</code>。这里倒计时用 12 秒，插件默认 60 秒。</li>
       </ol>
     </div>
   </div>

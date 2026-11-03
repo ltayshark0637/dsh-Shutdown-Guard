@@ -102,8 +102,8 @@ h1 em { font-style: normal; color: #f0a83a }
 
 .lede {
   margin: 15px 0 0;
-  max-width: 620px;
-  font-size: 13.5px;
+  max-width: 680px;
+  font-size: 15px;
   line-height: 1.82;
   color: #c2c0b6;
 }
@@ -186,7 +186,7 @@ h1 em { font-style: normal; color: #f0a83a }
 
 .sect h2 {
   margin: 0 0 12px;
-  font-size: 15.5px;
+  font-size: 17px;
   font-weight: 650;
   letter-spacing: -.005em;
   color: #faf9f5;
@@ -203,8 +203,8 @@ h1 em { font-style: normal; color: #f0a83a }
 }
 
 .sect p {
-  margin: 0 0 12px;
-  font-size: 13px;
+  margin: 0 0 13px;
+  font-size: 14.5px;
   line-height: 1.85;
   color: #b8b6ac;
 }
@@ -232,9 +232,9 @@ h1 em { font-style: normal; color: #f0a83a }
 .gates li {
   counter-increment: gate;
   position: relative;
-  padding: 7px 0 7px 30px;
-  font-size: 13px;
-  line-height: 1.7;
+  padding: 9px 0 9px 32px;
+  font-size: 14.5px;
+  line-height: 1.75;
   color: #b8b6ac;
   border-top: 1px solid rgba(255, 255, 255, .055);
 }
@@ -285,7 +285,7 @@ h1 em { font-style: normal; color: #f0a83a }
 }
 
 .shot span {
-  font-size: 11px;
+  font-size: 12.5px;
   line-height: 1.55;
   color: #7d7b72;
   text-align: center;
@@ -301,9 +301,9 @@ h1 em { font-style: normal; color: #f0a83a }
 }
 
 .levels li {
-  padding: 9px 0;
-  font-size: 12.5px;
-  line-height: 1.75;
+  padding: 11px 0;
+  font-size: 14px;
+  line-height: 1.8;
   color: #b8b6ac;
   border-top: 1px solid rgba(255, 255, 255, .055);
 }
@@ -329,7 +329,7 @@ h1 em { font-style: normal; color: #f0a83a }
   border-radius: 12px;
   border: 1px solid rgba(255, 168, 58, .2);
   background: rgba(240, 168, 58, .055);
-  font-size: 12.5px;
+  font-size: 14px;
   line-height: 1.8;
   color: #c2c0b6;
 }
@@ -500,7 +500,7 @@ h1 em { font-style: normal; color: #f0a83a }
   display: flex;
   gap: 10px;
   padding: 10px 15px;
-  font-size: 12.5px;
+  font-size: 13.5px;
   color: #a8a69d;
   border-top: 1px solid rgba(255, 255, 255, .05);
 }
@@ -543,8 +543,8 @@ h1 em { font-style: normal; color: #f0a83a }
 .tips li {
   counter-increment: tip;
   position: relative;
-  padding: 9px 0 9px 26px;
-  font-size: 12px;
+  padding: 10px 0 10px 28px;
+  font-size: 13.5px;
   line-height: 1.78;
   color: #6f6d66;
   border-top: 1px solid rgba(255, 255, 255, .05);
@@ -638,6 +638,120 @@ h1 em { font-style: normal; color: #f0a83a }
   .tab { flex: 1 1 auto; justify-content: center }
 }
 
+/* ---------------------------------------------------------------- showcase */
+/* 了解 pane renders real cards here, so the states read as the product rather
+   than as screenshots of it. */
+.strip .cell { min-width: 0 }
+.strip .cell .dsp-card { width: 100% }
+
+.cell-cap {
+  display: block;
+  margin-top: 9px;
+  font-size: 12px;
+  line-height: 1.6;
+  color: #7d7b72;
+  text-align: center;
+}
+
+.cell-cap b { display: block; color: #a8a69d; font-weight: 600 }
+
+/* heading row that carries the variant pills for the states block */
+.sect h2.with-pills {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 16px;
+}
+
+.pills {
+  display: inline-flex;
+  gap: 5px;
+  padding: 3px;
+  border-radius: 999px;
+  border: 1px solid rgba(255, 255, 255, .1);
+  background: rgba(255, 255, 255, .03);
+  flex: 0 0 auto;
+}
+
+.pills button {
+  appearance: none;
+  border: 0;
+  width: 30px;
+  height: 24px;
+  border-radius: 999px;
+  background: transparent;
+  color: #8b887e;
+  font: inherit;
+  font-size: 12px;
+  font-weight: 650;
+  cursor: pointer;
+  transition: background .14s, color .14s;
+}
+
+.pills button:hover { color: #faf9f5 }
+
+.pills button.on {
+  background: rgba(240, 168, 58, .18);
+  color: #f0a83a;
+}
+
+/* the arrow that points at the card until 武装 is clicked */
+.armhint {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin: 12px 0 0;
+  padding: 11px 14px;
+  border-radius: 10px;
+  border: 1px solid rgba(240, 168, 58, .3);
+  background: rgba(240, 168, 58, .09);
+  font-size: 13px;
+  font-weight: 600;
+  color: #f0a83a;
+}
+
+.armhint[hidden] { display: none }
+
+.armhint svg { flex: 0 0 auto; animation: tap-nudge 2.2s ease-in-out infinite }
+
+/* secondary control next to the main button */
+.stop {
+  appearance: none;
+  display: block;
+  width: 100%;
+  margin-top: 10px;
+  padding: 10px 16px;
+  border-radius: 10px;
+  border: 1px solid rgba(255, 255, 255, .12);
+  background: transparent;
+  color: #8b887e;
+  font: inherit;
+  font-size: 13px;
+  cursor: pointer;
+  transition: color .14s, border-color .14s;
+}
+
+.stop:hover { color: #faf9f5; border-color: rgba(255, 255, 255, .22) }
+
+/* the 武装 button pulses while the demo waits for that click */
+.dsp-btn-hint {
+  animation: arm-pulse 1.9s ease-in-out infinite;
+}
+
+@keyframes arm-pulse {
+  0%, 100% { box-shadow: 0 0 0 0 rgba(240, 168, 58, .55) }
+  55% { box-shadow: 0 0 0 7px rgba(240, 168, 58, 0) }
+}
+
+.sect a { color: #f0a83a; text-decoration: none; border-bottom: 1px solid rgba(240, 168, 58, .4) }
+.sect a:hover { color: #ffc469 }
+.stop:disabled {
+  color: #5c5a54;
+  border-color: rgba(255, 255, 255, .06);
+  cursor: default;
+}
+
+.stop:disabled:hover { color: #5c5a54; border-color: rgba(255, 255, 255, .06) }
 </style>
 <style>
 
@@ -874,26 +988,27 @@ box-shadow:0 0 7px color-mix(in srgb, var(--dsp-accent) 90%, transparent)}
   </div>
 
   <div class="sect full">
-    <h2><span>03</span>六种运行状态</h2>
+    <h2><span>03</span>三种外观</h2>
     <div class="strip three">
-      <div class="shot"><img src="screenshots/01-off.png" alt="<b>未开启</b> · 什么都没做" loading="lazy"><span><b>未开启</b> · 什么都没做</span></div>
-      <div class="shot"><img src="screenshots/02-armed.png" alt="<b>待命</b> · 已武装，等任务结束" loading="lazy"><span><b>待命</b> · 已武装，等任务结束</span></div>
-      <div class="shot"><img src="screenshots/03-hold.png" alt="<b>等待后台任务</b> · 任务还在跑，先不关" loading="lazy"><span><b>等待后台任务</b> · 任务还在跑，先不关</span></div>
-      <div class="shot"><img src="screenshots/04-fire.png" alt="<b>倒计时</b> · 已下发，可撤销" loading="lazy"><span><b>倒计时</b> · 已下发，可撤销</span></div>
-      <div class="shot"><img src="screenshots/05-fired.png" alt="<b>已下发</b> · 指令生效，无法取消" loading="lazy"><span><b>已下发</b> · 指令生效，无法取消</span></div>
-      <div class="shot"><img src="screenshots/08-blocked-halted.png" alt="<b>阻断</b> · 遇到必须人处理的事" loading="lazy"><span><b>阻断</b> · 遇到必须人处理的事</span></div>
+      <div class="shot"><img src="screenshots/02-armed.png" alt="<b>A · 警戒带</b>大字状态 + 底部滚动的红黄斜纹" loading="lazy"><span><b>A · 警戒带</b>大字状态 + 底部滚动的红黄斜纹</span></div>
+      <div class="shot"><img src="screenshots/06-variant-b-radar.png" alt="<b>B · 雷达</b>同心圆 + 扫描光束，任务以圆点呈现" loading="lazy"><span><b>B · 雷达</b>同心圆 + 扫描光束，任务以圆点呈现</span></div>
+      <div class="shot"><img src="screenshots/07-variant-c-terminal.png" alt="<b>C · 终端</b>命令行摘要 + 六段判定指示灯" loading="lazy"><span><b>C · 终端</b>命令行摘要 + 六段判定指示灯</span></div>
     </div>
-    <p>倒计时期间随时可取消，<b>取消后仍保持武装</b>——下一批任务干完照样会关。</p>
+    <p>雷达里的圆点按数量增删、不重排：数量变化时，你正在看的那几个点不会跳位置。设置里切换，立即生效，无需重启。</p>
+    <p>想自己动手试试？打开 <a href="#try">试一试</a> —— 换外观、掷状态、看日志，都是本地随机的，不联网。</p>
   </div>
 
   <div class="sect full">
-    <h2><span>04</span>三种外观</h2>
-    <div class="strip three">
-      <div class="shot"><img src="screenshots/02-armed.png" alt="<b>A · 警戒带</b> —— 大字状态 + 底部红黄斜纹" loading="lazy"><span><b>A · 警戒带</b> —— 大字状态 + 底部红黄斜纹</span></div>
-      <div class="shot"><img src="screenshots/06-variant-b-radar.png" alt="<b>B · 雷达</b> —— 同心圆 + 扫描光束" loading="lazy"><span><b>B · 雷达</b> —— 同心圆 + 扫描光束</span></div>
-      <div class="shot"><img src="screenshots/07-variant-c-terminal.png" alt="<b>C · 终端</b> —— 命令行摘要 + 六段指示灯" loading="lazy"><span><b>C · 终端</b> —— 命令行摘要 + 六段指示灯</span></div>
-    </div>
-    <p>雷达里的圆点按数量增删、不重排：数量变化时，你正在看的那几个点不会跳位置。设置里切换，立即生效，无需重启。</p>
+    <h2 class="with-pills">
+      <span><span>04</span>六种运行状态</span>
+      <span class="pills" id="show-variant-pills" role="group" aria-label="用哪种外观预览">
+        <button data-v="A" class="on">A</button>
+        <button data-v="B">B</button>
+        <button data-v="C">C</button>
+      </span>
+    </h2>
+    <div class="strip three" id="show-states"></div>
+    <p>倒计时期间随时可取消，<b>取消后仍保持武装</b>——下一批任务干完照样会关。</p>
   </div>
 
   <div class="sect">
@@ -924,11 +1039,9 @@ box-shadow:0 0 7px color-mix(in srgb, var(--dsp-accent) 90%, transparent)}
     <p>卡片目前固定在侧边栏的这个位置。后续计划把它做成可以独立出现的形态，届时这里会补充说明。</p>
   </div>
 
-  <div class="slide full">
-    <div class="install">
-      <span>设置 → 插件 → 添加，填<b>插件目录的绝对路径</b> → 安装 → 重启 DSH。客户端的 bundle 只在启动时编入模块图，改完代码必须重启，刷新页面无效。</span>
-      <span class="go"><a href="https://github.com/ltayshark0637/dsh-Shutdown-Guard">完整说明在 GitHub →</a></span>
-    </div>
+  <div class="install full">
+    <span>设置 → 插件 → 添加，填<b>插件目录的绝对路径</b> → 安装 → 重启 DSH。客户端的 bundle 只在启动时编入模块图，改完代码必须重启，刷新页面无效。</span>
+    <span class="go"><a href="https://github.com/ltayshark0637/dsh-Shutdown-Guard">完整说明在 GitHub →</a></span>
   </div>
 
 </div>
@@ -964,24 +1077,25 @@ box-shadow:0 0 7px color-mix(in srgb, var(--dsp-accent) 90%, transparent)}
     </div>
 
     <div class="block">
-      <div class="blabel">状态</div>
-      <div class="tryhint">
-        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 5v14M5 12l7 7 7-7"/></svg>
-        点这里试一试
+      <div class="blabel">场景</div>
+      <button class="roll" id="roll">随机一个场景</button>
+      <div class="armhint" id="arm-hint" hidden>
+        <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M19 12H5M11 18l-6-6 6-6"/></svg>
+        去左边点卡片上的「武装」开始检测
       </div>
-      <button class="roll" id="roll">随机一个状态</button>
-      <div class="now" id="now" role="status" aria-live="polite">正在模拟 <b>等待后台任务</b></div>
+      <div class="now" id="now" role="status" aria-live="polite">当前 <b>未开启</b></div>
+      <button class="stop" id="stop">解除</button>
     </div>
 
     <div class="block">
-      <div class="blabel">运行日志</div>
+      <div class="blabel">模拟日志</div>
       <ul class="log" id="log"><li class="empty">还没有记录</li></ul>
       <ol class="tips">
-        <li><b>左边是它真正待的地方</b>：技能中心下方、会话列表上方。目前卡片固定在这个位置；后续会支持让它独立出现，届时这里的交互会跟着变。卡片上的按钮在这页只是样子，真正的交互在右边。</li>
-        <li>每次点击掷一次：<b>三成概率</b>落进阻断态，其余在未开启 / 待命 / 等待后台任务 / 倒计时 / 已下发之间分布。</li>
-        <li>后台任务数与会话数各自 <b>0–9 随机</b>；两者都大于 0 时才会进入「等待后台任务」。</li>
-        <li>抽到倒计时会真的走秒，走完自动转为「已下发」并记一条日志。</li>
-        <li>真实插件的日志在 <code>设置 → 状态</code>，完整流水写在 <code>data/events.log</code>。</li>
+        <li><b>左边是它真正待的地方</b>：技能中心下方、会话列表上方。目前卡片固定在这个位置；后续会支持让它独立出现，届时这里的交互会跟着变。<b>这页的卡片可以点</b>，武装、取消、解除都在左边操作。</li>
+        <li>流程：<b>随机场景</b> → 点卡片上的<b>武装</b> → 开始检测 → 后台任务与会话逐个减少 → 全部结束后进入倒计时 → 下发。</li>
+        <li>检测途中会有小概率撞上阻断态：<code>halted</code> 要你点「解除并重试」，<code>waiting</code> 过几秒自己恢复。</li>
+        <li>倒计时期间你可以随时「取消关机」，模式仍保持武装；也可能撞上阻断。</li>
+        <li>真实插件的日志在 <code>设置 → 状态</code>，完整流水写在 <code>data/events.log</code>。这里倒计时用 12 秒，插件默认 60 秒。</li>
       </ol>
     </div>
   </div>
@@ -1000,8 +1114,8 @@ box-shadow:0 0 7px color-mix(in srgb, var(--dsp-accent) 90%, transparent)}
 <script>
 // Interactive demo for the sidebar card.
 // Everything here mirrors lib/client.js: same class names, same markup shape,
-// same state names. Only the data source differs — this one is a dice roll.
-;(function () {
+// same state names. Only the data source differs — this one is a simulation.
+; (function () {
   'use strict'
 
   var CHEV =
@@ -1025,7 +1139,7 @@ box-shadow:0 0 7px color-mix(in srgb, var(--dsp-accent) 90%, transparent)}
   }
   var BLOCK_TEXT = {
     halted: ['已暂停', '账户额度不足，需充值后解除'],
-    waiting: ['等待恢复', '请求过于频繁，30 秒后自动重试'],
+    waiting: ['等待恢复', '请求过于频繁，稍后自动重试'],
   }
 
   function pad2(n) { return n < 10 ? '0' + n : String(n) }
@@ -1038,18 +1152,18 @@ box-shadow:0 0 7px color-mix(in srgb, var(--dsp-accent) 90%, transparent)}
   // ---------------------------------------------------------------- body
   function bodyHtml(s) {
     var v = s.view
-    var jobs = s.jobs
-    var agent = s.agent
+    var jobs = s.jobs || 0
+    var agent = s.agent || 0
 
     if (s.variant === 'B') {
       var hud
       if (v === 'blocked') {
         hud = '<b>' + (s.blocked === 'waiting' ? 'Retrying' : 'Paused') + '</b><span>' +
-          (s.blocked === 'waiting' ? '30 秒后重试' : '需人工处理') + '</span>'
+          (s.blocked === 'waiting' ? '稍后重试' : '需人工处理') + '</span>'
       } else if (v === 'hold') {
         hud = '<b>Holding</b><span>jobs ' + jobs + ' · agent ' + agent + '</span>'
       } else if (v === 'fire') {
-        hud = '<b>' + clock(s.sec) + '</b><span>T-minus</span>'
+        hud = '<b>' + clock(s.sec || 0) + '</b><span>T-minus</span>'
       } else if (v === 'fired') {
         hud = '<b>Fired</b><span>已下发</span>'
       } else if (v === 'off') {
@@ -1067,7 +1181,7 @@ box-shadow:0 0 7px color-mix(in srgb, var(--dsp-accent) 90%, transparent)}
 
     if (s.variant === 'C') {
       var l2 = 'jobs ' + jobs + ' · agent ' + agent
-      var l3 = v === 'fire' ? 'T-minus ' + clock(s.sec)
+      var l3 = v === 'fire' ? 'T-minus ' + clock(s.sec || 0)
         : v === 'hold' ? 'holding'
           : v === 'off' ? 'offline'
             : v === 'blocked' ? (s.blocked === 'waiting' ? 'retrying' : 'halted')
@@ -1090,7 +1204,7 @@ box-shadow:0 0 7px color-mix(in srgb, var(--dsp-accent) 90%, transparent)}
 
     var text
     if (v === 'blocked') text = BLOCK_TEXT[s.blocked]
-    else if (v === 'fire') text = [clock(s.sec), '系统即将关机 · 可撤销']
+    else if (v === 'fire') text = [clock(s.sec || 0), '系统即将关机 · 可撤销']
     else if (v === 'hold') {
       var bits = []
       if (jobs) bits.push(jobs + ' 个后台任务')
@@ -1106,8 +1220,8 @@ box-shadow:0 0 7px color-mix(in srgb, var(--dsp-accent) 90%, transparent)}
   // three bands so a few dots do not pile up in the middle.
   function dots(s) {
     var out = ''
-    var total = Math.min(s.jobs, 9)
-    var runs = Math.min(s.agent, 9)
+    var total = Math.min(s.jobs || 0, 9)
+    var runs = Math.min(s.agent || 0, 9)
     var i
     for (i = 0; i < total; i++) {
       var a = (i / Math.max(total, 1)) * Math.PI * 2 + 0.6
@@ -1128,14 +1242,16 @@ box-shadow:0 0 7px color-mix(in srgb, var(--dsp-accent) 90%, transparent)}
   function card(s) {
     var v = s.view
     var tag = v === 'blocked' ? (s.blocked === 'waiting' ? 'RETRY' : 'PAUSED') : TAG[v]
+    var hint = s.btnHint ? ' dsp-btn-hint' : ''
     var btn
-    if (v === 'off') btn = '<button class="dsp-btn dsp-btn-primary">武装</button>'
-    else if (v === 'fire') btn = '<button class="dsp-btn dsp-btn-danger">取消关机</button>'
+    if (v === 'off') btn = '<button class="dsp-btn dsp-btn-primary' + hint + '" data-act="arm">武装</button>'
+    else if (v === 'fire') btn = '<button class="dsp-btn dsp-btn-danger" data-act="cancel">取消关机</button>'
     else if (v === 'blocked') {
-      btn = '<button class="dsp-btn">' + (s.blocked === 'halted' ? '解除并重试' : '解除') + '</button>'
-    } else btn = '<button class="dsp-btn dsp-btn-danger">解除</button>'
+      btn = '<button class="dsp-btn" data-act="' + (s.blocked === 'halted' ? 'retry' : 'disarm') + '">' +
+        (s.blocked === 'halted' ? '解除并重试' : '解除') + '</button>'
+    } else btn = '<button class="dsp-btn dsp-btn-danger" data-act="disarm">解除</button>'
 
-    return '<div class="dsp-card" data-state="' + v + '" data-variant="' + s.variant +
+    return '<div class="dsp-card" data-state="' + v + '" data-variant="' + (s.variant || 'A') +
       '" data-lum="dark" data-retry="' + ((v === 'blocked' && s.blocked === 'waiting') ? '1' : '0') + '">' +
       '<div class="dsp-chead"><i class="dsp-live"></i><span class="dsp-ctitle">任务完成后关机</span>' +
       '<span class="dsp-tag">' + tag + '</span>' + CHEV + '</div>' +
@@ -1145,8 +1261,18 @@ box-shadow:0 0 7px color-mix(in srgb, var(--dsp-accent) 90%, transparent)}
   }
 
   // ---------------------------------------------------------------- state
-  var state = { variant: 'A', view: 'armed', blocked: null, jobs: 0, agent: 0, sec: 42 }
-  var timer = null
+  // phase walks the story the demo is telling:
+  //   idle → ready → detect → countdown → fired
+  //                     ↘ blocked → (retry) → detect
+  var COUNTDOWN = 12      // seconds; the real plugin defaults to 60
+  var TICK_MS = 1100      // how fast jobs/sessions drain
+  var BLOCK_ODDS = 0.06   // per tick, only while detecting
+
+  var state = { variant: 'A', view: 'off', blocked: null, jobs: 0, agent: 0, sec: 0, phase: 'idle', btnHint: false }
+  var showVariant = 'A'
+  var ticker = null
+  var counter = null
+  var retrier = null
 
   var LABEL = {
     off: '未开启', armed: '待命', hold: '等待后台任务', fire: '倒计时', fired: '已下发',
@@ -1171,20 +1297,28 @@ box-shadow:0 0 7px color-mix(in srgb, var(--dsp-accent) 90%, transparent)}
     return ''
   }
 
-  var slot, nowEl, logEl
+  var slot, nowEl, logEl, hintEl, stopEl
 
   function paint() {
     slot.innerHTML = card(state)
     nowEl.className = 'now ' + tone(state)
-    nowEl.innerHTML = '正在模拟 <b>' + esc(describe(state)) + '</b>'
+    nowEl.innerHTML = '当前 <b>' + esc(describe(state)) + '</b>'
+    if (hintEl) {
+      // the nudge appears only while the card is waiting for the 武装 click
+      hintEl.hidden = state.phase !== 'ready'
+    }
+    if (stopEl) {
+      // nothing to stop while idle or already fired
+      var idle = state.phase === 'idle' || state.phase === 'ready' || state.phase === 'fired'
+      stopEl.disabled = idle
+      stopEl.textContent = state.phase === 'fired' ? '已下发，无需解除' : '解除'
+    }
   }
 
   function stamp() {
     var d = new Date()
     return pad2(d.getHours()) + ':' + pad2(d.getMinutes()) + ':' + pad2(d.getSeconds())
   }
-
-  var KINDS = ['armed', 'fire', 'wait', 'halted']
 
   function log(text, kind) {
     var empty = logEl.querySelector('.empty')
@@ -1193,77 +1327,243 @@ box-shadow:0 0 7px color-mix(in srgb, var(--dsp-accent) 90%, transparent)}
     li.innerHTML = '<span class="t">' + stamp() + '</span><span class="k ' + (kind || '') +
       '"></span><span>' + esc(text) + '</span>'
     logEl.insertBefore(li, logEl.firstChild)
-    while (logEl.children.length > 7) logEl.removeChild(logEl.lastChild)
+    while (logEl.children.length > 12) logEl.removeChild(logEl.lastChild)
   }
 
-  // ---------------------------------------------------------------- dice
+  // ---------------------------------------------------------------- timers
+  function stopAll() {
+    if (ticker) { clearInterval(ticker); ticker = null }
+    if (counter) { clearInterval(counter); counter = null }
+    if (retrier) { clearTimeout(retrier); retrier = null }
+  }
+
   function rnd(n) { return Math.floor(Math.random() * n) }
 
-  function roll() {
-    var s = { variant: state.variant, jobs: rnd(10), agent: rnd(10), sec: 5 + rnd(56) }
+  // ---------------------------------------------------------------- steps
+  function randomize() {
+    stopAll()
+    state.jobs = 2 + rnd(7)          // 2..8 background jobs
+    state.agent = 1 + rnd(6)         // 1..6 running sessions
+    state.view = 'off'
+    state.blocked = null
+    state.sec = 0
+    state.phase = 'ready'
+    state.btnHint = true
+    paint()
+    log('随机成功：' + state.jobs + ' 个后台任务、' + state.agent + ' 个会话在跑', 'armed')
+    log('点卡片上的「武装」开始检测', 'armed')
+  }
 
-    if (Math.random() < 0.3) {
-      s.view = 'blocked'
-      s.blocked = Math.random() < 0.5 ? 'halted' : 'waiting'
-      s.jobs = 0
-      s.agent = 0
-      return s
+  function arm() {
+    if (state.phase !== 'ready' && state.phase !== 'idle') return
+    state.phase = 'detect'
+    state.btnHint = false
+    sync()
+    log('已武装，开始检测：等所有任务结束再关机', 'armed')
+    startDetect()
+  }
+
+  function sync() {
+    // view follows the counters; this is the same rule the real card uses
+    if (state.phase === 'blocked') return
+    if (state.phase === 'fired') { state.view = 'fired'; return }
+    if (state.phase === 'countdown') { state.view = 'fire'; return }
+    if (state.phase === 'parked') { state.view = 'armed'; return }
+    if (state.phase === 'detect') {
+      state.view = (state.jobs > 0 || state.agent > 0) ? 'hold' : 'armed'
+      return
+    }
+    state.view = 'off'
+  }
+
+  function startDetect() {
+    stopAll()
+    ticker = setInterval(step, TICK_MS)
+  }
+
+  function step() {
+    if (state.phase !== 'detect') return
+
+    if (Math.random() < BLOCK_ODDS) {
+      enterBlocked(Math.random() < 0.5 ? 'halted' : 'waiting')
+      return
     }
 
-    s.blocked = null
-    var pick = Math.random()
-    if (pick < 0.18) {
-      s.view = 'off'
-      s.jobs = 0
-      s.agent = 0
-    } else if (pick < 0.82) {
-      // armed or holding, decided by whether anything is still running
-      s.view = (s.jobs > 0 || s.agent > 0) ? 'hold' : 'armed'
-    } else if (pick < 0.92) {
-      s.view = 'fire'
-      // the countdown only starts once nothing is left running
-      s.jobs = 0
-      s.agent = 0
+    if (state.jobs > 0) {
+      state.jobs -= 1
+      log('一个后台任务结束，还剩 ' + state.jobs + ' 个', 'wait')
+    } else if (state.agent > 0) {
+      state.agent -= 1
+      log('一个会话结束，还剩 ' + state.agent + ' 个', 'wait')
     } else {
-      s.view = 'fired'
-      s.jobs = 0
-      s.agent = 0
+      beginCountdown()
+      return
     }
-    return s
+
+    if (state.jobs === 0 && state.agent === 0) {
+      sync()
+      paint()
+      beginCountdown()
+      return
+    }
+
+    sync()
+    paint()
   }
 
-  function applyRoll() {
-    if (timer) { clearInterval(timer); timer = null }
-    state = roll()
+  function beginCountdown() {
+    if (ticker) { clearInterval(ticker); ticker = null }
+    state.phase = 'countdown'
+    state.view = 'fire'
+    state.sec = COUNTDOWN
     paint()
-    log('抽取结果：' + describe(state), state.view === 'blocked' ? 'halted'
-      : state.view === 'fire' ? 'fire'
-        : state.view === 'hold' ? 'wait'
-          : state.view === 'armed' ? 'armed' : '')
-
-    if (state.view === 'fire') {
-      timer = setInterval(function () {
-        state.sec -= 1
-        if (state.sec <= 0) {
-          clearInterval(timer); timer = null
-          state.view = 'fired'
-          paint()
-          log('倒计时结束，关机指令已下发')
-          return
-        }
+    log('全部任务已结束，开始倒计时 ' + COUNTDOWN + ' 秒', 'fire')
+    counter = setInterval(function () {
+      state.sec -= 1
+      if (state.sec <= 0) {
+        if (counter) { clearInterval(counter); counter = null }
+        state.phase = 'fired'
+        state.view = 'fired'
+        state.sec = 0
         paint()
-      }, 1000)
+        log('倒计时结束，关机指令已下发', 'fire')
+        return
+      }
+      paint()
+    }, 1000)
+  }
+
+  function enterBlocked(level) {
+    if (ticker) { clearInterval(ticker); ticker = null }
+    state.phase = 'blocked'
+    state.blocked = level
+    state.view = 'blocked'
+    paint()
+    if (level === 'halted') {
+      log('阻断：账户额度不足，需人工处理后点「解除并重试」', 'halted')
+      return
+    }
+    log('阻断：请求过于频繁，4 秒后自动重试', 'wait')
+    retrier = setTimeout(function () {
+      retrier = null
+      state.phase = 'detect'
+      state.blocked = null
+      sync()
+      paint()
+      log('自动重试：继续检测', 'wait')
+      startDetect()
+    }, 4000)
+  }
+
+  function cancelCountdown() {
+    if (state.phase !== 'countdown') return
+    if (counter) { clearInterval(counter); counter = null }
+    state.sec = 0
+    log('已取消本次倒计时，模式仍保持武装', 'armed')
+    if (state.jobs === 0 && state.agent === 0) {
+      // Nothing left to wait for. Resting armed with an empty queue is a valid
+      // state — and re-arming the countdown here would fire again in 12s, which
+      // is exactly what the user just cancelled. Park instead.
+      state.phase = 'parked'
+      state.view = 'armed'
+      paint()
+      log('队列已空，停在待命；点「解除」退出，或重新随机一轮', 'armed')
+      return
+    }
+    state.phase = 'detect'
+    sync()
+    paint()
+    startDetect()
+  }
+
+  function disarm() {
+    stopAll()
+    state.phase = 'idle'
+    state.view = 'off'
+    state.blocked = null
+    state.jobs = 0
+    state.agent = 0
+    state.sec = 0
+    state.btnHint = false
+    paint()
+    log('已解除，停止检测', 'armed')
+  }
+
+  function retryHalted() {
+    if (state.phase !== 'blocked') return
+    state.blocked = null
+    state.phase = 'detect'
+    sync()
+    paint()
+    log('已解除阻断，继续检测', 'armed')
+    if (state.jobs === 0 && state.agent === 0) beginCountdown()
+    else startDetect()
+  }
+
+  // ---------------------------------------------------------------- card clicks
+  function onCardClick(e) {
+    var b = e.target.closest('[data-act]')
+    if (!b) return
+    var act = b.getAttribute('data-act')
+    if (act === 'arm') {
+      if (state.phase === 'idle') log('先点「随机一个场景」', 'armed')
+      else arm()
+    } else if (act === 'cancel') cancelCountdown()
+    else if (act === 'retry') retryHalted()
+    else if (act === 'disarm') disarm()
+  }
+
+  // ---------------------------------------------------------------- showcase
+  // The 三种外观 and 六种状态 blocks render the same markup as the card, so what
+  // you see there is what the plugin ships.
+  var SHOW_STATES = [
+    ['off', '未开启', '什么都没做'],
+    ['armed', '待命', '已武装，等任务结束'],
+    ['hold', '等待后台任务', '任务还在跑，先不关'],
+    ['fire', '倒计时', '已下发，可撤销'],
+    ['fired', '已下发', '指令生效，无法取消'],
+    ['blocked', '阻断', '遇到必须人处理的事'],
+  ]
+
+  function showcaseSpec(view) {
+    if (view === 'hold') return { view: 'hold', jobs: 2, agent: 3 }
+    if (view === 'fire') return { view: 'fire', sec: 42 }
+    if (view === 'blocked') return { view: 'blocked', blocked: 'halted' }
+    return { view: view }
+  }
+
+  function renderVariants() {
+    var host = document.getElementById('show-variants')
+    if (!host) return
+    host.innerHTML = ['A', 'B', 'C'].map(function (v) {
+      var s = v === 'A' ? { view: 'hold', jobs: 2, agent: 3 }
+        : v === 'B' ? { view: 'armed' }
+          : { view: 'armed', jobs: 2, agent: 3 }
+      s.variant = v
+      return '<div class="cell">' + card(s) + '<span class="cell-cap"><b>' + v + ' · ' +
+        (v === 'A' ? '警戒带' : v === 'B' ? '雷达' : '终端') + '</b>' +
+        (v === 'A' ? '大字状态 + 底部红黄斜纹' : v === 'B' ? '同心圆 + 扫描光束' : '命令行摘要 + 六段指示灯') +
+        '</span></div>'
+    }).join('')
+  }
+
+  function renderStates() {
+    var host = document.getElementById('show-states')
+    if (!host) return
+    host.innerHTML = SHOW_STATES.map(function (row) {
+      var s = showcaseSpec(row[0])
+      s.variant = showVariant
+      return '<div class="cell">' + card(s) + '<span class="cell-cap"><b>' + row[1] + '</b>' + row[2] + '</span></div>'
+    }).join('')
+    var btns = document.querySelectorAll('#show-variant-pills button')
+    for (var i = 0; i < btns.length; i++) {
+      btns[i].classList.toggle('on', btns[i].getAttribute('data-v') === showVariant)
     }
   }
 
-  function setVariant(v) {
-    state.variant = v
-    var btns = document.querySelectorAll('#variants button')
-    for (var i = 0; i < btns.length; i++) {
-      btns[i].classList.toggle('on', btns[i].getAttribute('data-v') === v)
-    }
-    paint()
-    log('切换外观：' + v, 'armed')
+  function setShowVariant(v) {
+    showVariant = v
+    renderStates()
   }
 
   // ---------------------------------------------------------------- tabs
@@ -1281,10 +1581,19 @@ box-shadow:0 0 7px color-mix(in srgb, var(--dsp-accent) 90%, transparent)}
     for (var j = 0; j < panes.length; j++) {
       panes[j].hidden = panes[j].id !== 'pane-' + name
     }
-    if (name === 'try') paint()
     if (history.replaceState) {
       history.replaceState(null, '', name === 'try' ? '#try' : '#about')
     }
+  }
+
+  function setVariant(v) {
+    state.variant = v
+    var btns = document.querySelectorAll('#variants button')
+    for (var i = 0; i < btns.length; i++) {
+      btns[i].classList.toggle('on', btns[i].getAttribute('data-v') === v)
+    }
+    paint()
+    log('切换外观：' + v, 'armed')
   }
 
   // ---------------------------------------------------------------- boot
@@ -1292,22 +1601,46 @@ box-shadow:0 0 7px color-mix(in srgb, var(--dsp-accent) 90%, transparent)}
     slot = document.getElementById('card-slot')
     nowEl = document.getElementById('now')
     logEl = document.getElementById('log')
+    hintEl = document.getElementById('arm-hint')
+    stopEl = document.getElementById('stop')
+
+    slot.addEventListener('click', onCardClick)
 
     var wrap = document.getElementById('variants')
-    wrap.addEventListener('click', function (e) {
-      var b = e.target.closest('button')
-      if (b) setVariant(b.getAttribute('data-v'))
-    })
-    document.getElementById('roll').addEventListener('click', applyRoll)
+    if (wrap) {
+      wrap.addEventListener('click', function (e) {
+        var b = e.target.closest('button')
+        if (b) setVariant(b.getAttribute('data-v'))
+      })
+    }
 
-    document.querySelector('.tabs').addEventListener('click', function (e) {
-      var b = e.target.closest('.tab')
-      if (b) setPane(b.getAttribute('data-pane'))
-    })
+    var rollBtn = document.getElementById('roll')
+    if (rollBtn) rollBtn.addEventListener('click', randomize)
 
-    state = { variant: 'A', view: 'hold', blocked: null, jobs: 2, agent: 3, sec: 42 }
+    var stopBtn = document.getElementById('stop')
+    if (stopBtn) stopBtn.addEventListener('click', disarm)
+    var pills = document.getElementById('show-variant-pills')
+    if (pills) {
+      pills.addEventListener('click', function (e) {
+        var b = e.target.closest('button')
+        if (b) setShowVariant(b.getAttribute('data-v'))
+      })
+    }
+
+    var tabsEl = document.querySelector('.tabs')
+    if (tabsEl) {
+      tabsEl.addEventListener('click', function (e) {
+        var b = e.target.closest('.tab')
+        if (b) setPane(b.getAttribute('data-pane'))
+      })
+    }
+
+    renderVariants()
+    renderStates()
+
+    state = { variant: 'A', view: 'off', blocked: null, jobs: 0, agent: 0, sec: 0, phase: 'idle', btnHint: false }
     paint()
-    log('演示已就绪，点「随机一个状态」开始', 'armed')
+    log('点「随机一个场景」开始', 'armed')
 
     // #try opens the playground directly — that is the link the README points at.
     if (location.hash === '#try') setPane('try')

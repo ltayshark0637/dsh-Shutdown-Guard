@@ -227,7 +227,7 @@ function page(title, sub, inner, extraCss = '') {
 // neighbours.
 const single = (inner, extra = '') => `<!doctype html><html lang="zh"><head><meta charset="utf-8">
 <style>${BASE_CSS}${SIDEBAR_CSS}body{display:inline-block;background:transparent}
-.wrap{padding:16px}.bare .frame{background:transparent;padding:0;width:auto}</style>
+.wrap{padding:16px}.bare .frame{background:transparent;padding:0;width:280px}</style>
 <style>${extra}</style><style>${CSS}</style></head><body><div class="wrap bare">${inner}</div></body></html>`
 
 const frame = (html, cls = '') => `<div class="frame ${cls}">${html}</div>`
