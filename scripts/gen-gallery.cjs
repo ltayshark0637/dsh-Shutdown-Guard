@@ -232,7 +232,9 @@ const single = (inner, extra = '') => `<!doctype html><html lang="zh"><head><met
 
 const frame = (html, cls = '') => `<div class="frame ${cls}">${html}</div>`
 const cardOnly = (c) => single(frame(card(c)))
-const sidebarOnly = (c) => single(`<div style="padding:8px">${sidebar(frame(card(c)))}</div>`)
+// No `.frame` here: it is 280px wide, and the sidebar is 264px, so wrapping the
+// card in one made it bleed past the sidebar edges.
+const sidebarOnly = (c) => single(`<div style="padding:8px">${sidebar(card(c))}</div>`)
 
 const shots = {
   // 1-5: the five running states, one picture each

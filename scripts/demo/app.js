@@ -125,25 +125,35 @@
   }
 
   // ---------------------------------------------------------------- card
+  // The card is built once per paint, but the hazard strip is kept alive across
+  // updates: replacing it restarts its CSS animation, which made the tape look
+  // like it jumped every time a counter ticked.
   function card(s) {
     var v = s.view
-    var tag = v === 'blocked' ? (s.blocked === 'waiting' ? 'RETRY' : 'PAUSED') : TAG[v]
-    var hint = s.btnHint ? ' dsp-btn-hint' : ''
-    var btn
-    if (v === 'off') btn = '<button class="dsp-btn dsp-btn-primary' + hint + '" data-act="arm">武装</button>'
-    else if (v === 'fire') btn = '<button class="dsp-btn dsp-btn-danger" data-act="cancel">取消关机</button>'
-    else if (v === 'blocked') {
-      btn = '<button class="dsp-btn" data-act="' + (s.blocked === 'halted' ? 'retry' : 'disarm') + '">' +
-        (s.blocked === 'halted' ? '解除并重试' : '解除') + '</button>'
-    } else btn = '<button class="dsp-btn dsp-btn-danger" data-act="disarm">解除</button>'
-
     return '<div class="dsp-card" data-state="' + v + '" data-variant="' + (s.variant || 'A') +
       '" data-lum="dark" data-retry="' + ((v === 'blocked' && s.blocked === 'waiting') ? '1' : '0') + '">' +
       '<div class="dsp-chead"><i class="dsp-live"></i><span class="dsp-ctitle">任务完成后关机</span>' +
-      '<span class="dsp-tag">' + tag + '</span>' + CHEV + '</div>' +
+      '<span class="dsp-tag">' + tagOf(s) + '</span>' + CHEV + '</div>' +
       bodyHtml(s) +
-      '<div class="dsp-cbtns">' + btn + '</div>' +
+      '<div class="dsp-cbtns">' + buttonOf(s) + '</div>' +
       '<div class="dsp-hazard"></div></div>'
+  }
+
+  function tagOf(s) {
+    var v = s.view
+    return v === 'blocked' ? (s.blocked === 'waiting' ? 'RETRY' : 'PAUSED') : TAG[v]
+  }
+
+  function buttonOf(s) {
+    var v = s.view
+    var hint = s.btnHint ? ' dsp-btn-hint' : ''
+    if (v === 'off') return '<button class="dsp-btn dsp-btn-primary' + hint + '" data-act="arm">武装</button>'
+    if (v === 'fire') return '<button class="dsp-btn dsp-btn-danger" data-act="cancel">取消关机</button>'
+    if (v === 'blocked') {
+      return '<button class="dsp-btn" data-act="' + (s.blocked === 'halted' ? 'retry' : 'disarm') + '">' +
+        (s.blocked === 'halted' ? '解除并重试' : '解除') + '</button>'
+    }
+    return '<button class="dsp-btn dsp-btn-danger" data-act="disarm">解除</button>'
   }
 
   // ---------------------------------------------------------------- state
@@ -185,8 +195,33 @@
 
   var slot, nowEl, logEl, hintEl, stopEl
 
+  // Update the card in place instead of replacing it. A full innerHTML rewrite
+  // would recreate .dsp-hazard on every tick and its scrolling tape would
+  // restart from the left — one visible "jump" per tick. Only the parts that
+  // actually change are touched; the strip is never rebuilt.
   function paint() {
-    slot.innerHTML = card(state)
+    var cardEl = slot.querySelector('.dsp-card')
+    if (!cardEl) {
+      slot.innerHTML = card(state)
+      return
+    }
+
+    var v = state.view
+    cardEl.setAttribute('data-state', v)
+    cardEl.setAttribute('data-variant', state.variant || 'A')
+    cardEl.setAttribute('data-retry', (v === 'blocked' && state.blocked === 'waiting') ? '1' : '0')
+
+    var tagEl = cardEl.querySelector('.dsp-tag')
+    var nextTag = tagOf(state)
+    if (tagEl && tagEl.textContent !== nextTag) tagEl.textContent = nextTag
+
+    var oldBody = cardEl.querySelector('.dsp-cbody')
+    if (oldBody) oldBody.outerHTML = bodyHtml(state)
+    else cardEl.insertAdjacentHTML('afterbegin', bodyHtml(state))
+
+    var btns = cardEl.querySelector('.dsp-cbtns')
+    if (btns) btns.innerHTML = buttonOf(state)
+
     nowEl.className = 'now ' + tone(state)
     nowEl.innerHTML = '当前 <b>' + esc(describe(state)) + '</b>'
     if (hintEl) {
@@ -212,8 +247,10 @@
     var li = document.createElement('li')
     li.innerHTML = '<span class="t">' + stamp() + '</span><span class="k ' + (kind || '') +
       '"></span><span>' + esc(text) + '</span>'
-    logEl.insertBefore(li, logEl.firstChild)
-    while (logEl.children.length > 12) logEl.removeChild(logEl.lastChild)
+    // newest at the bottom, and the window follows it
+    logEl.appendChild(li)
+    while (logEl.children.length > 40) logEl.removeChild(logEl.firstChild)
+    logEl.scrollTop = logEl.scrollHeight
   }
 
   // ---------------------------------------------------------------- timers
@@ -275,7 +312,20 @@
       return
     }
 
-    if (state.jobs > 0) {
+    if (state.jobs > 0 && state.agent > 0) {
+      // Pick a category at random (weighted by how many of each are left) and
+      // drain one from it. Draining every job before touching the sessions
+      // looked scripted — real work finishes in whatever order it finishes.
+      var jobsLeft = state.jobs
+      var agentsLeft = state.agent
+      if (Math.random() < jobsLeft / (jobsLeft + agentsLeft)) {
+        state.jobs -= 1
+        log('一个后台任务结束，还剩 ' + state.jobs + ' 个', 'wait')
+      } else {
+        state.agent -= 1
+        log('一个会话结束，还剩 ' + state.agent + ' 个', 'wait')
+      }
+    } else if (state.jobs > 0) {
       state.jobs -= 1
       log('一个后台任务结束，还剩 ' + state.jobs + ' 个', 'wait')
     } else if (state.agent > 0) {
@@ -520,6 +570,14 @@
         if (b) setPane(b.getAttribute('data-pane'))
       })
     }
+
+    // the button at the end of the 了解 pane, and any #try link in the copy
+    document.addEventListener('click', function (e) {
+      var go = e.target.closest('[data-goto]')
+      if (go) { e.preventDefault(); setPane(go.getAttribute('data-goto')); return }
+      var a = e.target.closest('a[href="#try"]')
+      if (a) { e.preventDefault(); setPane('try') }
+    })
 
     renderVariants()
     renderStates()

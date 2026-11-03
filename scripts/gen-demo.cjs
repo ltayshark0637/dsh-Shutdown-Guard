@@ -128,6 +128,17 @@ const aboutPane = `<div class="about">
     <span class="go"><a href="https://github.com/ltayshark0637/dsh-Shutdown-Guard">完整说明在 GitHub →</a></span>
   </div>
 
+  <div class="cta full">
+    <div class="cta-text">
+      <b>不想只看图？</b>
+      <span>左转「试一试」：随机一个场景，亲手点武装、取消、解除，一路看到关机或阻断。</span>
+    </div>
+    <button class="cta-btn" data-goto="try">
+      去试一试
+      <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M5 12h14M13 6l6 6-6 6"/></svg>
+    </button>
+  </div>
+
 </div>`
 
 // ---------------------------------------------------------------- pane 2
@@ -157,18 +168,22 @@ const tryPane = `<div class="main">
       <button class="stop" id="stop">解除</button>
     </div>
 
-    <div class="block">
+    <div class="block log-block">
       <div class="blabel">模拟日志</div>
       <ul class="log" id="log"><li class="empty">还没有记录</li></ul>
-      <ol class="tips">
-        <li><b>左边是它真正待的地方</b>：技能中心下方、会话列表上方。目前卡片固定在这个位置；后续会支持让它独立出现，届时这里的交互会跟着变。<b>这页的卡片可以点</b>，武装、取消、解除都在左边操作。</li>
-        <li>流程：<b>随机场景</b> → 点卡片上的<b>武装</b> → 开始检测 → 后台任务与会话逐个减少 → 全部结束后进入倒计时 → 下发。</li>
-        <li>检测途中会有小概率撞上阻断态：<code>halted</code> 要你点「解除并重试」，<code>waiting</code> 过几秒自己恢复。</li>
-        <li>倒计时期间你可以随时「取消关机」，模式仍保持武装；也可能撞上阻断。</li>
-        <li>真实插件的日志在 <code>设置 → 状态</code>，完整流水写在 <code>data/events.log</code>。这里倒计时用 12 秒，插件默认 60 秒。</li>
-      </ol>
     </div>
   </div>
+
+  <aside class="tipscol">
+    <div class="blabel">怎么玩</div>
+    <ol class="tips">
+      <li><b>左边是它真正待的地方</b>：技能中心下方、会话列表上方。目前卡片固定在这个位置；后续会支持让它独立出现，届时这里的交互会跟着变。<b>这页的卡片可以点</b>，武装、取消、解除都在左边操作。</li>
+      <li>流程：<b>随机场景</b> → 点卡片上的<b>武装</b> → 开始检测 → 后台任务与会话逐个减少 → 全部结束后进入倒计时 → 下发。</li>
+      <li>检测途中会有小概率撞上阻断态：<code>halted</code> 要你点「解除并重试」，<code>waiting</code> 过几秒自己恢复。</li>
+      <li>倒计时期间你可以随时「取消关机」，模式仍保持武装；也可能撞上阻断。</li>
+      <li>真实插件的日志在 <code>设置 → 状态</code>，完整流水写在 <code>data/events.log</code>。这里倒计时用 12 秒，插件默认 60 秒。</li>
+    </ol>
+  </aside>
 </div>`
 
 const html = `<!doctype html>

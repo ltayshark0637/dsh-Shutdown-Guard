@@ -339,7 +339,7 @@ h1 em { font-style: normal; color: #f0a83a }
 /* ---------------------------------------------------------------- try pane */
 .main {
   display: flex;
-  gap: 48px;
+  gap: 40px;
   align-items: flex-start;
   padding-bottom: 84px;
 }
@@ -360,8 +360,17 @@ h1 em { font-style: normal; color: #f0a83a }
 .panel {
   flex: 1 1 auto;
   min-width: 0;
-  max-width: 560px;
+  max-width: 470px;
 }
+
+/* the five notes live in their own column, to the right of the controls */
+.tipscol {
+  flex: 1 1 320px;
+  min-width: 0;
+  max-width: 430px;
+}
+
+.tipscol .tips { margin-top: 0 }
 
 .block { margin-bottom: 30px }
 
@@ -479,7 +488,7 @@ h1 em { font-style: normal; color: #f0a83a }
 .now.tone-fire b { color: #ef5350 }
 .now.tone-armed b { color: #f0a83a }
 
-/* log */
+/* log — a fixed-height window that scrolls; newest lines land at the bottom */
 .log {
   margin: 0;
   padding: 0;
@@ -487,7 +496,18 @@ h1 em { font-style: normal; color: #f0a83a }
   border-radius: 11px;
   border: 1px solid rgba(255, 255, 255, .07);
   background: rgba(20, 19, 18, .55);
-  overflow: hidden;
+  height: 264px;
+  overflow-y: auto;
+  overscroll-behavior: contain;
+  scrollbar-width: thin;
+  scrollbar-color: rgba(255, 255, 255, .14) transparent;
+}
+
+.log::-webkit-scrollbar { width: 8px }
+.log::-webkit-scrollbar-track { background: transparent }
+.log::-webkit-scrollbar-thumb {
+  border-radius: 999px;
+  background: rgba(255, 255, 255, .14);
 }
 
 .log li {
@@ -740,9 +760,63 @@ h1 em { font-style: normal; color: #f0a83a }
 .sect a { color: #f0a83a; text-decoration: none; border-bottom: 1px solid rgba(240, 168, 58, .4) }
 .sect a:hover { color: #ffc469 }
 .stop:disabled {
-  color: #5c5a54;
-  border-color: rgba(255, 255, 255, .06);
+  color: #7d7b72;
+  border-color: rgba(255, 255, 255, .08);
+  background: rgba(255, 255, 255, .02);
   cursor: default;
 }
 
-.stop:disabled:hover { color: #5c5a54; border-color: rgba(255, 255, 255, .06) }
+.stop:disabled:hover { color: #7d7b72; border-color: rgba(255, 255, 255, .08) }
+/* ---------------------------------------------------------------- cta */
+/* One loud button at the end of the 了解 pane, pointing at the playground. */
+.cta {
+  display: flex;
+  align-items: center;
+  gap: 24px;
+  margin-top: 10px;
+  padding: 24px 26px;
+  border-radius: 14px;
+  border: 1px solid rgba(240, 168, 58, .34);
+  background:
+    radial-gradient(120% 200% at 0% 0%, rgba(240, 168, 58, .16), transparent 60%),
+    rgba(240, 168, 58, .06);
+}
+
+.cta-text { flex: 1 1 auto; min-width: 0 }
+.cta-text b { display: block; font-size: 16px; color: #faf9f5; margin-bottom: 6px }
+.cta-text span { display: block; font-size: 14px; line-height: 1.75; color: #a8a69d }
+
+.cta-btn {
+  appearance: none;
+  flex: 0 0 auto;
+  display: inline-flex;
+  align-items: center;
+  gap: 9px;
+  padding: 13px 24px;
+  border-radius: 999px;
+  border: 1px solid rgba(255, 200, 110, .5);
+  background: linear-gradient(180deg, #f5b34a, #e0912a);
+  color: #241a08;
+  font: inherit;
+  font-size: 14.5px;
+  font-weight: 700;
+  cursor: pointer;
+  box-shadow: 0 14px 34px -16px rgba(240, 168, 58, .85);
+  transition: transform .14s, box-shadow .14s, filter .14s;
+}
+
+.cta-btn:hover {
+  transform: translateY(-1px);
+  filter: brightness(1.06);
+  box-shadow: 0 18px 40px -16px rgba(240, 168, 58, .95);
+}
+
+.cta-btn:active { transform: translateY(0) }
+
+.cta-btn svg { transition: transform .14s }
+.cta-btn:hover svg { transform: translateX(2px) }
+
+@media (max-width: 760px) {
+  .cta { flex-direction: column; align-items: stretch; gap: 16px; text-align: center }
+  .cta-btn { justify-content: center }
+}
