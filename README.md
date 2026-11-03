@@ -123,16 +123,35 @@
 
 ## 安装
 
-**推荐**：DSH 设置 → 插件 → 添加，填入插件目录的**绝对路径** → 安装 → 重启 DSH。
+```bash
+dsh plugin --profile web add github:ltayshark0637/dsh-Shutdown-Guard
+```
 
-**手工兜底**：在 `profiles\web` 下建 `node_modules\dsh-shutdown-guard` 软链指向本目录，然后在 `profiles\web\package.json` 里：
-
-- `dependencies` 与 `pnpm.overrides` 加 `link:<插件绝对路径>`
-- `dsh.profile.bundles` 追加 `dsh-shutdown-guard`
-
-重启 DSH。
+装完**重启 DSH**。
 
 > ⚠️ **客户端 bundle 只在 DSH 启动时编入模块图**：改 `lib/client.js` 后必须重启，刷新页面无效。服务端同理。
+
+**网络受限时**：上面这条命令本质是 `pnpm add github:...`，需要 clone 到 GitHub。若 clone 不通，改用本地路径安装——DSH 设置 → 插件 → 添加，填入本目录的**绝对路径** → 安装 → 重启。
+
+**手工兜底**：在 `profiles\web` 下建 `node_modules\dsh-shutdown-guard` 软链指向本目录，然后：
+
+- `profiles\web\package.json` 的 `dependencies` 与 `pnpm.overrides` 加 `link:<本目录绝对路径>`
+- `dsh.profile.bundles` 追加 `dsh-shutdown-guard`
+
+## 权限与影响
+
+装上之后，这个插件会做以下几件事：
+
+| 影响面 | 具体行为 |
+| --- | --- |
+| **执行命令** | 经 `subprocess` 调 Windows 的 `shutdown.exe`：`/s /t <秒>` 安排关机、`/a` 取消。**只在武装且五道闸门全满足时才调** |
+| **读写文件** | 只在插件目录下的 `data/`：`config.json`（配置）与 `events.log`（事件日志） |
+| **监听事件** | `agent/status`、`agent/error`、`session/event`、`user-questions/request` |
+| **HTTP 路由** | 本机 DSH Web 服务下 `/api/dsh-shutdown-guard/` 的 `GET /state`、`GET /events`、`POST /arm`、`POST /disarm`、`POST /cancel`、`POST /config`；POST 校验 Origin 必须为 `127.0.0.1` 或 `localhost` |
+| **网络** | **不发起任何外部请求**，不收集数据 |
+| **平台** | **仅 Windows**。非 `win32` 时插件静默不加载 |
+
+AFK 自动接管开启时，插件会在武装期间替你回答 agent 的提问、并向报错会话注入恢复指令；这个开关在设置里可以随时关掉。
 
 ## 配置
 
