@@ -820,3 +820,44 @@ h1 em { font-style: normal; color: #f0a83a }
   .cta { flex-direction: column; align-items: stretch; gap: 16px; text-align: center }
   .cta-btn { justify-content: center }
 }
+/* ---------------------------------------------------------------- repo link */
+/* Pinned to the top-right corner so it stays reachable while scrolling. */
+.repo-link {
+  position: fixed;
+  top: 22px;
+  right: 24px;
+  z-index: 20;
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  padding: 9px 15px 9px 12px;
+  border-radius: 999px;
+  border: 1px solid rgba(255, 255, 255, .12);
+  background: rgba(24, 22, 19, .82);
+  backdrop-filter: blur(10px);
+  color: #b9b7ad;
+  font-size: 13px;
+  font-weight: 600;
+  text-decoration: none;
+  transition: color .14s, border-color .14s, background .14s, transform .14s;
+}
+
+.repo-link svg { flex: 0 0 auto }
+.repo-link span { line-height: 1 }
+
+.repo-link:hover {
+  color: #faf9f5;
+  border-color: rgba(240, 168, 58, .5);
+  background: rgba(37, 32, 24, .92);
+  transform: translateY(-1px);
+}
+
+.repo-link:focus-visible {
+  outline: 2px solid rgba(240, 168, 58, .7);
+  outline-offset: 2px;
+}
+
+@media (max-width: 720px) {
+  .repo-link { top: 14px; right: 14px; padding: 8px 12px; font-size: 12px }
+  .repo-link span { display: none }
+}
