@@ -46,9 +46,11 @@ const sbShell = `<div class="sb">
 </div>`
 
 // Screenshots live beside this page under docs/screenshots/, so a plain
-// relative path works both from disk and from GitHub Pages.
+// relative path works both from disk and from GitHub Pages. They load eagerly:
+// there are only five of them, and `loading="lazy"` left the shots collapsed to
+// their caption height on Pages until something forced a reflow.
 const img = (file, cap) =>
-  `<div class="shot"><img src="screenshots/${file}" alt="${cap}" loading="lazy"><span>${cap}</span></div>`
+  `<div class="shot"><img src="screenshots/${file}" alt="${cap}" decoding="async"><span>${cap}</span></div>`
 
 // ---------------------------------------------------------------- pane 1
 const aboutPane = `<div class="about">
