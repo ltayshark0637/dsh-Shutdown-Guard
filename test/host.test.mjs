@@ -8,7 +8,9 @@ const timers = new Map()
 {
   const fs = await import('node:fs')
   const pathMod = await import('node:path')
-  const cfg = pathMod.join(pathMod.dirname(new URL(import.meta.url).pathname).replace(/^\//,''),'..','data','config.json')
+  const { fileURLToPath } = await import('node:url')
+  const here = pathMod.dirname(fileURLToPath(import.meta.url))
+  const cfg = pathMod.join(here, '..', 'data', 'config.json')
   try { fs.unlinkSync(cfg) } catch { /* absent on a first run */ }
 }
 const routes = new Map()
@@ -273,7 +275,7 @@ assert.strictEqual(body.onlyOnSuccess, false)
 calls.push('profile-switch-ok')
 
 const fsx = await import('node:fs')
-const cfgPath = (await import('node:path')).join((await import('node:path')).dirname(new URL(import.meta.url).pathname).replace(/^\//,''),'..','data','config.json')
+const cfgPath = (await import('node:path')).join((await import('node:path')).dirname((await import('node:url')).fileURLToPath(import.meta.url)), '..', 'data', 'config.json')
 assert.ok(fsx.existsSync(cfgPath), 'config.json is written next to the plugin')
 const saved = JSON.parse(fsx.readFileSync(cfgPath, 'utf8'))
 assert.strictEqual(saved.activeProfileId, 'c3')

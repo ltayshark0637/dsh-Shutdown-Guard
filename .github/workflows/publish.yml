@@ -1,13 +1,19 @@
 name: publish
 
-# 发布由 npm 的 Trusted Publisher（OIDC）授权，仓库里不存任何 token。
-# 首次使用前，需要在这个包的 npm 设置页里登记本工作流：
+# 由 npm 的 Trusted Publisher（OIDC）授权发布，仓库里不存任何 token。
+#
+# 首次使用前，需要在这个包的 npm 设置页登记本工作流：
 #   https://www.npmjs.com/package/dsh-shutdown-guard/access
 #   → Trusted Publisher → GitHub Actions
 #      Organization or user : ltayshark0637
 #      Repository           : dsh-Shutdown-Guard
 #      Workflow filename    : publish.yml
-#      Environment          : （留空）
+#      Environment name     : （留空）
+#      Allowed actions      : 必须勾上 “npm publish”
+#                             （2026-09-03 之后新建的配置默认只允许 npm stage publish，
+#                               不勾这一项，下面的 npm publish 会被拒）
+#
+# 发版流程：改 package.json 的 version → 提交 → git tag vX.Y.Z → push tag。
 
 on:
   push:
@@ -17,32 +23,40 @@ on:
 
 permissions:
   contents: read
-  id-token: write
+  id-token: write # OIDC 必需
 
 jobs:
   publish:
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v6
 
-      - uses: actions/setup-node@v4
+      # 刻意不设 registry-url：setup-node 会写一个
+      #   //registry.npmjs.org/:_authToken=${NODE_AUTH_TOKEN}
+      # 到 .npmrc，而在 OIDC 流程里 NODE_AUTH_TOKEN 没有值，
+      # npm 解析配置时会报 Failed to replace env in config。
+      # 不写 .npmrc，npm 会自动对 registry.npmjs.org 走 OIDC。
+      - uses: actions/setup-node@v6
         with:
           node-version: '24'
-          registry-url: 'https://registry.npmjs.org'
+          package-manager-cache: false # 发布构建不要用缓存
 
-      # OIDC 发布要求 npm >= 11.5.1
-      - name: Ensure recent npm
-        run: npm install -g npm@latest && npm --version
+      # 本包零运行时依赖，没有 lockfile，因此不跑 npm ci。
 
-      - name: Guard against version drift
+      - name: Run tests
+        run: |
+          node test/host.test.mjs
+          node test/client.test.cjs
+
+      - name: Check that the tag matches package.json
         run: |
           PKG=$(node -p "require('./package.json').version")
           TAG=${GITHUB_REF_NAME#v}
           echo "package.json=$PKG  tag=$TAG"
-          if [ "$PKG" != "$TAG" ]; then
-            echo "::error::package.json version ($PKG) does not match tag ($TAG)"
+          if [ "$TAG" != "$PKG" ]; then
+            echo "::error::tag $TAG does not match package.json version $PKG"
             exit 1
           fi
 
-      - name: Publish
+      - name: Publish to npm
         run: npm publish --provenance --access public
