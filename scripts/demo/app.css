@@ -825,10 +825,21 @@ h1 em { font-style: normal; color: #f0a83a }
    of the banner. The offsets mirror .page's 68px/44px padding so its right edge
    lands on the same vertical line as the content, and its centre lines up with
    the eyebrow's cap height. */
-.repo-link {
+/* Both project links share one column so the pair stays aligned with the
+   eyebrow's right edge. */
+.repo-links {
   position: absolute;
   top: 61px;
   right: 44px;
+  z-index: 20;
+  display: flex;
+  flex-direction: column;
+  align-items: flex-end;
+  gap: 8px;
+}
+
+.repo-link {
+  position: static;
   z-index: 20;
   display: inline-flex;
   align-items: center;
@@ -865,4 +876,5 @@ h1 em { font-style: normal; color: #f0a83a }
   .page { padding: 56px 22px 0 }
   .repo-link { top: 50px; right: 22px; height: 30px; padding: 0 11px 0 9px; font-size: 12px }
   .repo-link span { display: none }
+  .repo-link svg { width: 15px }
 }

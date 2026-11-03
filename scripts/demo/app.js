@@ -36,92 +36,185 @@
   }
 
   // ---------------------------------------------------------------- body
-  function bodyHtml(s) {
+  // HUD line inside the radar. Kept separate so a tick can rewrite just this
+  // node instead of the whole body.
+  function hudHtml(s) {
     var v = s.view
     var jobs = s.jobs || 0
     var agent = s.agent || 0
+    if (v === 'blocked') {
+      return '<b>' + (s.blocked === 'waiting' ? 'Retrying' : 'Paused') + '</b><span>' +
+        (s.blocked === 'waiting' ? '稍后重试' : '需人工处理') + '</span>'
+    }
+    if (v === 'hold') return '<b>Holding</b><span>jobs ' + jobs + ' · agent ' + agent + '</span>'
+    if (v === 'fire') return '<b>' + clock(s.sec || 0) + '</b><span>T-minus</span>'
+    if (v === 'fired') return '<b>Fired</b><span>已下发</span>'
+    if (v === 'off') return '<b>Offline</b><span>jobs 0 · agent 0</span>'
+    return '<b>Standby</b><span>jobs 0 · agent 0</span>'
+  }
 
-    if (s.variant === 'B') {
-      var hud
-      if (v === 'blocked') {
-        hud = '<b>' + (s.blocked === 'waiting' ? 'Retrying' : 'Paused') + '</b><span>' +
-          (s.blocked === 'waiting' ? '稍后重试' : '需人工处理') + '</span>'
-      } else if (v === 'hold') {
-        hud = '<b>Holding</b><span>jobs ' + jobs + ' · agent ' + agent + '</span>'
-      } else if (v === 'fire') {
-        hud = '<b>' + clock(s.sec || 0) + '</b><span>T-minus</span>'
-      } else if (v === 'fired') {
-        hud = '<b>Fired</b><span>已下发</span>'
-      } else if (v === 'off') {
-        hud = '<b>Offline</b><span>jobs 0 · agent 0</span>'
-      } else {
-        hud = '<b>Standby</b><span>jobs 0 · agent 0</span>'
+  // Variant A: two lines of copy.
+  function aText(s) {
+    var v = s.view
+    var jobs = s.jobs || 0
+    var agent = s.agent || 0
+    if (v === 'blocked') return BLOCK_TEXT[s.blocked]
+    if (v === 'fire') return [clock(s.sec || 0), '系统即将关机 · 可撤销']
+    if (v === 'hold') {
+      var bits = []
+      if (jobs) bits.push(jobs + ' 个后台任务')
+      if (agent) bits.push(agent + ' 个会话')
+      return ['等待后台任务', bits.join(' · ') + '，完成后关机']
+    }
+    return A_TEXT[v]
+  }
+
+  // Variant C: terminal lines, LEDs and the footer string.
+  function cL2(s) { return 'jobs ' + (s.jobs || 0) + ' · agent ' + (s.agent || 0) }
+
+  function cL3(s) {
+    var v = s.view
+    if (v === 'fire') return 'T-minus ' + clock(s.sec || 0)
+    if (v === 'hold') return 'holding'
+    if (v === 'off') return 'offline'
+    if (v === 'blocked') return s.blocked === 'waiting' ? 'retrying' : 'halted'
+    if (v === 'fired') return 'done'
+    return 'waiting'
+  }
+
+  function ledState(s) {
+    var v = s.view
+    return [v !== 'off', true, (s.agent || 0) === 0, (s.jobs || 0) === 0, v !== 'blocked', v === 'fire']
+  }
+
+  function cCode(s) {
+    if (s.view === 'blocked') {
+      return s.blocked === 'waiting' ? 'waiting · 自动重试' : 'halted · 需人工处理'
+    }
+    return '条件 ' + ledState(s).filter(Boolean).length + '/6 已满足'
+  }
+
+  // Radar dots: one per background job and per running session. Positions come
+  // from a fixed golden-angle sequence so adding or removing one dot never
+  // moves the dots that are already on screen.
+  var DOT_SEEDS = { job: [], run: [] }
+
+  function seedFor(kind, i) {
+    var cache = DOT_SEEDS[kind]
+    if (!cache[i]) {
+      var angle = 2.39996 * (i + (kind === 'run' ? 4 : 0)) + 0.6
+      var radius = kind === 'run' ? 24 + (i % 4) * 8 : 15 + (i % 5) * 7
+      cache[i] = {
+        x: Math.cos(angle) * radius,
+        y: Math.sin(angle) * radius * 0.62,
       }
-      return '<div class="dsp-cbody dsp-v-b"><div class="dsp-disc">' +
+    }
+    return cache[i]
+  }
+
+  function dotMarkup(kind, n) {
+    var out = ''
+    for (var i = 0; i < n; i++) {
+      var p = seedFor(kind, i)
+      out += '<i class="dsp-rdot dsp-rdot-' + kind + '" style="left:calc(50% + ' +
+        p.x.toFixed(1) + 'px);top:calc(50% + ' + p.y.toFixed(1) + 'px)"></i>'
+    }
+    return out
+  }
+
+  function dots(s) {
+    return dotMarkup('job', Math.min(s.jobs || 0, 9)) + dotMarkup('run', Math.min(s.agent || 0, 9))
+  }
+
+  // Add or remove only the difference; the surviving nodes keep their identity.
+  function syncDots(wrap, s) {
+    var wanted = { job: Math.min(s.jobs || 0, 9), run: Math.min(s.agent || 0, 9) }
+    Object.keys(wanted).forEach(function (kind) {
+      var nodes = wrap.querySelectorAll('.dsp-rdot-' + kind)
+      var n = wanted[kind]
+      for (var i = nodes.length; i < n; i++) {
+        var p = seedFor(kind, i)
+        var el = document.createElement('i')
+        el.className = 'dsp-rdot dsp-rdot-' + kind
+        el.style.left = 'calc(50% + ' + p.x.toFixed(1) + 'px)'
+        el.style.top = 'calc(50% + ' + p.y.toFixed(1) + 'px)'
+        wrap.appendChild(el)
+      }
+      for (var j = nodes.length - 1; j >= n; j--) {
+        nodes[j].parentNode.removeChild(nodes[j])
+      }
+    })
+  }
+
+  function bodyHtml(s) {
+    var v = s.view
+    var variant = s.variant || 'A'
+
+    if (variant === 'B') {
+      return '<div class="dsp-cbody dsp-v-b" data-v="B"><div class="dsp-disc">' +
         '<div class="dsp-sweep"></div>' +
         '<div class="dsp-rings"><svg class="dsp-radar-svg" viewBox="0 0 238 202">' + RINGS + '</svg></div>' +
         '<div class="dsp-ping"></div>' +
         '<div class="dsp-dots">' + dots(s) + '</div>' +
-        '<div class="dsp-hud">' + hud + '</div></div></div>'
+        '<div class="dsp-hud">' + hudHtml(s) + '</div></div></div>'
     }
 
-    if (s.variant === 'C') {
-      var l2 = 'jobs ' + jobs + ' · agent ' + agent
-      var l3 = v === 'fire' ? 'T-minus ' + clock(s.sec || 0)
-        : v === 'hold' ? 'holding'
-          : v === 'off' ? 'offline'
-            : v === 'blocked' ? (s.blocked === 'waiting' ? 'retrying' : 'halted')
-              : v === 'fired' ? 'done' : 'waiting'
-      var lines =
-        '<div class="dsp-term-line"><span class="dsp-pr">&gt;</span>shutdown --when idle</div>' +
-        '<div class="dsp-term-line"><span class="dsp-pr">&gt;</span><span class="dsp-l2">' + l2 + '</span></div>' +
-        '<div class="dsp-term-line"><span class="dsp-pr">&gt;</span><span class="dsp-l3">' + l3 + '</span><i class="dsp-caret"></i></div>'
-      var ledState = [v !== 'off', true, agent === 0, jobs === 0, v !== 'blocked', v === 'fire']
+    if (variant === 'C') {
       var led = ''
+      var on = ledState(s)
       for (var i = 0; i < 6; i++) {
-        led += '<i class="dsp-led-seg' + (ledState[i] ? ' on' : '') + '" data-i="' + i + '"></i>'
+        led += '<i class="dsp-led-seg' + (on[i] ? ' on' : '') + '" data-i="' + i + '"></i>'
       }
-      var code = v === 'blocked'
-        ? (s.blocked === 'waiting' ? 'waiting · 自动重试' : 'halted · 需人工处理')
-        : '条件 ' + ledState.filter(Boolean).length + '/6 已满足'
-      return '<div class="dsp-cbody dsp-v-c"><div class="dsp-screen">' + lines + '</div>' +
-        '<div class="dsp-led">' + led + '</div><div class="dsp-code">' + code + '</div></div>'
+      return '<div class="dsp-cbody dsp-v-c" data-v="C"><div class="dsp-screen">' +
+        '<div class="dsp-term-line"><span class="dsp-pr">&gt;</span>shutdown --when idle</div>' +
+        '<div class="dsp-term-line"><span class="dsp-pr">&gt;</span><span class="dsp-l2">' + esc(cL2(s)) + '</span></div>' +
+        '<div class="dsp-term-line"><span class="dsp-pr">&gt;</span><span class="dsp-l3">' + esc(cL3(s)) + '</span><i class="dsp-caret"></i></div>' +
+        '</div><div class="dsp-led">' + led + '</div>' +
+        '<div class="dsp-code">' + esc(cCode(s)) + '</div></div>'
     }
 
-    var text
-    if (v === 'blocked') text = BLOCK_TEXT[s.blocked]
-    else if (v === 'fire') text = [clock(s.sec || 0), '系统即将关机 · 可撤销']
-    else if (v === 'hold') {
-      var bits = []
-      if (jobs) bits.push(jobs + ' 个后台任务')
-      if (agent) bits.push(agent + ' 个会话')
-      text = ['等待后台任务', bits.join(' · ') + '，完成后关机']
-    } else text = A_TEXT[v]
-
-    return '<div class="dsp-cbody dsp-v-a"><div class="dsp-big">' + esc(text[0]) +
+    var text = aText(s)
+    return '<div class="dsp-cbody dsp-v-a" data-v="A"><div class="dsp-big">' + esc(text[0]) +
       '</div><div class="dsp-meta">' + esc(text[1]) + '</div></div>'
   }
 
-  // Radar dots: one per running session and per background job, spread over
-  // three bands so a few dots do not pile up in the middle.
-  function dots(s) {
-    var out = ''
-    var total = Math.min(s.jobs || 0, 9)
-    var runs = Math.min(s.agent || 0, 9)
-    var i
-    for (i = 0; i < total; i++) {
-      var a = (i / Math.max(total, 1)) * Math.PI * 2 + 0.6
-      var r = 18 + ((i * 7) % 22)
-      out += '<i class="dsp-rdot dsp-rdot-job" style="left:calc(50% + ' + (Math.cos(a) * r).toFixed(1) +
-        'px);top:calc(50% + ' + (Math.sin(a) * r * 0.62).toFixed(1) + 'px)"></i>'
+  // Update the body in place. Rewriting .dsp-cbody on every tick restarted the
+  // radar sweep animation and re-created the dots, which read as a visible
+  // jump — the same failure mode the hazard strip had.
+  function updateBody(body, s) {
+    var variant = s.variant || 'A'
+
+    if (variant === 'B') {
+      var hud = body.querySelector('.dsp-hud')
+      if (hud) {
+        var next = hudHtml(s)
+        if (hud.innerHTML !== next) hud.innerHTML = next
+      }
+      var wrap = body.querySelector('.dsp-dots')
+      if (wrap) syncDots(wrap, s)
+      return
     }
-    for (i = 0; i < runs; i++) {
-      var b = (i / Math.max(runs, 1)) * Math.PI * 2 + 2.1
-      var r2 = 26 + ((i * 11) % 26)
-      out += '<i class="dsp-rdot dsp-rdot-run" style="left:calc(50% + ' + (Math.cos(b) * r2).toFixed(1) +
-        'px);top:calc(50% + ' + (Math.sin(b) * r2 * 0.62).toFixed(1) + 'px)"></i>'
+
+    if (variant === 'C') {
+      var l2 = body.querySelector('.dsp-l2')
+      if (l2 && l2.textContent !== cL2(s)) l2.textContent = cL2(s)
+      var l3 = body.querySelector('.dsp-l3')
+      if (l3 && l3.textContent !== cL3(s)) l3.textContent = cL3(s)
+      var on = ledState(s)
+      var segs = body.querySelectorAll('.dsp-led-seg')
+      for (var i = 0; i < segs.length; i++) {
+        segs[i].classList.toggle('on', !!on[i])
+      }
+      var code = body.querySelector('.dsp-code')
+      if (code && code.textContent !== cCode(s)) code.textContent = cCode(s)
+      return
     }
-    return out
+
+    var text = aText(s)
+    var big = body.querySelector('.dsp-big')
+    if (big && big.textContent !== text[0]) big.textContent = text[0]
+    var meta = body.querySelector('.dsp-meta')
+    if (meta && meta.textContent !== text[1]) meta.textContent = text[1]
   }
 
   // ---------------------------------------------------------------- card
@@ -216,8 +309,13 @@
     if (tagEl && tagEl.textContent !== nextTag) tagEl.textContent = nextTag
 
     var oldBody = cardEl.querySelector('.dsp-cbody')
-    if (oldBody) oldBody.outerHTML = bodyHtml(state)
-    else cardEl.insertAdjacentHTML('afterbegin', bodyHtml(state))
+    if (!oldBody || oldBody.getAttribute('data-v') !== (state.variant || 'A')) {
+      if (oldBody) oldBody.outerHTML = bodyHtml(state)
+      else cardEl.insertAdjacentHTML('afterbegin', bodyHtml(state))
+      oldBody = cardEl.querySelector('.dsp-cbody')
+    } else {
+      updateBody(oldBody, state)
+    }
 
     var btns = cardEl.querySelector('.dsp-cbtns')
     if (btns) btns.innerHTML = buttonOf(state)
