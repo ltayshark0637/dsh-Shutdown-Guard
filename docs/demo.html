@@ -1,176 +1,295 @@
 <!doctype html>
 <html lang="zh"><head><meta charset="utf-8">
 <meta name="viewport" content="width=device-width,initial-scale=1">
-<title>dsh-shutdown-guard · 交互演示</title>
+<title>Shutdown Guard · 交互演示</title>
+<meta name="description" content="任务完成后自动关机 —— 侧边栏守夜卡片。三种外观、六种状态，可在这里直接试。">
 <style>
-# 交互演示
-# 左边是侧边栏里的真实位置，右边只有三件事：换外观、随机一个状态、看日志。
-# 生成方式：node scripts/gen-demo.cjs（样式全部取自 lib/client.js 的真实 CSS）
+/* Interactive demo page — same visual language as the README banner:
+   one continuous wash, faint grid, film grain, amber eyebrow, hazard rule. */
 
 * { box-sizing: border-box }
 
+html, body { margin: 0 }
+
 body {
-  margin: 0;
-  background: #0f0f0e;
+  min-height: 100vh;
+  background: #14120f;
   color: #faf9f5;
-  font: 14px/1.6 'Inter', system-ui, 'Microsoft YaHei', sans-serif;
+  font: 14px/1.65 'Inter', system-ui, 'Microsoft YaHei', sans-serif;
   -webkit-font-smoothing: antialiased;
+  overflow-x: hidden;
 }
 
-.app {
+/* ---------------------------------------------------------------- backdrop */
+.bg { position: fixed; inset: 0; z-index: 0; pointer-events: none }
+
+.bg-wash {
+  background: linear-gradient(104deg, #14120f 0%, #17140f 34%, #191410 58%, #1b120e 78%, #1c110d 100%);
+}
+
+.bg-lobe {
+  background:
+    radial-gradient(1400px 900px at 4% 2%, rgba(240, 168, 58, .10), transparent 70%),
+    radial-gradient(1400px 900px at 100% 100%, rgba(232, 69, 60, .10), transparent 70%);
+}
+
+.bg-grid {
+  opacity: .4;
+  background-image:
+    linear-gradient(rgba(255, 255, 255, .03) 1px, transparent 1px),
+    linear-gradient(90deg, rgba(255, 255, 255, .03) 1px, transparent 1px);
+  background-size: 44px 44px;
+  -webkit-mask-image: radial-gradient(ellipse 78% 82% at 34% 38%, #000 34%, transparent 82%);
+  mask-image: radial-gradient(ellipse 78% 82% at 34% 38%, #000 34%, transparent 82%);
+}
+
+.bg-grain {
+  opacity: .05;
+  mix-blend-mode: overlay;
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='160' height='160'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='.85' numOctaves='3'/%3E%3C/filter%3E%3Crect width='160' height='160' filter='url(%23n)'/%3E%3C/svg%3E");
+}
+
+/* ---------------------------------------------------------------- shell */
+.page {
+  position: relative;
+  z-index: 1;
+  max-width: 1180px;
+  margin: 0 auto;
+  padding: 68px 44px 0;
+}
+
+/* ---------------------------------------------------------------- hero */
+.eyebrow {
   display: flex;
-  gap: 40px;
-  align-items: flex-start;
-  padding: 40px 44px 56px;
-  max-width: 1080px;
+  align-items: center;
+  gap: 8px;
+  font-size: 11.5px;
+  font-weight: 600;
+  letter-spacing: .17em;
+  text-transform: uppercase;
+  color: #9c9a90;
 }
 
-/* ---- 左：侧边栏舞台 ---- */
-.stage {
-  flex: 0 0 288px;
+.eyebrow i {
+  width: 6px;
+  height: 6px;
+  border-radius: 50%;
+  background: #f0a83a;
+  box-shadow: 0 0 0 4px rgba(240, 168, 58, .16);
+  flex: 0 0 auto;
+}
+
+h1 {
+  margin: 16px 0 0;
+  font-size: 54px;
+  line-height: 1;
+  letter-spacing: -.032em;
+  font-weight: 750;
+  color: #fff;
+}
+
+h1 em { font-style: normal; color: #f0a83a }
+
+.zh {
+  margin: 18px 0 0;
+  font-size: 19px;
+  font-weight: 600;
+  line-height: 1.3;
+}
+
+.zh span { color: #7d7b72; font-weight: 400; margin: 0 9px }
+
+.lede {
+  margin: 15px 0 0;
+  max-width: 580px;
+  font-size: 13.5px;
+  line-height: 1.82;
+  color: #c2c0b6;
+}
+
+.lede b { color: #faf9f5; font-weight: 600 }
+
+.chips {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 7px;
+  margin-top: 24px;
+}
+
+.chip {
+  font-size: 11.5px;
+  padding: 6px 11px;
+  border-radius: 999px;
+  border: 1px solid rgba(255, 255, 255, .14);
+  background: rgba(255, 255, 255, .045);
+  color: #d4d2c8;
+  white-space: nowrap;
+}
+
+/* ---------------------------------------------------------------- layout */
+.main {
+  display: flex;
+  gap: 48px;
+  align-items: flex-start;
+  margin-top: 52px;
+  padding-bottom: 80px;
+}
+
+/* ---------------------------------------------------------------- stage */
+.stage-col { flex: 0 0 300px }
+
+.stage-frame {
   padding: 12px;
-  background: #131312;
-  border: 1px solid rgba(255, 255, 255, .06);
   border-radius: 18px;
+  background: rgba(20, 19, 18, .72);
+  border: 1px solid rgba(255, 255, 255, .07);
+  box-shadow: 0 28px 64px -34px rgba(0, 0, 0, .95);
 }
 
 .stage-note {
-  margin: 14px 0 0;
+  margin: 16px 0 0;
   font-size: 11.5px;
+  line-height: 1.78;
   color: #6f6d66;
-  line-height: 1.7;
 }
 
 .stage-note b { color: #8b887e; font-weight: 600 }
 
-/* ---- 右：控制台 ---- */
+/* the sidebar mock is a hair wider than a screenshot frame */
+.sb { width: 100% }
+
+/* ---------------------------------------------------------------- panel */
 .panel {
   flex: 1 1 auto;
   min-width: 0;
-  padding-top: 4px;
+  max-width: 560px;
 }
 
-.title {
-  margin: 0 0 4px;
-  font-size: 19px;
-  font-weight: 650;
-  letter-spacing: -.01em;
-}
+.block { margin-bottom: 32px }
 
-.subtitle {
-  margin: 0 0 28px;
-  font-size: 12.5px;
-  color: #8b887e;
-}
-
-.group { margin-bottom: 26px }
-
-.glabel {
+.blabel {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  margin-bottom: 12px;
   font-size: 11px;
   letter-spacing: .1em;
   text-transform: uppercase;
   color: #7d7b72;
-  margin-bottom: 10px;
 }
 
+.blabel::after {
+  content: '';
+  flex: 1 1 auto;
+  height: 1px;
+  background: rgba(255, 255, 255, .07);
+}
+
+/* segmented control, chip-shaped to match the hero */
 .seg {
   display: inline-flex;
-  padding: 3px;
-  gap: 3px;
-  background: #171716;
-  border: 1px solid rgba(255, 255, 255, .07);
-  border-radius: 10px;
+  gap: 6px;
+  padding: 4px;
+  border-radius: 12px;
+  background: rgba(255, 255, 255, .035);
+  border: 1px solid rgba(255, 255, 255, .09);
 }
 
 .seg button {
   appearance: none;
   border: 0;
+  padding: 8px 16px;
+  border-radius: 9px;
   background: transparent;
   color: #a8a69d;
   font: inherit;
   font-size: 13px;
-  padding: 6px 14px;
-  border-radius: 7px;
   cursor: pointer;
-  transition: background .12s, color .12s;
+  transition: background .14s, color .14s;
+  white-space: nowrap;
 }
 
 .seg button:hover { color: #faf9f5 }
 
 .seg button.on {
-  background: #2a2a28;
+  background: rgba(255, 255, 255, .1);
   color: #faf9f5;
+  box-shadow: inset 0 0 0 1px rgba(255, 255, 255, .08);
 }
 
-.random {
+/* primary action — the one thing we want people to click */
+.roll {
   appearance: none;
   display: block;
   width: 100%;
-  padding: 13px 18px;
+  padding: 15px 20px;
   border: 0;
-  border-radius: 11px;
-  background: #f0a83a;
-  color: #1a1206;
+  border-radius: 13px;
+  background: linear-gradient(180deg, #f5b34a, #e89b28);
+  color: #1d1305;
   font: inherit;
-  font-size: 14.5px;
-  font-weight: 650;
+  font-size: 15px;
+  font-weight: 700;
+  letter-spacing: .01em;
   cursor: pointer;
-  transition: filter .12s;
+  box-shadow: 0 16px 36px -18px rgba(240, 168, 58, .85);
+  transition: filter .14s, transform .06s;
 }
 
-.random:hover { filter: brightness(1.08) }
-.random:active { filter: brightness(.94) }
+.roll:hover { filter: brightness(1.06) }
+.roll:active { transform: translateY(1px) }
+.roll:focus-visible { outline: 2px solid #f0a83a; outline-offset: 3px }
 
+/* current roll */
 .now {
   display: flex;
   align-items: baseline;
-  gap: 8px;
-  margin: 16px 0 0;
-  padding: 12px 14px;
-  background: #171716;
+  flex-wrap: wrap;
+  gap: 6px;
+  margin: 14px 0 0;
+  padding: 13px 16px;
+  border-radius: 11px;
   border: 1px solid rgba(255, 255, 255, .07);
-  border-radius: 10px;
+  background: rgba(255, 255, 255, .025);
   font-size: 13px;
   color: #8b887e;
 }
 
-.now b {
-  color: #faf9f5;
-  font-weight: 600;
-}
+.now b { color: #faf9f5; font-weight: 600 }
 
 .now.tone-halted b { color: #9aa7c2 }
 .now.tone-waiting b { color: #86a894 }
-.now.tone-fire b    { color: #ef5350 }
-.now.tone-armed b   { color: #f0a83a }
+.now.tone-fire b { color: #ef5350 }
+.now.tone-armed b { color: #f0a83a }
 
+/* log */
 .log {
   margin: 0;
   padding: 0;
   list-style: none;
+  border-radius: 11px;
   border: 1px solid rgba(255, 255, 255, .07);
-  border-radius: 10px;
+  background: rgba(20, 19, 18, .55);
   overflow: hidden;
-  background: #141413;
 }
 
 .log li {
   display: flex;
   gap: 10px;
-  padding: 9px 13px;
+  padding: 10px 15px;
   font-size: 12.5px;
-  border-top: 1px solid rgba(255, 255, 255, .05);
   color: #a8a69d;
+  border-top: 1px solid rgba(255, 255, 255, .05);
 }
 
 .log li:first-child { border-top: 0 }
 
 .log .t {
   flex: 0 0 auto;
-  font-variant-numeric: tabular-nums;
-  color: #6f6d66;
   font-family: ui-monospace, Consolas, monospace;
   font-size: 11.5px;
+  font-variant-numeric: tabular-nums;
+  color: #6f6d66;
   padding-top: 1px;
 }
 
@@ -183,15 +302,79 @@ body {
   background: #5f5d57;
 }
 
-.log .k.armed  { background: #f0a83a }
-.log .k.fire   { background: #ef5350 }
-.log .k.wait   { background: #6f8f7a }
+.log .k.armed { background: #f0a83a }
+.log .k.fire { background: #ef5350 }
+.log .k.wait { background: #6f8f7a }
 .log .k.halted { background: #7e8aa3 }
 
-.log .empty {
-  padding: 16px 13px;
+.log .empty { padding: 18px 15px; font-size: 12.5px; color: #6f6d66 }
+
+/* footnote under the log */
+.hint {
+  margin: 14px 0 0;
+  font-size: 11.5px;
+  line-height: 1.75;
   color: #6f6d66;
-  font-size: 12.5px;
+}
+
+.hint code {
+  font-family: ui-monospace, Consolas, monospace;
+  font-size: 11px;
+  padding: 1px 5px;
+  border-radius: 4px;
+  background: rgba(255, 255, 255, .06);
+  color: #b0aea5;
+}
+
+/* ---------------------------------------------------------------- footer */
+.rule {
+  position: relative;
+  height: 5px;
+  overflow: hidden;
+  background: #141413;
+  z-index: 2;
+}
+
+.rule::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  bottom: 0;
+  left: -60px;
+  right: -60px;
+  background: repeating-linear-gradient(45deg, #f2b13c 0 10px, #e8453c 10px 20px);
+  animation: demo-slide 1.15s linear infinite;
+}
+
+@keyframes demo-slide { to { transform: translateX(28.28px) } }
+
+.colophon {
+  position: relative;
+  z-index: 2;
+  max-width: 1180px;
+  margin: 0 auto;
+  padding: 22px 44px 34px;
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px 20px;
+  align-items: baseline;
+  font-size: 11.5px;
+  color: #6f6d66;
+}
+
+.colophon b { color: #8b887e; font-weight: 600 }
+
+.colophon a { color: #b0aea5; text-decoration: none; border-bottom: 1px solid rgba(255, 255, 255, .14) }
+.colophon a:hover { color: #faf9f5 }
+
+/* ---------------------------------------------------------------- narrow */
+@media (max-width: 900px) {
+  .page { padding: 44px 22px 0 }
+  h1 { font-size: 38px }
+  .main { flex-direction: column; gap: 36px; margin-top: 36px }
+  .stage-col { flex: 0 0 auto; width: 100%; max-width: 300px }
+  .panel { max-width: none }
+  .colophon { padding: 20px 22px 30px }
 }
 
 </style>
@@ -210,8 +393,8 @@ body {
 .sb-sess .nm{flex:1;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
 .sb-sess .tm{font-size:10.5px;color:#6b6963}
 
-/* the demo needs the sidebar a little wider than a screenshot frame */
-.sb { width: 264px }
+/* the demo sidebar fills its frame instead of sitting at screenshot width */
+.sb { width: 100% }
 </style>
 <style>
 .dsp-host{flex:0 0 auto;padding:0 12px 8px 0;min-width:0}
@@ -380,10 +563,28 @@ box-shadow:0 0 7px color-mix(in srgb, var(--dsp-accent) 90%, transparent)}
 @keyframes dsp-pulse-red{0%{box-shadow:0 0 0 0 rgba(239,83,80,.7)}70%{box-shadow:0 0 0 6px rgba(239,83,80,0)}100%{box-shadow:0 0 0 0 rgba(239,83,80,0)}}
 </style>
 </head><body>
-<div class="app">
 
-  <div>
-    <div class="stage"><div class="sb">
+<div class="bg bg-wash"></div>
+<div class="bg bg-lobe"></div>
+<div class="bg bg-grid"></div>
+<div class="bg bg-grain"></div>
+
+<div class="page">
+  <div class="eyebrow"><i></i>DeepSeek Harness Plugin</div>
+  <h1>Shutdown <em>Guard</em></h1>
+  <div class="zh">任务完成后自动关机<span>·</span>侧边栏守夜卡片</div>
+  <p class="lede">为 DeepSeek Harness 的侧边栏添加「所有任务完成后自动关机」卡片，拥有更好且多样的<b>视觉效果</b>、<b>判定逻辑</b>与<b>个性化定制</b>。下面的卡片是真的：换外观、掷一次状态，看它怎么变。</p>
+  <div class="chips">
+    <span class="chip">五道判定闸</span>
+    <span class="chip">三种外观</span>
+    <span class="chip">个性化定制</span>
+    <span class="chip">AFK 自动接管</span>
+    <span class="chip">阻断态分级</span>
+  </div>
+
+  <div class="main">
+    <div class="stage-col">
+      <div class="stage-frame"><div class="sb">
   <div class="sb-top"><span>deepseek</span><span class="sb-badge">HARNESS</span></div>
   <div class="sb-row"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7"><circle cx="12" cy="12" r="9"/><path d="M12 8v8M8 12h8"/></svg><span>新会话</span></div>
   <div class="sb-row"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7"><rect x="3" y="3" width="7" height="7" rx="1.5"/><rect x="14" y="3" width="7" height="7" rx="1.5"/><rect x="3" y="14" width="7" height="7" rx="1.5"/><rect x="14" y="14" width="7" height="7" rx="1.5"/></svg><span>工作台</span></div>
@@ -395,39 +596,44 @@ box-shadow:0 0 7px color-mix(in srgb, var(--dsp-accent) 90%, transparent)}
   <div class="sb-sess"><i></i><span class="nm">重构关机插件</span><span class="tm">1 分钟</span></div>
   <div class="sb-sess"><i></i><span class="nm">周报数据整理</span><span class="tm">14 小时</span></div>
   <div class="sb-sess"><i></i><span class="nm">iOS 构建脚本</span><span class="tm">昨天</span></div>
+  <div class="sb-sess"><i></i><span class="nm">合同条款比对</span><span class="tm">2 天</span></div>
 </div></div>
-    <p class="stage-note">
-      <b>左侧是真实位置</b>：卡片在「技能中心」下方、会话列表上方。<br>
-      这里的按钮只是样子，真正的交互在右边。
-    </p>
-  </div>
+      <p class="stage-note"><b>左边是它真正待的地方</b>：技能中心下方、会话列表上方。卡片上的按钮在这里只是样子，真正的交互在右边。</p>
+    </div>
 
-  <div class="panel">
-    <h1 class="title">任务完成后关机</h1>
-    <p class="subtitle">点「随机一个状态」看看它在不同情况下长什么样。数据是这一次随机出来的，刷新就变。</p>
+    <div class="panel">
+      <div class="block">
+        <div class="blabel">外观</div>
+        <div class="seg" id="variants" role="group" aria-label="外观">
+          <button data-v="A" class="on">A · 警戒带</button>
+          <button data-v="B">B · 雷达</button>
+          <button data-v="C">C · 终端</button>
+        </div>
+      </div>
 
-    <div class="group">
-      <div class="glabel">外观</div>
-      <div class="seg" id="variants">
-        <button data-v="A" class="on">A · 警戒带</button>
-        <button data-v="B">B · 雷达</button>
-        <button data-v="C">C · 终端</button>
+      <div class="block">
+        <div class="blabel">状态</div>
+        <button class="roll" id="roll">随机一个状态</button>
+        <div class="now" id="now" role="status" aria-live="polite">正在模拟 <b>等待后台任务</b></div>
+      </div>
+
+      <div class="block">
+        <div class="blabel">运行日志</div>
+        <ul class="log" id="log"><li class="empty">还没有记录</li></ul>
+        <p class="hint">每次点击掷一次：三成概率落进阻断态，其余在未开启 / 待命 / 等待后台任务 / 倒计时 / 已下发之间分布，后台任务与会话数各自 0–9 随机。真实插件的这条日志在 <code>settings → 状态</code> 里。</p>
       </div>
     </div>
-
-    <div class="group">
-      <div class="glabel">状态</div>
-      <button class="random" id="roll">随机一个状态</button>
-      <div class="now" id="now">正在模拟 <b>等待后台任务</b></div>
-    </div>
-
-    <div class="group">
-      <div class="glabel">运行日志</div>
-      <ul class="log" id="log"><li class="empty">还没有记录</li></ul>
-    </div>
   </div>
-
 </div>
+
+<div class="rule"></div>
+<div class="colophon">
+  <span><b>dsh-shutdown-guard</b></span>
+  <span>MIT</span>
+  <span>演示页 · 数据全部本地随机，不联网</span>
+  <a href="https://github.com/ltayshark0637/dsh-Shutdown-Guard">GitHub</a>
+</div>
+
 <script>
 // Interactive demo for the sidebar card.
 // Everything here mirrors lib/client.js: same class names, same markup shape,
