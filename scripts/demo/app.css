@@ -124,10 +124,17 @@ h1 em { font-style: normal; color: #f0a83a }
 /* ---------------------------------------------------------------- tabs */
 /* Two pill buttons right under the banner. They read as one control, so the
    inactive one stays quiet: no border, no fill, just dimmed text. */
+.tabs-row {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 8px;
+  margin: 40px 0 0;
+}
+
 .tabs {
   display: flex;
   gap: 8px;
-  margin: 40px 0 0;
 }
 
 .tab {
@@ -161,6 +168,19 @@ h1 em { font-style: normal; color: #f0a83a }
   font-weight: 600;
   opacity: .6;
   font-variant-numeric: tabular-nums;
+}
+
+/* Language switcher, to the right of the two panes' tabs. Same pill, just
+   smaller: it is a page setting, not a third pane. */
+.langs {
+  display: flex;
+  gap: 6px;
+  margin-left: auto;
+}
+
+.lang-tab {
+  padding: 7px 14px;
+  font-size: 12.5px;
 }
 
 .pane { padding-top: 38px }
@@ -356,6 +376,16 @@ h1 em { font-style: normal; color: #f0a83a }
 
 /* the sidebar mock fills its frame instead of sitting at screenshot width */
 .sb { width: 100% }
+
+/* Section 07 frames the same mock the playground uses; the screenshot it
+   replaced was 568px wide with a 10px radius, so match that. */
+.sbWrap {
+  width: 100%;
+  border-radius: 10px;
+  overflow: hidden;
+  background: #141413;
+  border: 1px solid rgba(255, 255, 255, .07);
+}
 
 .panel {
   flex: 1 1 auto;
@@ -649,7 +679,8 @@ h1 em { font-style: normal; color: #f0a83a }
 @media (max-width: 620px) {
   .strip.three { grid-template-columns: repeat(2, minmax(0, 1fr)) }
   .tabs { width: 100% }
-  .tab { flex: 1 1 auto; justify-content: center }
+  .tabs .tab { flex: 1 1 auto; justify-content: center }
+  .langs { margin-left: 0 }
 }
 
 /* ---------------------------------------------------------------- showcase */

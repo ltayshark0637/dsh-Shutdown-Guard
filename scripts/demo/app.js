@@ -1,8 +1,19 @@
 // Interactive demo for the sidebar card.
 // Everything here mirrors lib/client.js: same class names, same markup shape,
 // same state names. Only the data source differs — this one is a simulation.
+//
+// All user-facing copy comes from scripts/demo/i18n.js; the strings that must
+// stay verbatim in every language (Holding, Standby, `shutdown --when idle`,
+// `jobs 3 · agent 2`) are built here and never translated.
 ; (function () {
   'use strict'
+
+  var I18N = typeof window !== 'undefined' ? window.DEMO_I18N : null
+  var LANG = I18N ? I18N.currentLang() : 'zh'
+
+  function T(key, params) {
+    return I18N ? I18N.dt(LANG, key, params) : key
+  }
 
   var CHEV =
     '<svg class="dsp-chev" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><path d="M6 9l6 6 6-6"/></svg>'
@@ -18,15 +29,6 @@
   })()
 
   var TAG = { off: 'OFF', armed: 'ARMED', hold: 'WAIT', fire: 'FIRE', fired: 'FIRED' }
-  var A_TEXT = {
-    off: ['未开启', '仅在点击「武装」后才会运行程序'],
-    armed: ['待命', '所有任务已结束 · 等待下一次触发'],
-    fired: ['已下发', '关机指令已生效，无法取消'],
-  }
-  var BLOCK_TEXT = {
-    halted: ['已暂停', '账户额度不足，需充值后解除'],
-    waiting: ['等待恢复', '请求过于频繁，稍后自动重试'],
-  }
 
   function pad2(n) { return n < 10 ? '0' + n : String(n) }
   function clock(sec) { return pad2(Math.floor(sec / 60)) + ':' + pad2(sec % 60) }
@@ -44,11 +46,11 @@
     var agent = s.agent || 0
     if (v === 'blocked') {
       return '<b>' + (s.blocked === 'waiting' ? 'Retrying' : 'Paused') + '</b><span>' +
-        (s.blocked === 'waiting' ? '稍后重试' : '需人工处理') + '</span>'
+        T(s.blocked === 'waiting' ? 'card.hud.retry' : 'card.hud.manual') + '</span>'
     }
     if (v === 'hold') return '<b>Holding</b><span>jobs ' + jobs + ' · agent ' + agent + '</span>'
     if (v === 'fire') return '<b>' + clock(s.sec || 0) + '</b><span>T-minus</span>'
-    if (v === 'fired') return '<b>Fired</b><span>已下发</span>'
+    if (v === 'fired') return '<b>Fired</b><span>' + T('card.hud.fired') + '</span>'
     if (v === 'off') return '<b>Offline</b><span>jobs 0 · agent 0</span>'
     return '<b>Standby</b><span>jobs 0 · agent 0</span>'
   }
@@ -58,15 +60,22 @@
     var v = s.view
     var jobs = s.jobs || 0
     var agent = s.agent || 0
-    if (v === 'blocked') return BLOCK_TEXT[s.blocked]
-    if (v === 'fire') return [clock(s.sec || 0), '系统即将关机 · 可撤销']
+    if (v === 'blocked') {
+      return [
+        T('card.a.blocked.' + s.blocked + '.big'),
+        T('card.a.blocked.' + s.blocked + '.meta'),
+      ]
+    }
+    if (v === 'fire') return [clock(s.sec || 0), T('card.a.fire.meta')]
     if (v === 'hold') {
       var bits = []
-      if (jobs) bits.push(jobs + ' 个后台任务')
-      if (agent) bits.push(agent + ' 个会话')
-      return ['等待后台任务', bits.join(' · ') + '，完成后关机']
+      if (jobs) bits.push(T('card.a.hold.jobs', { n: jobs }))
+      if (agent) bits.push(T('card.a.hold.agents', { n: agent }))
+      return [T('card.a.hold.big'), T('card.a.hold.meta', { bits: bits.join(' · ') })]
     }
-    return A_TEXT[v]
+    if (v === 'fired') return [T('card.a.fired.big'), T('card.a.fired.meta')]
+    if (v === 'off') return [T('card.a.off.big'), T('card.a.off.meta')]
+    return [T('card.a.armed.big'), T('card.a.armed.meta')]
   }
 
   // Variant C: terminal lines, LEDs and the footer string.
@@ -89,9 +98,9 @@
 
   function cCode(s) {
     if (s.view === 'blocked') {
-      return s.blocked === 'waiting' ? 'waiting · 自动重试' : 'halted · 需人工处理'
+      return T(s.blocked === 'waiting' ? 'card.c.waiting' : 'card.c.halted')
     }
-    return '条件 ' + ledState(s).filter(Boolean).length + '/6 已满足'
+    return T('card.c.cond', { n: ledState(s).filter(Boolean).length })
   }
 
   // Radar dots: one per background job and per running session. Positions come
@@ -225,7 +234,7 @@
     var v = s.view
     return '<div class="dsp-card" data-state="' + v + '" data-variant="' + (s.variant || 'A') +
       '" data-lum="dark" data-retry="' + ((v === 'blocked' && s.blocked === 'waiting') ? '1' : '0') + '">' +
-      '<div class="dsp-chead"><i class="dsp-live"></i><span class="dsp-ctitle">任务完成后关机</span>' +
+      '<div class="dsp-chead"><i class="dsp-live"></i><span class="dsp-ctitle">' + esc(T('card.title')) + '</span>' +
       '<span class="dsp-tag">' + tagOf(s) + '</span>' + CHEV + '</div>' +
       bodyHtml(s) +
       '<div class="dsp-cbtns">' + buttonOf(s) + '</div>' +
@@ -240,13 +249,13 @@
   function buttonOf(s) {
     var v = s.view
     var hint = s.btnHint ? ' dsp-btn-hint' : ''
-    if (v === 'off') return '<button class="dsp-btn dsp-btn-primary' + hint + '" data-act="arm">武装</button>'
-    if (v === 'fire') return '<button class="dsp-btn dsp-btn-danger" data-act="cancel">取消关机</button>'
+    if (v === 'off') return '<button class="dsp-btn dsp-btn-primary' + hint + '" data-act="arm">' + esc(T('card.arm')) + '</button>'
+    if (v === 'fire') return '<button class="dsp-btn dsp-btn-danger" data-act="cancel">' + esc(T('card.cancel')) + '</button>'
     if (v === 'blocked') {
       return '<button class="dsp-btn" data-act="' + (s.blocked === 'halted' ? 'retry' : 'disarm') + '">' +
-        (s.blocked === 'halted' ? '解除并重试' : '解除') + '</button>'
+        esc(s.blocked === 'halted' ? T('card.retry') : T('card.disarm')) + '</button>'
     }
-    return '<button class="dsp-btn dsp-btn-danger" data-act="disarm">解除</button>'
+    return '<button class="dsp-btn dsp-btn-danger" data-act="disarm">' + esc(T('card.disarm')) + '</button>'
   }
 
   // ---------------------------------------------------------------- state
@@ -263,20 +272,16 @@
   var counter = null
   var retrier = null
 
-  var LABEL = {
-    off: '未开启', armed: '待命', hold: '等待后台任务', fire: '倒计时', fired: '已下发',
-  }
-
   function describe(s) {
-    if (s.view === 'blocked') return s.blocked === 'halted' ? '阻断 · 需人工处理' : '阻断 · 等待自动恢复'
+    if (s.view === 'blocked') return T(s.blocked === 'halted' ? 'now.blocked.halted' : 'now.blocked.waiting')
     if (s.view === 'hold') {
       var bits = []
-      if (s.jobs) bits.push('后台任务 ' + s.jobs)
-      if (s.agent) bits.push('会话 ' + s.agent)
-      return '等待后台任务（' + bits.join(' · ') + '）'
+      if (s.jobs) bits.push(T('now.hold.jobs', { n: s.jobs }))
+      if (s.agent) bits.push(T('now.hold.agents', { n: s.agent }))
+      return T('now.hold', { bits: bits.join(' · ') })
     }
-    if (s.view === 'fire') return '倒计时 ' + clock(s.sec)
-    return LABEL[s.view]
+    if (s.view === 'fire') return T('now.countdown', { sec: clock(s.sec) })
+    return T('state.' + s.view + '.t')
   }
 
   function tone(s) {
@@ -293,10 +298,11 @@
   // restart from the left — one visible "jump" per tick. Only the parts that
   // actually change are touched; the strip is never rebuilt.
   function paint() {
+    if (!slot) return
     var cardEl = slot.querySelector('.dsp-card')
     if (!cardEl) {
       slot.innerHTML = card(state)
-      return
+      cardEl = slot.querySelector('.dsp-card')
     }
 
     var v = state.view
@@ -307,6 +313,10 @@
     var tagEl = cardEl.querySelector('.dsp-tag')
     var nextTag = tagOf(state)
     if (tagEl && tagEl.textContent !== nextTag) tagEl.textContent = nextTag
+
+    var titleEl = cardEl.querySelector('.dsp-ctitle')
+    var nextTitle = T('card.title')
+    if (titleEl && titleEl.textContent !== nextTitle) titleEl.textContent = nextTitle
 
     var oldBody = cardEl.querySelector('.dsp-cbody')
     if (!oldBody || oldBody.getAttribute('data-v') !== (state.variant || 'A')) {
@@ -320,8 +330,10 @@
     var btns = cardEl.querySelector('.dsp-cbtns')
     if (btns) btns.innerHTML = buttonOf(state)
 
-    nowEl.className = 'now ' + tone(state)
-    nowEl.innerHTML = '当前 <b>' + esc(describe(state)) + '</b>'
+    if (nowEl) {
+      nowEl.className = 'now ' + tone(state)
+      nowEl.innerHTML = T('try.now', { state: esc(describe(state)) })
+    }
     if (hintEl) {
       // the nudge appears only while the card is waiting for the 武装 click
       hintEl.hidden = state.phase !== 'ready'
@@ -330,7 +342,7 @@
       // nothing to stop while idle or already fired
       var idle = state.phase === 'idle' || state.phase === 'ready' || state.phase === 'fired'
       stopEl.disabled = idle
-      stopEl.textContent = state.phase === 'fired' ? '已下发，无需解除' : '解除'
+      stopEl.textContent = state.phase === 'fired' ? T('try.stopFired') : T('try.stop')
     }
   }
 
@@ -339,16 +351,26 @@
     return pad2(d.getHours()) + ':' + pad2(d.getMinutes()) + ':' + pad2(d.getSeconds())
   }
 
-  function log(text, kind) {
-    var empty = logEl.querySelector('.empty')
-    if (empty) empty.parentNode.removeChild(empty)
-    var li = document.createElement('li')
-    li.innerHTML = '<span class="t">' + stamp() + '</span><span class="k ' + (kind || '') +
-      '"></span><span>' + esc(text) + '</span>'
-    // newest at the bottom, and the window follows it
-    logEl.appendChild(li)
-    while (logEl.children.length > 40) logEl.removeChild(logEl.firstChild)
+  // The log keeps message keys rather than finished strings, so switching the
+  // page language re-renders the existing entries in the new language.
+  var entries = []
+
+  function renderLog() {
+    if (!logEl) return
+    var out = ''
+    for (var i = 0; i < entries.length; i++) {
+      var e = entries[i]
+      out += '<li><span class="t">' + e.time + '</span><span class="k ' + e.kind +
+        '"></span><span>' + esc(T(e.key, e.params)) + '</span></li>'
+    }
+    logEl.innerHTML = out
     logEl.scrollTop = logEl.scrollHeight
+  }
+
+  function log(key, params, kind) {
+    entries.push({ key: key, params: params || null, kind: kind || '', time: stamp() })
+    while (entries.length > 40) entries.shift()
+    renderLog()
   }
 
   // ---------------------------------------------------------------- timers
@@ -371,8 +393,8 @@
     state.phase = 'ready'
     state.btnHint = true
     paint()
-    log('随机成功：' + state.jobs + ' 个后台任务、' + state.agent + ' 个会话在跑', 'armed')
-    log('点卡片上的「武装」开始检测', 'armed')
+    log('log.rolled', { jobs: state.jobs, agent: state.agent }, 'armed')
+    log('log.hintArm', null, 'armed')
   }
 
   function arm() {
@@ -380,7 +402,7 @@
     state.phase = 'detect'
     state.btnHint = false
     sync()
-    log('已武装，开始检测：等所有任务结束再关机', 'armed')
+    log('log.armed', null, 'armed')
     startDetect()
   }
 
@@ -418,17 +440,17 @@
       var agentsLeft = state.agent
       if (Math.random() < jobsLeft / (jobsLeft + agentsLeft)) {
         state.jobs -= 1
-        log('一个后台任务结束，还剩 ' + state.jobs + ' 个', 'wait')
+        log('log.jobDone', { n: state.jobs }, 'wait')
       } else {
         state.agent -= 1
-        log('一个会话结束，还剩 ' + state.agent + ' 个', 'wait')
+        log('log.agentDone', { n: state.agent }, 'wait')
       }
     } else if (state.jobs > 0) {
       state.jobs -= 1
-      log('一个后台任务结束，还剩 ' + state.jobs + ' 个', 'wait')
+      log('log.jobDone', { n: state.jobs }, 'wait')
     } else if (state.agent > 0) {
       state.agent -= 1
-      log('一个会话结束，还剩 ' + state.agent + ' 个', 'wait')
+      log('log.agentDone', { n: state.agent }, 'wait')
     } else {
       beginCountdown()
       return
@@ -451,7 +473,7 @@
     state.view = 'fire'
     state.sec = COUNTDOWN
     paint()
-    log('全部任务已结束，开始倒计时 ' + COUNTDOWN + ' 秒', 'fire')
+    log('log.countdown', { sec: COUNTDOWN }, 'fire')
     counter = setInterval(function () {
       state.sec -= 1
       if (state.sec <= 0) {
@@ -460,7 +482,7 @@
         state.view = 'fired'
         state.sec = 0
         paint()
-        log('倒计时结束，关机指令已下发', 'fire')
+        log('log.fired', null, 'fire')
         return
       }
       paint()
@@ -474,17 +496,17 @@
     state.view = 'blocked'
     paint()
     if (level === 'halted') {
-      log('阻断：账户额度不足，需人工处理后点「解除并重试」', 'halted')
+      log('log.blockHalted', null, 'halted')
       return
     }
-    log('阻断：请求过于频繁，4 秒后自动重试', 'wait')
+    log('log.blockWaiting', null, 'wait')
     retrier = setTimeout(function () {
       retrier = null
       state.phase = 'detect'
       state.blocked = null
       sync()
       paint()
-      log('自动重试：继续检测', 'wait')
+      log('log.retried', null, 'wait')
       startDetect()
     }, 4000)
   }
@@ -493,7 +515,7 @@
     if (state.phase !== 'countdown') return
     if (counter) { clearInterval(counter); counter = null }
     state.sec = 0
-    log('已取消本次倒计时，模式仍保持武装', 'armed')
+    log('log.cancelled', null, 'armed')
     if (state.jobs === 0 && state.agent === 0) {
       // Nothing left to wait for. Resting armed with an empty queue is a valid
       // state — and re-arming the countdown here would fire again in 12s, which
@@ -501,7 +523,7 @@
       state.phase = 'parked'
       state.view = 'armed'
       paint()
-      log('队列已空，停在待命；点「解除」退出，或重新随机一轮', 'armed')
+      log('log.parked', null, 'armed')
       return
     }
     state.phase = 'detect'
@@ -520,7 +542,7 @@
     state.sec = 0
     state.btnHint = false
     paint()
-    log('已解除，停止检测', 'armed')
+    log('log.disarmed', null, 'armed')
   }
 
   function retryHalted() {
@@ -529,7 +551,7 @@
     state.phase = 'detect'
     sync()
     paint()
-    log('已解除阻断，继续检测', 'armed')
+    log('log.retryResumed', null, 'armed')
     if (state.jobs === 0 && state.agent === 0) beginCountdown()
     else startDetect()
   }
@@ -540,7 +562,7 @@
     if (!b) return
     var act = b.getAttribute('data-act')
     if (act === 'arm') {
-      if (state.phase === 'idle') log('先点「随机一个场景」', 'armed')
+      if (state.phase === 'idle') log('log.armFirst', null, 'armed')
       else arm()
     } else if (act === 'cancel') cancelCountdown()
     else if (act === 'retry') retryHalted()
@@ -550,14 +572,7 @@
   // ---------------------------------------------------------------- showcase
   // The 三种外观 and 六种状态 blocks render the same markup as the card, so what
   // you see there is what the plugin ships.
-  var SHOW_STATES = [
-    ['off', '未开启', '什么都没做'],
-    ['armed', '待命', '已武装，等任务结束'],
-    ['hold', '等待后台任务', '任务还在跑，先不关'],
-    ['fire', '倒计时', '已下发，可撤销'],
-    ['fired', '已下发', '指令生效，无法取消'],
-    ['blocked', '阻断', '遇到必须人处理的事'],
-  ]
+  var SHOW_STATES = ['off', 'armed', 'hold', 'fire', 'fired', 'blocked']
 
   function showcaseSpec(view) {
     if (view === 'hold') return { view: 'hold', jobs: 2, agent: 3 }
@@ -575,19 +590,35 @@
           : { view: 'armed', jobs: 2, agent: 3 }
       s.variant = v
       return '<div class="cell">' + card(s) + '<span class="cell-cap"><b>' + v + ' · ' +
-        (v === 'A' ? '警戒带' : v === 'B' ? '雷达' : '终端') + '</b>' +
-        (v === 'A' ? '大字状态 + 底部红黄斜纹' : v === 'B' ? '同心圆 + 扫描光束' : '命令行摘要 + 六段指示灯') +
+        esc(T('var.' + v + '.name')) + '</b>' +
+        esc(T('var.' + v + '.desc')) +
         '</span></div>'
     }).join('')
+  }
+
+  // Section 07 shows the card inside two static sidebars. They are live markup
+  // (not screenshots) so the sidebar chrome and the card follow the language.
+  function fillSidebars() {
+    ;[
+      ['card-slot-hold', { view: 'hold', jobs: 2, agent: 3 }],
+      ['card-slot-fire', { view: 'fire', sec: 42, jobs: 0, agent: 0 }],
+    ].forEach(function (pair) {
+      var host = document.getElementById(pair[0])
+      if (!host) return
+      var s = pair[1]
+      s.variant = 'A'
+      host.innerHTML = card(s)
+    })
   }
 
   function renderStates() {
     var host = document.getElementById('show-states')
     if (!host) return
-    host.innerHTML = SHOW_STATES.map(function (row) {
-      var s = showcaseSpec(row[0])
+    host.innerHTML = SHOW_STATES.map(function (view) {
+      var s = showcaseSpec(view)
       s.variant = showVariant
-      return '<div class="cell">' + card(s) + '<span class="cell-cap"><b>' + row[1] + '</b>' + row[2] + '</span></div>'
+      return '<div class="cell">' + card(s) + '<span class="cell-cap"><b>' + esc(T('state.' + view + '.t')) +
+        '</b>' + esc(T('state.' + view + '.d')) + '</span></div>'
     }).join('')
     var btns = document.querySelectorAll('#show-variant-pills button')
     for (var i = 0; i < btns.length; i++) {
@@ -627,7 +658,7 @@
       btns[i].classList.toggle('on', btns[i].getAttribute('data-v') === v)
     }
     paint()
-    log('切换外观：' + v, 'armed')
+    log('log.variant', { v: v }, 'armed')
   }
 
   // ---------------------------------------------------------------- boot
@@ -677,12 +708,27 @@
       if (a) { e.preventDefault(); setPane('try') }
     })
 
+    // A language switch must not restart the simulation: paint() rewrites the
+    // copy in place, and the log re-renders from its stored keys, so an
+    // in-flight countdown keeps ticking.
+    if (I18N && I18N.onChange) {
+      I18N.onChange(function (lang) {
+        LANG = lang
+        paint()
+        renderVariants()
+        renderStates()
+        renderLog()
+        fillSidebars()
+      })
+    }
+
     renderVariants()
     renderStates()
+    fillSidebars()
 
     state = { variant: 'A', view: 'off', blocked: null, jobs: 0, agent: 0, sec: 0, phase: 'idle', btnHint: false }
     paint()
-    log('点「随机一个场景」开始', 'armed')
+    log('log.boot', null, 'armed')
 
     // #try opens the playground directly — that is the link the README points at.
     if (location.hash === '#try') setPane('try')

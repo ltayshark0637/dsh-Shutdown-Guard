@@ -1,8 +1,8 @@
 <!doctype html>
-<html lang="zh"><head><meta charset="utf-8">
+<html lang="zh" data-lang="zh"><head><meta charset="utf-8">
 <meta name="viewport" content="width=device-width,initial-scale=1">
-<title>Shutdown Guard · 任务完成后自动关机</title>
-<meta name="description" content="任务完成后自动关机 —— 侧边栏守夜卡片。三种外观、六种状态，可在这里直接试。">
+<title data-i18n="meta.title">Shutdown Guard · 任务完成后自动关机</title>
+<meta name="description" content="任务完成后自动关机 —— 侧边栏守夜卡片。三种外观、六种状态，可在这里直接试。" data-i18n-content="meta.desc">
 <style>
 /* Interactive demo page — same visual language as the README banner:
    one continuous wash, faint grid, film grain, amber eyebrow, hazard rule.
@@ -130,10 +130,17 @@ h1 em { font-style: normal; color: #f0a83a }
 /* ---------------------------------------------------------------- tabs */
 /* Two pill buttons right under the banner. They read as one control, so the
    inactive one stays quiet: no border, no fill, just dimmed text. */
+.tabs-row {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 8px;
+  margin: 40px 0 0;
+}
+
 .tabs {
   display: flex;
   gap: 8px;
-  margin: 40px 0 0;
 }
 
 .tab {
@@ -167,6 +174,19 @@ h1 em { font-style: normal; color: #f0a83a }
   font-weight: 600;
   opacity: .6;
   font-variant-numeric: tabular-nums;
+}
+
+/* Language switcher, to the right of the two panes' tabs. Same pill, just
+   smaller: it is a page setting, not a third pane. */
+.langs {
+  display: flex;
+  gap: 6px;
+  margin-left: auto;
+}
+
+.lang-tab {
+  padding: 7px 14px;
+  font-size: 12.5px;
 }
 
 .pane { padding-top: 38px }
@@ -362,6 +382,16 @@ h1 em { font-style: normal; color: #f0a83a }
 
 /* the sidebar mock fills its frame instead of sitting at screenshot width */
 .sb { width: 100% }
+
+/* Section 07 frames the same mock the playground uses; the screenshot it
+   replaced was 568px wide with a 10px radius, so match that. */
+.sbWrap {
+  width: 100%;
+  border-radius: 10px;
+  overflow: hidden;
+  background: #141413;
+  border: 1px solid rgba(255, 255, 255, .07);
+}
 
 .panel {
   flex: 1 1 auto;
@@ -655,7 +685,8 @@ h1 em { font-style: normal; color: #f0a83a }
 @media (max-width: 620px) {
   .strip.three { grid-template-columns: repeat(2, minmax(0, 1fr)) }
   .tabs { width: 100% }
-  .tab { flex: 1 1 auto; justify-content: center }
+  .tabs .tab { flex: 1 1 auto; justify-content: center }
+  .langs { margin-left: 0 }
 }
 
 /* ---------------------------------------------------------------- showcase */
@@ -1079,121 +1110,152 @@ box-shadow:0 0 7px color-mix(in srgb, var(--dsp-accent) 90%, transparent)}
 
 <div class="page">
   <div class="repo-links">
-    <a class="repo-link" href="https://github.com/ltayshark0637/dsh-Shutdown-Guard" aria-label="在 GitHub 上查看 dsh-shutdown-guard" title="在 GitHub 上查看">
+    <a class="repo-link" href="https://github.com/ltayshark0637/dsh-Shutdown-Guard" aria-label="在 GitHub 上查看 dsh-shutdown-guard" data-i18n-aria="repo.gh.aria" title="在 GitHub 上查看" data-i18n-titleattr="repo.gh.title">
       <svg viewBox="0 0 16 16" width="17" height="17" aria-hidden="true" focusable="false"><path fill="currentColor" d="M8 0C3.58 0 0 3.58 0 8c0 3.54 2.29 6.53 5.47 7.59.4.07.55-.17.55-.38 0-.19-.01-.82-.01-1.49-2.01.37-2.53-.49-2.69-.94-.09-.23-.48-.94-.82-1.13-.28-.15-.68-.52-.01-.53.63-.01 1.08.58 1.23.82.72 1.21 1.87.87 2.33.66.07-.52.28-.87.51-1.07-1.78-.2-3.64-.89-3.64-3.95 0-.87.31-1.59.82-2.15-.08-.2-.36-1.02.08-2.12 0 0 .67-.21 2.2.82.64-.18 1.32-.27 2-.27s1.36.09 2 .27c1.53-1.04 2.2-.82 2.2-.82.44 1.1.16 1.92.08 2.12.51.56.82 1.27.82 2.15 0 3.07-1.87 3.75-3.65 3.95.29.25.54.73.54 1.48 0 1.07-.01 1.93-.01 2.2 0 .21.15.46.55.38A8.012 8.012 0 0 0 16 8c0-4.42-3.58-8-8-8z"/></svg>
       <span>GitHub</span>
     </a>
-    <a class="repo-link" href="https://www.npmjs.com/package/dsh-shutdown-guard" aria-label="在 npm 上查看 dsh-shutdown-guard" title="在 npm 上查看">
+    <a class="repo-link" href="https://www.npmjs.com/package/dsh-shutdown-guard" aria-label="在 npm 上查看 dsh-shutdown-guard" data-i18n-aria="repo.npm.aria" title="在 npm 上查看" data-i18n-titleattr="repo.npm.title">
       <svg viewBox="0 0 16 16" width="17" height="17" aria-hidden="true" focusable="false"><rect x="1.3" y="4.4" width="13.4" height="7.2" rx="1.4" fill="none" stroke="currentColor" stroke-width="1.2"/><text x="8" y="9.55" text-anchor="middle" font-family="ui-monospace, &quot;Cascadia Mono&quot;, Consolas, monospace" font-size="4.4" font-weight="700" fill="currentColor">npm</text></svg>
       <span>npm</span>
     </a>
   </div>
   <div class="eyebrow"><i></i>DeepSeek Harness Plugin</div>
   <h1>Shutdown <em>Guard</em></h1>
-  <div class="zh">任务完成后自动关机<span>·</span>侧边栏守夜卡片</div>
-  <p class="lede">为 DeepSeek Harness 的侧边栏添加「所有任务完成后自动关机」卡片，拥有更好且多样的<b>视觉效果</b>、<b>判定逻辑</b>与<b>个性化定制</b>。</p>
+  <div class="zh" data-i18n="hero.sub">任务完成后自动关机<span>·</span>侧边栏守夜卡片</div>
+  <p class="lede" data-i18n="hero.lede">为 DeepSeek Harness 的侧边栏添加「所有任务完成后自动关机」卡片，拥有更好且多样的<b>视觉效果</b>、<b>判定逻辑</b>与<b>个性化定制</b>。</p>
   <div class="chips">
-    <span class="chip">五道判定闸</span>
-    <span class="chip">三种外观</span>
-    <span class="chip">个性化定制</span>
-    <span class="chip">AFK 自动接管</span>
-    <span class="chip">阻断态分级</span>
+    <span class="chip" data-i18n="chip.1">五道判定闸</span>
+    <span class="chip" data-i18n="chip.2">三种外观</span>
+    <span class="chip" data-i18n="chip.3">个性化定制</span>
+    <span class="chip" data-i18n="chip.4">AFK 自动接管</span>
+    <span class="chip" data-i18n="chip.5">阻断态分级</span>
   </div>
 
-  <div class="tabs" role="tablist">
-    <button class="tab on" id="tab-about" role="tab" aria-selected="true" aria-controls="pane-about" data-pane="about">
-      <span class="n">01</span>了解
-    </button>
-    <button class="tab" id="tab-try" role="tab" aria-selected="false" aria-controls="pane-try" data-pane="try">
-      <span class="n">02</span>试一试
-    </button>
+  <div class="tabs-row">
+    <div class="tabs" role="tablist">
+      <button class="tab on" id="tab-about" role="tab" aria-selected="true" aria-controls="pane-about" data-pane="about" data-i18n="tab.about"><span class="n">01</span>了解</button>
+      <button class="tab" id="tab-try" role="tab" aria-selected="false" aria-controls="pane-try" data-pane="try" data-i18n="tab.try"><span class="n">02</span>试一试</button>
+    </div>
+    <div class="langs" role="group" aria-label="切换语言" data-i18n-aria="langs.aria">
+      <button class="tab lang-tab on" type="button" data-lang-btn="zh" aria-pressed="true">中文</button>
+      <button class="tab lang-tab" type="button" data-lang-btn="en" aria-pressed="false">English</button>
+      <button class="tab lang-tab" type="button" data-lang-btn="ru" aria-pressed="false">Русский</button>
+    </div>
   </div>
 
   <div class="pane" id="pane-about" role="tabpanel" aria-labelledby="tab-about">
     <div class="about">
 
   <div class="sect">
-    <h2><span>01</span>为什么需要它</h2>
-    <p>跑长任务的人常有这个场景：晚上让 agent 把一批活干完，想让它干完就关机，人不在跟前。</p>
-    <p>但「任务结束」不等于「可以关机」——后台任务还在跑、会话报错了、agent 在等你回答问题、你在半路手动终止了……这些情况下关机全是事故。这个插件把这些情况逐个挡下来，只有真的可以关的时候才关。</p>
+    <h2 data-i18n="a1.title"><span>01</span>为什么需要它</h2>
+    <p data-i18n="a1.p1">跑长任务的人常有这个场景：晚上让 agent 把一批活干完，想让它干完就关机，人不在跟前。</p>
+    <p data-i18n="a1.p2">但「任务结束」不等于「可以关机」——后台任务还在跑、会话报错了、agent 在等你回答问题、你在半路手动终止了……这些情况下关机全是事故。这个插件把这些情况逐个挡下来，只有真的可以关的时候才关。</p>
   </div>
 
   <div class="sect">
-    <h2><span>02</span>判定：什么时候才关</h2>
-    <p>处于阻断态时直接不下发；其余五道闸门同时满足才下发 <code>shutdown /s</code>：</p>
+    <h2 data-i18n="a2.title"><span>02</span>判定：什么时候才关</h2>
+    <p data-i18n="a2.p">处于阻断态时直接不下发；其余五道闸门同时满足才下发 <code>shutdown /s</code>：</p>
     <ol class="gates">
-      <li><b>已武装</b> —— 你手动点的</li>
-      <li><b>没有倒计时在跑</b> —— 避免重复下发</li>
-      <li><b>所有 root 会话都空闲</b> —— 没有任何 agent 还在干活</li>
-      <li><b>没有运行中 / 停止中的后台任务</b> —— <code>blockOnJobs</code>，默认开</li>
-      <li><b>本批次没有会话报错</b> —— <code>onlyOnSuccess</code>，默认开</li>
+      <li data-i18n="a2.g1"><b>已武装</b> —— 你手动点的</li>
+      <li data-i18n="a2.g2"><b>没有倒计时在跑</b> —— 避免重复下发</li>
+      <li data-i18n="a2.g3"><b>所有 root 会话都空闲</b> —— 没有任何 agent 还在干活</li>
+      <li data-i18n="a2.g4"><b>没有运行中 / 停止中的后台任务</b> —— <code>blockOnJobs</code>，默认开</li>
+      <li data-i18n="a2.g5"><b>本批次没有会话报错</b> —— <code>onlyOnSuccess</code>，默认开</li>
     </ol>
   </div>
 
   <div class="sect full">
-    <h2><span>03</span>三种外观</h2>
-    <div class="strip three">
-      <div class="shot"><img src="screenshots/02-armed.png" alt="<b>A · 警戒带</b>大字状态 + 底部滚动的红黄斜纹" decoding="async"><span><b>A · 警戒带</b>大字状态 + 底部滚动的红黄斜纹</span></div>
-      <div class="shot"><img src="screenshots/06-variant-b-radar.png" alt="<b>B · 雷达</b>同心圆 + 扫描光束，任务以圆点呈现" decoding="async"><span><b>B · 雷达</b>同心圆 + 扫描光束，任务以圆点呈现</span></div>
-      <div class="shot"><img src="screenshots/07-variant-c-terminal.png" alt="<b>C · 终端</b>命令行摘要 + 六段判定指示灯" decoding="async"><span><b>C · 终端</b>命令行摘要 + 六段判定指示灯</span></div>
-    </div>
-    <p>雷达里的圆点按数量增删、不重排：数量变化时，你正在看的那几个点不会跳位置。设置里切换，立即生效，无需重启。</p>
-    <p>想自己动手试试？打开 <a href="#try">试一试</a> —— 换外观、掷状态、看日志，都是本地随机的，不联网。</p>
+    <h2 data-i18n="a3.title"><span>03</span>三种外观</h2>
+    <div class="strip three" id="show-variants"></div>
+    <p data-i18n="a3.p1">雷达里的圆点按数量增删、不重排：数量变化时，你正在看的那几个点不会跳位置。设置里切换，立即生效，无需重启。</p>
+    <p data-i18n="a3.p2">想自己动手试试？打开 <a href="#try">试一试</a> —— 换外观、掷状态、看日志，都是本地随机的，不联网。</p>
   </div>
 
   <div class="sect full">
     <h2 class="with-pills">
-      <span><span>04</span>六种运行状态</span>
-      <span class="pills" id="show-variant-pills" role="group" aria-label="用哪种外观预览">
+      <span data-i18n="a4.title"><span>04</span>六种运行状态</span>
+      <span class="pills" id="show-variant-pills" role="group" aria-label="用哪种外观预览" data-i18n-aria="a4.pillsAria">
         <button data-v="A" class="on">A</button>
         <button data-v="B">B</button>
         <button data-v="C">C</button>
       </span>
     </h2>
     <div class="strip three" id="show-states"></div>
-    <p>倒计时期间随时可取消，<b>取消后仍保持武装</b>——下一批任务干完照样会关。</p>
+    <p data-i18n="a4.p">倒计时期间随时可取消，<b>取消后仍保持武装</b>——下一批任务干完照样会关。</p>
   </div>
 
   <div class="sect">
-    <h2><span>05</span>阻断态</h2>
-    <p>遇到没法当普通失败处理的错误，插件<b>不解除武装</b>，卡片转色、把原因写出来：</p>
+    <h2 data-i18n="a5.title"><span>05</span>阻断态</h2>
+    <p data-i18n="a5.p">遇到没法当普通失败处理的错误，插件<b>不解除武装</b>，卡片转色、把原因写出来：</p>
     <ul class="levels">
-      <li class="halted"><em>halted · 灰蓝</em>额度不足、凭证失效、上下文超限、能力不支持、磁盘写满。只有人能处理，点「解除并重试」。</li>
-      <li class="waiting"><em>waiting · 灰绿</em>限流、5xx、网络中断、空响应、超时、图片卸载。按策略自动重试，到点注入「继续原计划」指令。</li>
+      <li class="halted" data-i18n="a5.li1"><em>halted · 灰蓝</em>额度不足、凭证失效、上下文超限、能力不支持、磁盘写满。只有人能处理，点「解除并重试」。</li>
+      <li class="waiting" data-i18n="a5.li2"><em>waiting · 灰绿</em>限流、5xx、网络中断、空响应、超时、图片卸载。按策略自动重试，到点注入「继续原计划」指令。</li>
     </ul>
   </div>
 
   <div class="sect">
-    <h2><span>06</span>AFK 自动接管</h2>
-    <p>人不在跟前时，插件替你顶三件事：</p>
+    <h2 data-i18n="a6.title"><span>06</span>AFK 自动接管</h2>
+    <p data-i18n="a6.p">人不在跟前时，插件替你顶三件事：</p>
     <ul class="levels">
-      <li><em>自动回答提问</em>agent 问你问题时，回复「用户处于 AFK，先完成已交代的任务，汇总报告并落盘」。返回 <code>selected: []</code> + 自定义文本，<b>不会替你选中任何选项</b>；关掉后提问照常抛给你。</li>
-      <li><em>错误恢复</em>会话报错时先要求 agent 排查并继续原计划；同一会话再失败改为「停止重试、写报告收尾」。</li>
-      <li><em>中断保护</em>你在半路手动终止任务，不会触发关机。</li>
+      <li data-i18n="a6.li1"><em>自动回答提问</em>agent 问你问题时，回复「用户处于 AFK，先完成已交代的任务，汇总报告并落盘」。返回 <code>selected: []</code> + 自定义文本，<b>不会替你选中任何选项</b>；关掉后提问照常抛给你。</li>
+      <li data-i18n="a6.li2"><em>错误恢复</em>会话报错时先要求 agent 排查并继续原计划；同一会话再失败改为「停止重试、写报告收尾」。</li>
+      <li data-i18n="a6.li3"><em>中断保护</em>你在半路手动终止任务，不会触发关机。</li>
     </ul>
   </div>
 
   <div class="sect full">
-    <h2><span>07</span>装在哪里</h2>
+    <h2 data-i18n="a7.title"><span>07</span>装在哪里</h2>
     <div class="strip two">
-      <div class="shot"><img src="screenshots/10-sidebar-hold.png" alt="武装时：技能中心下方、会话列表上方" decoding="async"><span>武装时：技能中心下方、会话列表上方</span></div>
-      <div class="shot"><img src="screenshots/11-sidebar-fire.png" alt="倒计时：同一位置，整条转红" decoding="async"><span>倒计时：同一位置，整条转红</span></div>
+      <div class="shot">
+        <div class="sbWrap"><div class="sb">
+  <div class="sb-top"><span>deepseek</span><span class="sb-badge">HARNESS</span></div>
+  <div class="sb-row"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7"><circle cx="12" cy="12" r="9"/><path d="M12 8v8M8 12h8"/></svg><span data-i18n="sb.chat">新会话</span></div>
+  <div class="sb-row"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7"><rect x="3" y="3" width="7" height="7" rx="1.5"/><rect x="14" y="3" width="7" height="7" rx="1.5"/><rect x="3" y="14" width="7" height="7" rx="1.5"/><rect x="14" y="14" width="7" height="7" rx="1.5"/></svg><span data-i18n="sb.board">工作台</span></div>
+  <div class="sb-row"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7"><path d="M12 3v6M8 9h8v4a4 4 0 0 1-8 0V9zM12 17v4"/></svg><span data-i18n="sb.plug">插件</span></div>
+  <div class="sb-row"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7"><path d="M12 3l2.6 5.6 6.1.8-4.5 4.2 1.2 6-5.4-3-5.4 3 1.2-6L3.3 9.4l6.1-.8L12 3z"/></svg><span data-i18n="sb.skill">技能中心</span></div>
+  <div class="sb-gap"></div>
+  <div id="card-slot-hold"></div>
+  <div class="sb-gap"></div>
+  <div class="sb-sess"><i></i><span class="nm" data-i18n="sb.sess1">重构关机插件</span><span class="tm" data-i18n="sb.t1">1 分钟</span></div>
+  <div class="sb-sess"><i></i><span class="nm" data-i18n="sb.sess2">周报数据整理</span><span class="tm" data-i18n="sb.t2">14 小时</span></div>
+  <div class="sb-sess"><i></i><span class="nm" data-i18n="sb.sess3">iOS 构建脚本</span><span class="tm" data-i18n="sb.t3">昨天</span></div>
+  <div class="sb-sess"><i></i><span class="nm" data-i18n="sb.sess4">合同条款比对</span><span class="tm" data-i18n="sb.t4">2 天</span></div>
+</div></div>
+        <span data-i18n="a7.cap1">武装时：技能中心下方、会话列表上方</span>
+      </div>
+      <div class="shot">
+        <div class="sbWrap"><div class="sb">
+  <div class="sb-top"><span>deepseek</span><span class="sb-badge">HARNESS</span></div>
+  <div class="sb-row"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7"><circle cx="12" cy="12" r="9"/><path d="M12 8v8M8 12h8"/></svg><span data-i18n="sb.chat">新会话</span></div>
+  <div class="sb-row"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7"><rect x="3" y="3" width="7" height="7" rx="1.5"/><rect x="14" y="3" width="7" height="7" rx="1.5"/><rect x="3" y="14" width="7" height="7" rx="1.5"/><rect x="14" y="14" width="7" height="7" rx="1.5"/></svg><span data-i18n="sb.board">工作台</span></div>
+  <div class="sb-row"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7"><path d="M12 3v6M8 9h8v4a4 4 0 0 1-8 0V9zM12 17v4"/></svg><span data-i18n="sb.plug">插件</span></div>
+  <div class="sb-row"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7"><path d="M12 3l2.6 5.6 6.1.8-4.5 4.2 1.2 6-5.4-3-5.4 3 1.2-6L3.3 9.4l6.1-.8L12 3z"/></svg><span data-i18n="sb.skill">技能中心</span></div>
+  <div class="sb-gap"></div>
+  <div id="card-slot-fire"></div>
+  <div class="sb-gap"></div>
+  <div class="sb-sess"><i></i><span class="nm" data-i18n="sb.sess1">重构关机插件</span><span class="tm" data-i18n="sb.t1">1 分钟</span></div>
+  <div class="sb-sess"><i></i><span class="nm" data-i18n="sb.sess2">周报数据整理</span><span class="tm" data-i18n="sb.t2">14 小时</span></div>
+  <div class="sb-sess"><i></i><span class="nm" data-i18n="sb.sess3">iOS 构建脚本</span><span class="tm" data-i18n="sb.t3">昨天</span></div>
+  <div class="sb-sess"><i></i><span class="nm" data-i18n="sb.sess4">合同条款比对</span><span class="tm" data-i18n="sb.t4">2 天</span></div>
+</div></div>
+        <span data-i18n="a7.cap2">倒计时：同一位置，整条转红</span>
+      </div>
     </div>
-    <p>卡片目前固定在侧边栏的这个位置。后续计划把它做成可以独立出现的形态，届时这里会补充说明。</p>
+    <p data-i18n="a7.p">卡片目前固定在侧边栏的这个位置。后续计划把它做成可以独立出现的形态，届时这里会补充说明。</p>
   </div>
 
   <div class="install full">
-    <span>设置 → 插件 → 添加，填<b>插件目录的绝对路径</b> → 安装 → 重启 DSH。客户端的 bundle 只在启动时编入模块图，改完代码必须重启，刷新页面无效。</span>
-    <span class="go"><a href="https://github.com/ltayshark0637/dsh-Shutdown-Guard">完整说明在 GitHub →</a></span>
+    <span data-i18n="install.text">设置 → 插件 → 添加，填<b>插件目录的绝对路径</b> → 安装 → 重启 DSH。客户端的 bundle 只在启动时编入模块图，改完代码必须重启，刷新页面无效。</span>
+    <span class="go"><a href="https://github.com/ltayshark0637/dsh-Shutdown-Guard" data-i18n="install.link">完整说明在 GitHub →</a></span>
   </div>
 
   <div class="cta full">
     <div class="cta-text">
-      <b>不想只看图？</b>
-      <span>左转「试一试」：随机一个场景，亲手点武装、取消、解除，一路看到关机或阻断。</span>
+      <b data-i18n="cta.b">不想只看图？</b>
+      <span data-i18n="cta.span">左转「试一试」：随机一个场景，亲手点武装、取消、解除，一路看到关机或阻断。</span>
     </div>
     <button class="cta-btn" data-goto="try">
-      去试一试
+      <span data-i18n="cta.btn">去试一试</span>
       <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M5 12h14M13 6l6 6-6 6"/></svg>
     </button>
   </div>
@@ -1206,55 +1268,55 @@ box-shadow:0 0 7px color-mix(in srgb, var(--dsp-accent) 90%, transparent)}
   <div class="stage-col">
     <div class="stage-frame"><div class="sb">
   <div class="sb-top"><span>deepseek</span><span class="sb-badge">HARNESS</span></div>
-  <div class="sb-row"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7"><circle cx="12" cy="12" r="9"/><path d="M12 8v8M8 12h8"/></svg><span>新会话</span></div>
-  <div class="sb-row"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7"><rect x="3" y="3" width="7" height="7" rx="1.5"/><rect x="14" y="3" width="7" height="7" rx="1.5"/><rect x="3" y="14" width="7" height="7" rx="1.5"/><rect x="14" y="14" width="7" height="7" rx="1.5"/></svg><span>工作台</span></div>
-  <div class="sb-row"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7"><path d="M12 3v6M8 9h8v4a4 4 0 0 1-8 0V9zM12 17v4"/></svg><span>插件</span></div>
-  <div class="sb-row"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7"><path d="M12 3l2.6 5.6 6.1.8-4.5 4.2 1.2 6-5.4-3-5.4 3 1.2-6L3.3 9.4l6.1-.8L12 3z"/></svg><span>技能中心</span></div>
+  <div class="sb-row"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7"><circle cx="12" cy="12" r="9"/><path d="M12 8v8M8 12h8"/></svg><span data-i18n="sb.chat">新会话</span></div>
+  <div class="sb-row"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7"><rect x="3" y="3" width="7" height="7" rx="1.5"/><rect x="14" y="3" width="7" height="7" rx="1.5"/><rect x="3" y="14" width="7" height="7" rx="1.5"/><rect x="14" y="14" width="7" height="7" rx="1.5"/></svg><span data-i18n="sb.board">工作台</span></div>
+  <div class="sb-row"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7"><path d="M12 3v6M8 9h8v4a4 4 0 0 1-8 0V9zM12 17v4"/></svg><span data-i18n="sb.plug">插件</span></div>
+  <div class="sb-row"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7"><path d="M12 3l2.6 5.6 6.1.8-4.5 4.2 1.2 6-5.4-3-5.4 3 1.2-6L3.3 9.4l6.1-.8L12 3z"/></svg><span data-i18n="sb.skill">技能中心</span></div>
   <div class="sb-gap"></div>
   <div id="card-slot"></div>
   <div class="sb-gap"></div>
-  <div class="sb-sess"><i></i><span class="nm">重构关机插件</span><span class="tm">1 分钟</span></div>
-  <div class="sb-sess"><i></i><span class="nm">周报数据整理</span><span class="tm">14 小时</span></div>
-  <div class="sb-sess"><i></i><span class="nm">iOS 构建脚本</span><span class="tm">昨天</span></div>
-  <div class="sb-sess"><i></i><span class="nm">合同条款比对</span><span class="tm">2 天</span></div>
+  <div class="sb-sess"><i></i><span class="nm" data-i18n="sb.sess1">重构关机插件</span><span class="tm" data-i18n="sb.t1">1 分钟</span></div>
+  <div class="sb-sess"><i></i><span class="nm" data-i18n="sb.sess2">周报数据整理</span><span class="tm" data-i18n="sb.t2">14 小时</span></div>
+  <div class="sb-sess"><i></i><span class="nm" data-i18n="sb.sess3">iOS 构建脚本</span><span class="tm" data-i18n="sb.t3">昨天</span></div>
+  <div class="sb-sess"><i></i><span class="nm" data-i18n="sb.sess4">合同条款比对</span><span class="tm" data-i18n="sb.t4">2 天</span></div>
 </div></div>
   </div>
 
   <div class="panel">
     <div class="block">
-      <div class="blabel">外观</div>
-      <div class="seg" id="variants" role="group" aria-label="外观">
-        <button data-v="A" class="on">A · 警戒带</button>
-        <button data-v="B">B · 雷达</button>
-        <button data-v="C">C · 终端</button>
+      <div class="blabel" data-i18n="try.appearance">外观</div>
+      <div class="seg" id="variants" role="group" aria-label="外观" data-i18n-aria="try.appearanceAria">
+        <button data-v="A" class="on" data-i18n="try.vA">A · 警戒带</button>
+        <button data-v="B" data-i18n="try.vB">B · 雷达</button>
+        <button data-v="C" data-i18n="try.vC">C · 终端</button>
       </div>
     </div>
 
     <div class="block">
-      <div class="blabel">场景</div>
-      <button class="roll" id="roll">随机一个场景</button>
+      <div class="blabel" data-i18n="try.scene">场景</div>
+      <button class="roll" id="roll" data-i18n="try.roll">随机一个场景</button>
       <div class="armhint" id="arm-hint" hidden>
         <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M19 12H5M11 18l-6-6 6-6"/></svg>
-        去左边点卡片上的「武装」开始检测
+        <span data-i18n="try.armHint">去左边点卡片上的「武装」开始检测</span>
       </div>
       <div class="now" id="now" role="status" aria-live="polite">当前 <b>未开启</b></div>
       <button class="stop" id="stop">解除</button>
     </div>
 
     <div class="block log-block">
-      <div class="blabel">模拟日志</div>
-      <ul class="log" id="log"><li class="empty">还没有记录</li></ul>
+      <div class="blabel" data-i18n="try.log">模拟日志</div>
+      <ul class="log" id="log"><li class="empty" data-i18n="try.logEmpty">还没有记录</li></ul>
     </div>
   </div>
 
   <aside class="tipscol">
-    <div class="blabel">怎么玩</div>
+    <div class="blabel" data-i18n="try.tips">怎么玩</div>
     <ol class="tips">
-      <li><b>左边是它真正待的地方</b>：技能中心下方、会话列表上方。目前卡片固定在这个位置；后续会支持让它独立出现，届时这里的交互会跟着变。<b>这页的卡片可以点</b>，武装、取消、解除都在左边操作。</li>
-      <li>流程：<b>随机场景</b> → 点卡片上的<b>武装</b> → 开始检测 → 后台任务与会话逐个减少 → 全部结束后进入倒计时 → 下发。</li>
-      <li>检测途中会有小概率撞上阻断态：<code>halted</code> 要你点「解除并重试」，<code>waiting</code> 过几秒自己恢复。</li>
-      <li>倒计时期间你可以随时「取消关机」，模式仍保持武装；也可能撞上阻断。</li>
-      <li>真实插件的日志在 <code>设置 → 状态</code>，完整流水写在 <code>data/events.log</code>。这里倒计时用 12 秒，插件默认 60 秒。</li>
+      <li data-i18n="try.tip1"><b>左边是它真正待的地方</b>：技能中心下方、会话列表上方。目前卡片固定在这个位置；后续会支持让它独立出现，届时这里的交互会跟着变。<b>这页的卡片可以点</b>，武装、取消、解除都在左边操作。</li>
+      <li data-i18n="try.tip2">流程：<b>随机场景</b> → 点卡片上的<b>武装</b> → 开始检测 → 后台任务与会话逐个减少 → 全部结束后进入倒计时 → 下发。</li>
+      <li data-i18n="try.tip3">检测途中会有小概率撞上阻断态：<code>halted</code> 要你点「解除并重试」，<code>waiting</code> 过几秒自己恢复。</li>
+      <li data-i18n="try.tip4">倒计时期间你可以随时「取消关机」，模式仍保持武装；也可能撞上阻断。</li>
+      <li data-i18n="try.tip5">真实插件的日志在 <code>设置 → 状态</code>，完整流水写在 <code>data/events.log</code>。这里倒计时用 12 秒，插件默认 60 秒。</li>
     </ol>
   </aside>
 </div>
@@ -1265,16 +1327,737 @@ box-shadow:0 0 7px color-mix(in srgb, var(--dsp-accent) 90%, transparent)}
 <div class="colophon">
   <span><b>dsh-shutdown-guard</b></span>
   <span>MIT</span>
-  <span>演示页 · 数据全部本地随机，不联网</span>
+  <span data-i18n="colophon.note">演示页 · 数据全部本地随机，不联网</span>
   <a href="https://github.com/ltayshark0637/dsh-Shutdown-Guard">GitHub</a>
 </div>
 
 <script>
+// Demo page copy in three languages.
+//
+// Loaded twice:
+//   - by scripts/gen-demo.cjs (Node, via require) so the build can read the
+//     message table and the file text it inlines into docs/demo.html;
+//   - by the browser, where it is inlined as a plain <script> right before
+//     app.js and installs itself as window.DEMO_I18N.
+//
+// It stays dependency-free and UMD-shaped on purpose: no bundler, no build
+// step, one file that both sides can use.
+;(function (root, factory) {
+  var api = factory()
+  if (typeof module === 'object' && module.exports) module.exports = api
+  else root.DEMO_I18N = api
+})(typeof globalThis !== 'undefined' ? globalThis : this, function () {
+  'use strict'
+
+  var DEMO_LANGS = ['zh', 'en', 'ru']
+
+  var DEMO_LABELS = { zh: '中文', en: 'English', ru: 'Русский' }
+
+  var STORE_KEY = 'dsh-shutdown-guard-demo.lang'
+
+  // Messages may contain inline markup (<b>, <code>, <a>, <span>) because some
+  // sentences carry emphasis or a link. Text that must stay verbatim in every
+  // language (Holding, Standby, `shutdown --when idle`, `jobs 3 · agent 2`) is
+  // kept inside those strings untouched.
+  var DEMO_MSG = {
+    zh: {
+      'meta.title': 'Shutdown Guard · 任务完成后自动关机',
+      'meta.desc': '任务完成后自动关机 —— 侧边栏守夜卡片。三种外观、六种状态，可在这里直接试。',
+
+      'repo.gh.aria': '在 GitHub 上查看 dsh-shutdown-guard',
+      'repo.gh.title': '在 GitHub 上查看',
+      'repo.npm.aria': '在 npm 上查看 dsh-shutdown-guard',
+      'repo.npm.title': '在 npm 上查看',
+
+      'hero.sub': '任务完成后自动关机<span>·</span>侧边栏守夜卡片',
+      'hero.lede': '为 DeepSeek Harness 的侧边栏添加「所有任务完成后自动关机」卡片，拥有更好且多样的<b>视觉效果</b>、<b>判定逻辑</b>与<b>个性化定制</b>。',
+      'chip.1': '五道判定闸',
+      'chip.2': '三种外观',
+      'chip.3': '个性化定制',
+      'chip.4': 'AFK 自动接管',
+      'chip.5': '阻断态分级',
+      'tab.about': '<span class="n">01</span>了解',
+      'tab.try': '<span class="n">02</span>试一试',
+      'langs.aria': '切换语言',
+
+      'sb.chat': '新会话',
+      'sb.board': '工作台',
+      'sb.plug': '插件',
+      'sb.skill': '技能中心',
+      'sb.sess1': '重构关机插件',
+      'sb.sess2': '周报数据整理',
+      'sb.sess3': 'iOS 构建脚本',
+      'sb.sess4': '合同条款比对',
+      'sb.t1': '1 分钟',
+      'sb.t2': '14 小时',
+      'sb.t3': '昨天',
+      'sb.t4': '2 天',
+
+      'a1.title': '<span>01</span>为什么需要它',
+      'a1.p1': '跑长任务的人常有这个场景：晚上让 agent 把一批活干完，想让它干完就关机，人不在跟前。',
+      'a1.p2': '但「任务结束」不等于「可以关机」——后台任务还在跑、会话报错了、agent 在等你回答问题、你在半路手动终止了……这些情况下关机全是事故。这个插件把这些情况逐个挡下来，只有真的可以关的时候才关。',
+
+      'a2.title': '<span>02</span>判定：什么时候才关',
+      'a2.p': '处于阻断态时直接不下发；其余五道闸门同时满足才下发 <code>shutdown /s</code>：',
+      'a2.g1': '<b>已武装</b> —— 你手动点的',
+      'a2.g2': '<b>没有倒计时在跑</b> —— 避免重复下发',
+      'a2.g3': '<b>所有 root 会话都空闲</b> —— 没有任何 agent 还在干活',
+      'a2.g4': '<b>没有运行中 / 停止中的后台任务</b> —— <code>blockOnJobs</code>，默认开',
+      'a2.g5': '<b>本批次没有会话报错</b> —— <code>onlyOnSuccess</code>，默认开',
+
+      'a3.title': '<span>03</span>三种外观',
+      'a3.cap1': '<b>A · 警戒带</b>大字状态 + 底部滚动的红黄斜纹',
+      'a3.cap2': '<b>B · 雷达</b>同心圆 + 扫描光束，任务以圆点呈现',
+      'a3.cap3': '<b>C · 终端</b>命令行摘要 + 六段判定指示灯',
+      'a3.alt1': 'A · 警戒带：大字状态 + 底部滚动的红黄斜纹',
+      'a3.alt2': 'B · 雷达：同心圆 + 扫描光束，任务以圆点呈现',
+      'a3.alt3': 'C · 终端：命令行摘要 + 六段判定指示灯',
+      'a3.p1': '雷达里的圆点按数量增删、不重排：数量变化时，你正在看的那几个点不会跳位置。设置里切换，立即生效，无需重启。',
+      'a3.p2': '想自己动手试试？打开 <a href="#try">试一试</a> —— 换外观、掷状态、看日志，都是本地随机的，不联网。',
+
+      'a4.title': '<span>04</span>六种运行状态',
+      'a4.pillsAria': '用哪种外观预览',
+      'a4.p': '倒计时期间随时可取消，<b>取消后仍保持武装</b>——下一批任务干完照样会关。',
+
+      'a5.title': '<span>05</span>阻断态',
+      'a5.p': '遇到没法当普通失败处理的错误，插件<b>不解除武装</b>，卡片转色、把原因写出来：',
+      'a5.li1': '<em>halted · 灰蓝</em>额度不足、凭证失效、上下文超限、能力不支持、磁盘写满。只有人能处理，点「解除并重试」。',
+      'a5.li2': '<em>waiting · 灰绿</em>限流、5xx、网络中断、空响应、超时、图片卸载。按策略自动重试，到点注入「继续原计划」指令。',
+
+      'a6.title': '<span>06</span>AFK 自动接管',
+      'a6.p': '人不在跟前时，插件替你顶三件事：',
+      'a6.li1': '<em>自动回答提问</em>agent 问你问题时，回复「用户处于 AFK，先完成已交代的任务，汇总报告并落盘」。返回 <code>selected: []</code> + 自定义文本，<b>不会替你选中任何选项</b>；关掉后提问照常抛给你。',
+      'a6.li2': '<em>错误恢复</em>会话报错时先要求 agent 排查并继续原计划；同一会话再失败改为「停止重试、写报告收尾」。',
+      'a6.li3': '<em>中断保护</em>你在半路手动终止任务，不会触发关机。',
+
+      'a7.title': '<span>07</span>装在哪里',
+      'a7.cap1': '武装时：技能中心下方、会话列表上方',
+      'a7.cap2': '倒计时：同一位置，整条转红',
+      'a7.alt1': '武装时：技能中心下方、会话列表上方',
+      'a7.alt2': '倒计时：同一位置，整条转红',
+      'a7.p': '卡片目前固定在侧边栏的这个位置。后续计划把它做成可以独立出现的形态，届时这里会补充说明。',
+
+      'install.text': '设置 → 插件 → 添加，填<b>插件目录的绝对路径</b> → 安装 → 重启 DSH。客户端的 bundle 只在启动时编入模块图，改完代码必须重启，刷新页面无效。',
+      'install.link': '完整说明在 GitHub →',
+      'cta.b': '不想只看图？',
+      'cta.span': '左转「试一试」：随机一个场景，亲手点武装、取消、解除，一路看到关机或阻断。',
+      'cta.btn': '去试一试',
+
+      'try.appearance': '外观',
+      'try.appearanceAria': '外观',
+      'try.vA': 'A · 警戒带',
+      'try.vB': 'B · 雷达',
+      'try.vC': 'C · 终端',
+      'try.scene': '场景',
+      'try.roll': '随机一个场景',
+      'try.armHint': '去左边点卡片上的「武装」开始检测',
+      'try.now': '当前 <b>{state}</b>',
+      'try.stop': '解除',
+      'try.stopFired': '已下发，无需解除',
+      'try.log': '模拟日志',
+      'try.logEmpty': '还没有记录',
+      'try.tips': '怎么玩',
+      'try.tip1': '<b>左边是它真正待的地方</b>：技能中心下方、会话列表上方。目前卡片固定在这个位置；后续会支持让它独立出现，届时这里的交互会跟着变。<b>这页的卡片可以点</b>，武装、取消、解除都在左边操作。',
+      'try.tip2': '流程：<b>随机场景</b> → 点卡片上的<b>武装</b> → 开始检测 → 后台任务与会话逐个减少 → 全部结束后进入倒计时 → 下发。',
+      'try.tip3': '检测途中会有小概率撞上阻断态：<code>halted</code> 要你点「解除并重试」，<code>waiting</code> 过几秒自己恢复。',
+      'try.tip4': '倒计时期间你可以随时「取消关机」，模式仍保持武装；也可能撞上阻断。',
+      'try.tip5': '真实插件的日志在 <code>设置 → 状态</code>，完整流水写在 <code>data/events.log</code>。这里倒计时用 12 秒，插件默认 60 秒。',
+
+      'colophon.note': '演示页 · 数据全部本地随机，不联网',
+
+      'card.title': '任务完成后关机',
+      'card.arm': '武装',
+      'card.cancel': '取消关机',
+      'card.retry': '解除并重试',
+      'card.disarm': '解除',
+      'card.a.off.big': '未开启',
+      'card.a.off.meta': '仅在点击「武装」后才会运行程序',
+      'card.a.armed.big': '待命',
+      'card.a.armed.meta': '所有任务已结束 · 等待下一次触发',
+      'card.a.fired.big': '已下发',
+      'card.a.fired.meta': '关机指令已生效，无法取消',
+      'card.a.fire.meta': '系统即将关机 · 可撤销',
+      'card.a.hold.big': '等待后台任务',
+      'card.a.hold.meta': '{bits}，完成后关机',
+      'card.a.hold.jobs': '{n} 个后台任务',
+      'card.a.hold.agents': '{n} 个会话',
+      'card.a.blocked.halted.big': '已暂停',
+      'card.a.blocked.halted.meta': '账户额度不足，需充值后解除',
+      'card.a.blocked.waiting.big': '等待恢复',
+      'card.a.blocked.waiting.meta': '请求过于频繁，稍后自动重试',
+      'card.hud.retry': '稍后重试',
+      'card.hud.manual': '需人工处理',
+      'card.hud.fired': '已下发',
+      'card.c.waiting': 'waiting · 自动重试',
+      'card.c.halted': 'halted · 需人工处理',
+      'card.c.cond': '条件 {n}/6 已满足',
+
+      'state.off.t': '未开启',
+      'state.off.d': '什么都没做',
+      'state.armed.t': '待命',
+      'state.armed.d': '已武装，等任务结束',
+      'state.hold.t': '等待后台任务',
+      'state.hold.d': '任务还在跑，先不关',
+      'state.fire.t': '倒计时',
+      'state.fire.d': '已下发，可撤销',
+      'state.fired.t': '已下发',
+      'state.fired.d': '指令生效，无法取消',
+      'state.blocked.t': '阻断',
+      'state.blocked.d': '遇到必须人处理的事',
+
+      'now.blocked.halted': '阻断 · 需人工处理',
+      'now.blocked.waiting': '阻断 · 等待自动恢复',
+      'now.hold': '等待后台任务（{bits}）',
+      'now.hold.jobs': '后台任务 {n}',
+      'now.hold.agents': '会话 {n}',
+      'now.countdown': '倒计时 {sec}',
+
+      'var.A.name': '警戒带',
+      'var.A.desc': '大字状态 + 底部红黄斜纹',
+      'var.B.name': '雷达',
+      'var.B.desc': '同心圆 + 扫描光束',
+      'var.C.name': '终端',
+      'var.C.desc': '命令行摘要 + 六段指示灯',
+
+      'log.boot': '点「随机一个场景」开始',
+      'log.rolled': '随机成功：{jobs} 个后台任务、{agent} 个会话在跑',
+      'log.hintArm': '点卡片上的「武装」开始检测',
+      'log.armFirst': '先点「随机一个场景」',
+      'log.armed': '已武装，开始检测：等所有任务结束再关机',
+      'log.jobDone': '一个后台任务结束，还剩 {n} 个',
+      'log.agentDone': '一个会话结束，还剩 {n} 个',
+      'log.countdown': '全部任务已结束，开始倒计时 {sec} 秒',
+      'log.fired': '倒计时结束，关机指令已下发',
+      'log.blockHalted': '阻断：账户额度不足，需人工处理后点「解除并重试」',
+      'log.blockWaiting': '阻断：请求过于频繁，4 秒后自动重试',
+      'log.retried': '自动重试：继续检测',
+      'log.cancelled': '已取消本次倒计时，模式仍保持武装',
+      'log.parked': '队列已空，停在待命；点「解除」退出，或重新随机一轮',
+      'log.disarmed': '已解除，停止检测',
+      'log.retryResumed': '已解除阻断，继续检测',
+      'log.variant': '切换外观：{v}',
+    },
+
+    en: {
+      'meta.title': 'Shutdown Guard · shut down when the work is done',
+      'meta.desc': 'Shut down automatically once all work is done — a night-watch card in the sidebar. Three looks, six states, try it here.',
+
+      'repo.gh.aria': 'View dsh-shutdown-guard on GitHub',
+      'repo.gh.title': 'View on GitHub',
+      'repo.npm.aria': 'View dsh-shutdown-guard on npm',
+      'repo.npm.title': 'View on npm',
+
+      'hero.sub': 'Shut down when the work is done<span>·</span>a night-watch card in the sidebar',
+      'hero.lede': 'Adds a “shut down when every task is done” card to the DeepSeek Harness sidebar, with better and more varied <b>visuals</b>, <b>gating logic</b> and <b>personalisation</b>.',
+      'chip.1': 'Five gates',
+      'chip.2': 'Three looks',
+      'chip.3': 'Personalisation',
+      'chip.4': 'AFK auto-handling',
+      'chip.5': 'Tiered blocked states',
+      'tab.about': '<span class="n">01</span>Overview',
+      'tab.try': '<span class="n">02</span>Try it',
+      'langs.aria': 'Switch language',
+
+      'sb.chat': 'New chat',
+      'sb.board': 'Workbench',
+      'sb.plug': 'Plugins',
+      'sb.skill': 'Skill Center',
+      'sb.sess1': 'Refactor shutdown plugin',
+      'sb.sess2': 'Weekly report data',
+      'sb.sess3': 'iOS build script',
+      'sb.sess4': 'Contract clause diff',
+      'sb.t1': '1 min',
+      'sb.t2': '14 h',
+      'sb.t3': 'Yesterday',
+      'sb.t4': '2 days',
+
+      'a1.title': '<span>01</span>Why it exists',
+      'a1.p1': 'Anyone running long tasks knows the scene: you let the agent work through a batch overnight and want the machine to shut down when it is done, with nobody around.',
+      'a1.p2': 'But “the task is finished” is not the same as “it is safe to shut down” — background jobs may still be running, a session may have errored, the agent may be waiting for your answer, you may have stopped it halfway. Shutting down in any of those cases is an incident. This plugin blocks each case, one by one, and only shuts down when it is genuinely safe.',
+
+      'a2.title': '<span>02</span>The check: when it actually shuts down',
+      'a2.p': 'In a blocked state nothing is sent. Otherwise all five gates must pass before <code>shutdown /s</code> is issued:',
+      'a2.g1': '<b>Armed</b> — you clicked it yourself',
+      'a2.g2': '<b>No countdown running</b> — avoids sending twice',
+      'a2.g3': '<b>Every root session idle</b> — no agent is still working',
+      'a2.g4': '<b>No running or stopping background jobs</b> — <code>blockOnJobs</code>, on by default',
+      'a2.g5': '<b>No session errored in this batch</b> — <code>onlyOnSuccess</code>, on by default',
+
+      'a3.title': '<span>03</span>Three looks',
+      'a3.cap1': '<b>A · Hazard tape</b> A large status word plus a scrolling red-and-yellow strip',
+      'a3.cap2': '<b>B · Radar</b> Concentric rings and a sweep, each task shown as a dot',
+      'a3.cap3': '<b>C · Terminal</b> A command-line summary plus six decision LEDs',
+      'a3.alt1': 'A · Hazard tape: large status plus a scrolling red-and-yellow strip',
+      'a3.alt2': 'B · Radar: concentric rings and a sweep, tasks shown as dots',
+      'a3.alt3': 'C · Terminal: command-line summary plus six decision LEDs',
+      'a3.p1': 'Dots in the radar are added and removed by count, never re-sorted: when the number changes, the dots you are looking at stay put. Switch in settings — it applies immediately, no restart.',
+      'a3.p2': 'Want to try it yourself? Open <a href="#try">Try it</a> — change the look, roll a state, watch the log. All local and random, no network.',
+
+      'a4.title': '<span>04</span>Six runtime states',
+      'a4.pillsAria': 'Which look to preview',
+      'a4.p': 'A countdown can be cancelled at any time, and <b>cancelling keeps it armed</b> — the next batch will still be shut down when it finishes.',
+
+      'a5.title': '<span>05</span>Blocked states',
+      'a5.p': 'On an error that cannot be handled as an ordinary failure, the plugin <b>stays armed</b>, recolours the card and writes the reason down:',
+      'a5.li1': '<em>halted · slate</em> Out of quota, invalid credentials, context limit, unsupported capability, disk full. Only a human can clear these: click “Clear and retry”.',
+      'a5.li2': '<em>waiting · sage</em> Rate limit, 5xx, network drop, empty response, timeout, image unload. Retried automatically by policy; on success the agent is told to “continue the original plan”.',
+
+      'a6.title': '<span>06</span>AFK auto-handling',
+      'a6.p': 'When nobody is around, the plugin stands in for you in three places:',
+      'a6.li1': '<em>Answering questions</em> When the agent asks something, it replies “The user is AFK. Finish the tasks already assigned, then summarise and write the report to disk.” It returns <code>selected: []</code> plus custom text, so it <b>never picks an option for you</b>; turn this off and questions reach you as usual.',
+      'a6.li2': '<em>Error recovery</em> On a session error it first asks the agent to investigate and continue the original plan; a second failure in the same session becomes “stop retrying and close out with a report”.',
+      'a6.li3': '<em>Interruption protection</em> If you stop a task halfway yourself, no shutdown is triggered.',
+
+      'a7.title': '<span>07</span>Where it lives',
+      'a7.cap1': 'When armed: below Skill Center, above the session list',
+      'a7.cap2': 'Countdown: same spot, the whole strip turns red',
+      'a7.alt1': 'When armed: below Skill Center, above the session list',
+      'a7.alt2': 'Countdown: same spot, the whole strip turns red',
+      'a7.p': 'For now the card is fixed to this spot in the sidebar. The plan is to let it appear independently later; this page will be updated when that lands.',
+
+      'install.text': 'Settings → Plugins → Add, enter the <b>absolute path to the plugin directory</b> → Install → restart DSH. The client bundle is only wired into the module graph at startup, so code changes need a restart — reloading the page does nothing.',
+      'install.link': 'Full instructions on GitHub →',
+      'cta.b': 'Rather click than read?',
+      'cta.span': 'Head to “Try it”: roll a random scenario, then arm, cancel and clear it yourself, all the way to shutdown or a blocked state.',
+      'cta.btn': 'Try it',
+
+      'try.appearance': 'Look',
+      'try.appearanceAria': 'Look',
+      'try.vA': 'A · Hazard tape',
+      'try.vB': 'B · Radar',
+      'try.vC': 'C · Terminal',
+      'try.scene': 'Scenario',
+      'try.roll': 'Roll a random scenario',
+      'try.armHint': 'Click “Arm” on the card on the left to start checking',
+      'try.now': 'Now <b>{state}</b>',
+      'try.stop': 'Clear',
+      'try.stopFired': 'Already fired — nothing to clear',
+      'try.log': 'Simulation log',
+      'try.logEmpty': 'No entries yet',
+      'try.tips': 'How to play',
+      'try.tip1': '<b>The left side is where it really lives</b>: below Skill Center, above the session list. The card is fixed there for now; later it will be able to appear on its own, and the interaction here will follow. <b>The card on this page is clickable</b> — arm, cancel and clear all happen on the left.',
+      'try.tip2': 'Flow: <b>roll a scenario</b> → click <b>Arm</b> on the card → checking starts → background jobs and sessions drain one by one → when all are done a countdown begins → the command is issued.',
+      'try.tip3': 'While checking there is a small chance of hitting a blocked state: <code>halted</code> waits for you to click “Clear and retry”, <code>waiting</code> recovers on its own after a few seconds.',
+      'try.tip4': 'During the countdown you can “Cancel shutdown” at any time; the mode stays armed. A blocked state can happen here too.',
+      'try.tip5': 'The real plugin logs under <code>Settings → Status</code>, with the full stream in <code>data/events.log</code>. The countdown here is 12 seconds; the plugin defaults to 60.',
+
+      'colophon.note': 'Demo page · all data is local and random, no network',
+
+      'card.title': 'Shut down when done',
+      'card.arm': 'Arm',
+      'card.cancel': 'Cancel shutdown',
+      'card.retry': 'Clear and retry',
+      'card.disarm': 'Clear',
+      'card.a.off.big': 'Off',
+      'card.a.off.meta': 'The program only runs after you click “Arm”',
+      'card.a.armed.big': 'Standby',
+      'card.a.armed.meta': 'All tasks finished · waiting for the next trigger',
+      'card.a.fired.big': 'Fired',
+      'card.a.fired.meta': 'Shutdown issued — cannot be cancelled',
+      'card.a.fire.meta': 'Shutting down · can be cancelled',
+      'card.a.hold.big': 'Waiting',
+      'card.a.hold.meta': '{bits} — shuts down when done',
+      'card.a.hold.jobs': '{n} background jobs',
+      'card.a.hold.agents': '{n} sessions',
+      'card.a.blocked.halted.big': 'Paused',
+      'card.a.blocked.halted.meta': 'Out of account quota — top up, then clear',
+      'card.a.blocked.waiting.big': 'Retrying',
+      'card.a.blocked.waiting.meta': 'Too many requests — retrying automatically',
+      'card.hud.retry': 'retrying shortly',
+      'card.hud.manual': 'needs a human',
+      'card.hud.fired': 'sent',
+      'card.c.waiting': 'waiting · auto-retry',
+      'card.c.halted': 'halted · needs a human',
+      'card.c.cond': 'conditions {n}/6 met',
+
+      'state.off.t': 'Off',
+      'state.off.d': 'Nothing done yet',
+      'state.armed.t': 'Standby',
+      'state.armed.d': 'Armed, waiting for the tasks to finish',
+      'state.hold.t': 'Waiting',
+      'state.hold.d': 'Tasks still running — not shutting down yet',
+      'state.fire.t': 'Countdown',
+      'state.fire.d': 'Issued, can be cancelled',
+      'state.fired.t': 'Fired',
+      'state.fired.d': 'Issued and in effect — cannot be cancelled',
+      'state.blocked.t': 'Blocked',
+      'state.blocked.d': 'Something needs a human',
+
+      'now.blocked.halted': 'Blocked · needs a human',
+      'now.blocked.waiting': 'Blocked · waiting to recover',
+      'now.hold': 'Now waiting on {bits}',
+      'now.hold.jobs': '{n} background jobs',
+      'now.hold.agents': '{n} sessions',
+      'now.countdown': 'Countdown {sec}',
+
+      'var.A.name': 'Hazard tape',
+      'var.A.desc': 'Large status + red/yellow strip',
+      'var.B.name': 'Radar',
+      'var.B.desc': 'Concentric rings + sweep',
+      'var.C.name': 'Terminal',
+      'var.C.desc': 'CLI summary + six LEDs',
+
+      'log.boot': 'Click “Roll a random scenario” to start',
+      'log.rolled': 'Rolled: {jobs} background jobs, {agent} sessions running',
+      'log.hintArm': 'Click “Arm” on the card to start checking',
+      'log.armFirst': 'Roll a scenario first',
+      'log.armed': 'Armed, checking: shut down when every task is done',
+      'log.jobDone': 'A background job finished — {n} left',
+      'log.agentDone': 'A session finished — {n} left',
+      'log.countdown': 'All tasks done — countdown started ({sec}s)',
+      'log.fired': 'Countdown over — shutdown issued',
+      'log.blockHalted': 'Blocked: out of account quota — clear it by hand, then “Clear and retry”',
+      'log.blockWaiting': 'Blocked: too many requests — retrying in 4s',
+      'log.retried': 'Auto-retry: checking again',
+      'log.cancelled': 'Countdown cancelled — still armed',
+      'log.parked': 'Queue is empty — resting in standby. Click “Clear” to exit, or roll again',
+      'log.disarmed': 'Cleared — checking stopped',
+      'log.retryResumed': 'Block cleared — checking again',
+      'log.variant': 'Look changed: {v}',
+    },
+
+    ru: {
+      'meta.title': 'Shutdown Guard · выключение после завершения задач',
+      'meta.desc': 'Автоматическое выключение, когда все задачи готовы, — карточка ночного сторожа в боковой панели. Три вида, шесть состояний, можно попробовать здесь.',
+
+      'repo.gh.aria': 'Открыть dsh-shutdown-guard на GitHub',
+      'repo.gh.title': 'Открыть на GitHub',
+      'repo.npm.aria': 'Открыть dsh-shutdown-guard на npm',
+      'repo.npm.title': 'Открыть на npm',
+
+      'hero.sub': 'Выключение после завершения задач<span>·</span>карточка ночного сторожа в боковой панели',
+      'hero.lede': 'Добавляет в боковую панель DeepSeek Harness карточку «выключить, когда всё готово»: более выразительная <b>визуальная часть</b>, продуманная <b>логика проверок</b> и <b>настройка под себя</b>.',
+      'chip.1': 'Пять проверок',
+      'chip.2': 'Три вида',
+      'chip.3': 'Настройка под себя',
+      'chip.4': 'Авто-режим AFK',
+      'chip.5': 'Уровни блокировки',
+      'tab.about': '<span class="n">01</span>Обзор',
+      'tab.try': '<span class="n">02</span>Попробовать',
+      'langs.aria': 'Сменить язык',
+
+      'sb.chat': 'Новый чат',
+      'sb.board': 'Рабочая панель',
+      'sb.plug': 'Плагины',
+      'sb.skill': 'Центр навыков',
+      'sb.sess1': 'Переработка плагина выключения',
+      'sb.sess2': 'Данные недельного отчёта',
+      'sb.sess3': 'Скрипт сборки iOS',
+      'sb.sess4': 'Сравнение пунктов договора',
+      'sb.t1': '1 мин',
+      'sb.t2': '14 ч',
+      'sb.t3': 'Вчера',
+      'sb.t4': '2 дня',
+
+      'a1.title': '<span>01</span>Зачем это нужно',
+      'a1.p1': 'Кто запускает долгие задачи, знает этот сценарий: вечером отдаёте агенту пачку работы и хотите, чтобы машина выключилась после, когда рядом никого нет.',
+      'a1.p2': 'Но «задачи завершены» не значит «можно выключать»: фоновые задачи ещё идут, сессия завершилась с ошибкой, агент ждёт вашего ответа, вы сами остановили его на полпути — в любом из этих случаев выключение становится аварией. Плагин отсекает каждый такой случай и выключает, только когда это действительно безопасно.',
+
+      'a2.title': '<span>02</span>Проверка: когда выключение разрешено',
+      'a2.p': 'В состоянии блокировки команда не отправляется. Иначе должны пройти все пять проверок, и только потом отправляется <code>shutdown /s</code>:',
+      'a2.g1': '<b>Режим включён</b> — вы нажали сами',
+      'a2.g2': '<b>Нет активного обратного отсчёта</b> — чтобы не отправить дважды',
+      'a2.g3': '<b>Все корневые сессии свободны</b> — ни один агент не работает',
+      'a2.g4': '<b>Нет выполняющихся или останавливающихся фоновых задач</b> — <code>blockOnJobs</code>, включено по умолчанию',
+      'a2.g5': '<b>В этой партии не было ошибок сессий</b> — <code>onlyOnSuccess</code>, включено по умолчанию',
+
+      'a3.title': '<span>03</span>Три вида',
+      'a3.cap1': '<b>A · Сигнальная лента</b> Крупный статус и бегущая красно-жёлтая полоса внизу',
+      'a3.cap2': '<b>B · Радар</b> Концентрические круги и луч сканирования, задачи показаны точками',
+      'a3.cap3': '<b>C · Терминал</b> Сводка командной строки и шесть индикаторов проверок',
+      'a3.alt1': 'A · Сигнальная лента: крупный статус и бегущая красно-жёлтая полоса внизу',
+      'a3.alt2': 'B · Радар: концентрические круги и луч сканирования, задачи точками',
+      'a3.alt3': 'C · Терминал: сводка командной строки и шесть индикаторов проверок',
+      'a3.p1': 'Точки на радаре добавляются и убираются по количеству, но не пересортировываются: когда число меняется, точки, на которые вы смотрите, остаются на местах. Вид переключается в настройках и применяется сразу, без перезапуска.',
+      'a3.p2': 'Хотите попробовать сами? Откройте <a href="#try">«Попробовать»</a> — сменить вид, выбросить состояние, посмотреть журнал. Всё считается локально и случайно, без сети.',
+
+      'a4.title': '<span>04</span>Шесть рабочих состояний',
+      'a4.pillsAria': 'Какой вид показывать',
+      'a4.p': 'Отсчёт можно отменить в любой момент, и <b>отмена сохраняет режим</b> — следующая партия задач всё равно приведёт к выключению.',
+
+      'a5.title': '<span>05</span>Состояния блокировки',
+      'a5.p': 'Если ошибку нельзя обработать как обычный сбой, плагин <b>не снимает режим</b>, меняет цвет карточки и пишет причину:',
+      'a5.li1': '<em>halted · серо-синий</em> Кончилась квота, недействительные учётные данные, превышен контекст, возможность не поддерживается, диск заполнен. Справится только человек: нажмите «Снять и повторить».',
+      'a5.li2': '<em>waiting · серо-зелёный</em> Ограничение частоты, 5xx, обрыв сети, пустой ответ, таймаут, выгрузка изображения. Повтор по правилам; после успеха агенту передаётся «продолжай по исходному плану».',
+
+      'a6.title': '<span>06</span>Авто-режим AFK',
+      'a6.p': 'Когда рядом никого нет, плагин подменяет вас в трёх случаях:',
+      'a6.li1': '<em>Ответы на вопросы</em> На вопрос агента он отвечает: «Пользователь в режиме AFK, заверши уже порученные задачи, сведи отчёт и сохрани его на диск». Возвращается <code>selected: []</code> и свой текст, поэтому <b>ни один вариант за вас не выбирается</b>; если выключить, вопросы снова приходят вам.',
+      'a6.li2': '<em>Восстановление после ошибок</em> При ошибке сессии агента сначала просят разобраться и продолжить исходный план; повторный сбой в той же сессии превращается в «прекрати повторять и закройся отчётом».',
+      'a6.li3': '<em>Защита от прерывания</em> Если вы сами остановили задачу на полпути, выключение не запускается.',
+
+      'a7.title': '<span>07</span>Где он находится',
+      'a7.cap1': 'Режим включён: под центром навыков, над списком сессий',
+      'a7.cap2': 'Обратный отсчёт: то же место, вся полоса краснеет',
+      'a7.alt1': 'Режим включён: под центром навыков, над списком сессий',
+      'a7.alt2': 'Обратный отсчёт: то же место, вся полоса краснеет',
+      'a7.p': 'Пока карточка закреплена за этим местом в боковой панели. В планах — дать ей отдельное появление; тогда здесь появится пояснение.',
+
+      'install.text': 'Настройки → Плагины → Добавить, укажите <b>абсолютный путь к каталогу плагина</b> → Установить → перезапустите DSH. Клиентский bundle подключается к графу модулей только при старте, поэтому после правок кода нужен перезапуск — обновление страницы не помогает.',
+      'install.link': 'Полная инструкция на GitHub →',
+      'cta.b': 'Не хотите только смотреть картинки?',
+      'cta.span': 'Перейдите в «Попробовать»: выбросите случайный сценарий и сами нажмите включение, отмену и снятие — до выключения или блокировки.',
+      'cta.btn': 'Попробовать',
+
+      'try.appearance': 'Вид',
+      'try.appearanceAria': 'Вид',
+      'try.vA': 'A · Сигнальная лента',
+      'try.vB': 'B · Радар',
+      'try.vC': 'C · Терминал',
+      'try.scene': 'Сценарий',
+      'try.roll': 'Случайный сценарий',
+      'try.armHint': 'Нажмите «Включить» на карточке слева, чтобы начать проверку',
+      'try.now': 'Сейчас <b>{state}</b>',
+      'try.stop': 'Снять',
+      'try.stopFired': 'Уже выключено — снимать нечего',
+      'try.log': 'Журнал симуляции',
+      'try.logEmpty': 'Записей пока нет',
+      'try.tips': 'Как играть',
+      'try.tip1': '<b>Слева — её настоящее место</b>: под центром навыков, над списком сессий. Пока карточка закреплена здесь; позже её можно будет показывать отдельно, и взаимодействие здесь тоже изменится. <b>Карточка на этой странице кликабельна</b> — включение, отмена и снятие делаются слева.',
+      'try.tip2': 'Порядок: <b>случайный сценарий</b> → нажмите <b>Включить</b> на карточке → начнётся проверка → фоновые задачи и сессии будут убывать по одной → когда всё закончится, пойдёт отсчёт → команда уйдёт.',
+      'try.tip3': 'Во время проверки с небольшой вероятностью срабатывает блокировка: <code>halted</code> ждёт нажатия «Снять и повторить», <code>waiting</code> сама восстанавливается через несколько секунд.',
+      'try.tip4': 'Во время отсчёта можно в любой момент нажать «Отменить выключение» — режим останется включённым. Блокировка тоже может случиться.',
+      'try.tip5': 'Журнал настоящего плагина — в <code>Настройки → Статус</code>, полный поток пишется в <code>data/events.log</code>. Здесь отсчёт 12 секунд, у плагина по умолчанию 60.',
+
+      'colophon.note': 'Демо-страница · все данные локальны и случайны, без сети',
+
+      'card.title': 'Выключить после задач',
+      'card.arm': 'Включить',
+      'card.cancel': 'Отменить выключение',
+      'card.retry': 'Снять и повторить',
+      'card.disarm': 'Снять',
+      'card.a.off.big': 'Выключено',
+      'card.a.off.meta': 'Программа запускается только после нажатия «Включить»',
+      'card.a.armed.big': 'Готов',
+      'card.a.armed.meta': 'Все задачи завершены · ждём следующего запуска',
+      'card.a.fired.big': 'Выполнено',
+      'card.a.fired.meta': 'Команда выключения отправлена, отменить нельзя',
+      'card.a.fire.meta': 'Система выключится · можно отменить',
+      'card.a.hold.big': 'Ожидание',
+      'card.a.hold.meta': '{bits} — выключение после завершения',
+      'card.a.hold.jobs': 'фоновых задач: {n}',
+      'card.a.hold.agents': 'сессий: {n}',
+      'card.a.blocked.halted.big': 'Пауза',
+      'card.a.blocked.halted.meta': 'Квота исчерпана — пополните, затем снимите',
+      'card.a.blocked.waiting.big': 'Повтор',
+      'card.a.blocked.waiting.meta': 'Слишком много запросов — повтор автоматически',
+      'card.hud.retry': 'повтор позже',
+      'card.hud.manual': 'нужен человек',
+      'card.hud.fired': 'отправлено',
+      'card.c.waiting': 'waiting · авто-повтор',
+      'card.c.halted': 'halted · нужен человек',
+      'card.c.cond': 'условий {n}/6 выполнено',
+
+      'state.off.t': 'Выключено',
+      'state.off.d': 'Пока ничего не делали',
+      'state.armed.t': 'Готов',
+      'state.armed.d': 'Режим включён, ждём завершения задач',
+      'state.hold.t': 'Ожидание',
+      'state.hold.d': 'Задачи ещё идут — не выключаемся',
+      'state.fire.t': 'Отсчёт',
+      'state.fire.d': 'Отправлено, можно отменить',
+      'state.fired.t': 'Выполнено',
+      'state.fired.d': 'Команда выполнена, отменить нельзя',
+      'state.blocked.t': 'Блокировка',
+      'state.blocked.d': 'Нужно вмешательство человека',
+
+      'now.blocked.halted': 'Блокировка · нужен человек',
+      'now.blocked.waiting': 'Блокировка · ждём восстановления',
+      'now.hold': 'ждём: {bits}',
+      'now.hold.jobs': 'задач {n}',
+      'now.hold.agents': 'сессий {n}',
+      'now.countdown': 'Отсчёт {sec}',
+
+      'var.A.name': 'Сигнальная лента',
+      'var.A.desc': 'Крупный статус + лента',
+      'var.B.name': 'Радар',
+      'var.B.desc': 'Круги + луч сканирования',
+      'var.C.name': 'Терминал',
+      'var.C.desc': 'Сводка CLI + шесть индикаторов',
+
+      'log.boot': 'Нажмите «Случайный сценарий», чтобы начать',
+      'log.rolled': 'Сценарий: фоновых задач {jobs}, сессий {agent}',
+      'log.hintArm': 'Нажмите «Включить» на карточке, чтобы начать проверку',
+      'log.armFirst': 'Сначала выберите сценарий',
+      'log.armed': 'Режим включён, проверяем: выключение после завершения всех задач',
+      'log.jobDone': 'Фоновая задача завершена, осталось: {n}',
+      'log.agentDone': 'Сессия завершена, осталось: {n}',
+      'log.countdown': 'Все задачи завершены, начался отсчёт {sec} с',
+      'log.fired': 'Отсчёт закончен, команда выключения отправлена',
+      'log.blockHalted': 'Блокировка: квота исчерпана — нужно вмешательство, затем «Снять и повторить»',
+      'log.blockWaiting': 'Блокировка: слишком много запросов, повтор через 4 с',
+      'log.retried': 'Авто-повтор: продолжаем проверку',
+      'log.cancelled': 'Отсчёт отменён, режим остаётся включённым',
+      'log.parked': 'Очередь пуста, ждём в режиме готовности. «Снять» — выйти, или запустите сценарий заново',
+      'log.disarmed': 'Режим снят, проверка остановлена',
+      'log.retryResumed': 'Блокировка снята, продолжаем проверку',
+      'log.variant': 'Вид изменён: {v}',
+    },
+  }
+
+  function normalize(lang) {
+    var l = String(lang || '').toLowerCase()
+    if (l.indexOf('zh') === 0) return 'zh'
+    if (l.indexOf('ru') === 0) return 'ru'
+    if (l.indexOf('en') === 0) return 'en'
+    return null
+  }
+
+  // Translate one key. Unknown language falls back to zh; an unknown key falls
+  // back to zh and then to the key itself, so a typo shows up instead of a
+  // blank line.
+  function dt(lang, key, params) {
+    var table = DEMO_MSG[normalize(lang) || 'zh'] || DEMO_MSG.zh
+    var msg = table[key]
+    if (msg == null) msg = DEMO_MSG.zh[key]
+    if (msg == null) return key
+    if (!params) return msg
+    return String(msg).replace(/\{(\w+)\}/g, function (m, name) {
+      return Object.prototype.hasOwnProperty.call(params, name) ? String(params[name]) : m
+    })
+  }
+
+  // ------------------------------------------------------------ browser side
+  // Everything below is a no-op when the file is require()d by the build, so
+  // gen-demo.cjs can reuse the exact same table without a DOM.
+  var subscribers = []
+
+  function hasDom() {
+    return typeof document !== 'undefined' && !!document.documentElement
+  }
+
+  function currentLang() {
+    if (typeof window === 'undefined') return 'zh'
+    var fromUrl = null
+    try {
+      fromUrl = normalize(new URLSearchParams(window.location.search).get('lang'))
+    } catch (e) { /* no URLSearchParams, or a file:// quirk */ }
+    if (fromUrl) return fromUrl
+
+    var stored = null
+    try {
+      stored = normalize(window.localStorage.getItem(STORE_KEY))
+    } catch (e) { /* private mode */ }
+    if (stored) return stored
+
+    var nav = null
+    try {
+      nav = normalize(window.navigator.language || (window.navigator.languages && window.navigator.languages[0]))
+    } catch (e) { /* no navigator */ }
+    return nav || 'zh'
+  }
+
+  // Elements translated once and restored verbatim for zh: the generated zh
+  // markup is the source of truth, so switching back cannot drift from it.
+  var original = new WeakMap()
+
+  var ATTRS = [
+    ['data-i18n-aria', 'aria-label'],
+    ['data-i18n-titleattr', 'title'],
+    ['data-i18n-alt', 'alt'],
+    ['data-i18n-content', 'content'],
+  ]
+
+  function applyLang(lang) {
+    var next = normalize(lang) || 'zh'
+    if (!hasDom()) return next
+
+    var html = document.documentElement
+    html.setAttribute('data-lang', next)
+    html.setAttribute('lang', next === 'zh' ? 'zh-CN' : next)
+
+    var nodes = document.querySelectorAll('[data-i18n]')
+    for (var i = 0; i < nodes.length; i++) {
+      var el = nodes[i]
+      var key = el.getAttribute('data-i18n')
+      if (!original.has(el)) original.set(el, el.innerHTML)
+      el.innerHTML = next === 'zh' ? original.get(el) : dt(next, key)
+    }
+
+    for (var a = 0; a < ATTRS.length; a++) {
+      var sel = '[' + ATTRS[a][0] + ']'
+      var withAttr = document.querySelectorAll(sel)
+      for (var b = 0; b < withAttr.length; b++) {
+        var node = withAttr[b]
+        var attr = ATTRS[a][1]
+        var attrKey = node.getAttribute(ATTRS[a][0])
+        var storeKey = '__i18nOrig_' + attr
+        if (!(storeKey in node)) node[storeKey] = node.getAttribute(attr)
+        node.setAttribute(attr, next === 'zh' ? node[storeKey] : dt(next, attrKey))
+      }
+    }
+
+    var langs = document.querySelectorAll('.lang-tab')
+    for (var c = 0; c < langs.length; c++) {
+      var on = langs[c].getAttribute('data-lang-btn') === next
+      langs[c].classList.toggle('on', on)
+      langs[c].setAttribute('aria-pressed', on ? 'true' : 'false')
+    }
+
+    for (var s = 0; s < subscribers.length; s++) {
+      try { subscribers[s](next) } catch (e) { /* one bad listener must not break the switch */ }
+    }
+    return next
+  }
+
+  function setLang(lang) {
+    var next = normalize(lang)
+    if (!next) return false
+    try { window.localStorage.setItem(STORE_KEY, next) } catch (e) { /* private mode */ }
+    applyLang(next)
+    return true
+  }
+
+  function onChange(fn) {
+    if (typeof fn === 'function') subscribers.push(fn)
+  }
+
+  var api = {
+    DEMO_LANGS: DEMO_LANGS,
+    DEMO_LABELS: DEMO_LABELS,
+    DEMO_MSG: DEMO_MSG,
+    STORE_KEY: STORE_KEY,
+    dt: dt,
+    normalize: normalize,
+    currentLang: currentLang,
+    setLang: setLang,
+    applyLang: applyLang,
+    onChange: onChange,
+  }
+
+  if (hasDom()) {
+    var boot = function () { applyLang(currentLang()) }
+    if (document.readyState === 'loading') document.addEventListener('DOMContentLoaded', boot)
+    else boot()
+    // One delegated listener covers the switcher; it lives here so app.js only
+    // has to care about its own widgets.
+    document.addEventListener('click', function (e) {
+      var btn = e.target.closest ? e.target.closest('[data-lang-btn]') : null
+      if (btn) setLang(btn.getAttribute('data-lang-btn'))
+    })
+  }
+
+  return api
+})
+
+</script>
+<script>
 // Interactive demo for the sidebar card.
 // Everything here mirrors lib/client.js: same class names, same markup shape,
 // same state names. Only the data source differs — this one is a simulation.
+//
+// All user-facing copy comes from scripts/demo/i18n.js; the strings that must
+// stay verbatim in every language (Holding, Standby, `shutdown --when idle`,
+// `jobs 3 · agent 2`) are built here and never translated.
 ; (function () {
   'use strict'
+
+  var I18N = typeof window !== 'undefined' ? window.DEMO_I18N : null
+  var LANG = I18N ? I18N.currentLang() : 'zh'
+
+  function T(key, params) {
+    return I18N ? I18N.dt(LANG, key, params) : key
+  }
 
   var CHEV =
     '<svg class="dsp-chev" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><path d="M6 9l6 6 6-6"/></svg>'
@@ -1290,15 +2073,6 @@ box-shadow:0 0 7px color-mix(in srgb, var(--dsp-accent) 90%, transparent)}
   })()
 
   var TAG = { off: 'OFF', armed: 'ARMED', hold: 'WAIT', fire: 'FIRE', fired: 'FIRED' }
-  var A_TEXT = {
-    off: ['未开启', '仅在点击「武装」后才会运行程序'],
-    armed: ['待命', '所有任务已结束 · 等待下一次触发'],
-    fired: ['已下发', '关机指令已生效，无法取消'],
-  }
-  var BLOCK_TEXT = {
-    halted: ['已暂停', '账户额度不足，需充值后解除'],
-    waiting: ['等待恢复', '请求过于频繁，稍后自动重试'],
-  }
 
   function pad2(n) { return n < 10 ? '0' + n : String(n) }
   function clock(sec) { return pad2(Math.floor(sec / 60)) + ':' + pad2(sec % 60) }
@@ -1316,11 +2090,11 @@ box-shadow:0 0 7px color-mix(in srgb, var(--dsp-accent) 90%, transparent)}
     var agent = s.agent || 0
     if (v === 'blocked') {
       return '<b>' + (s.blocked === 'waiting' ? 'Retrying' : 'Paused') + '</b><span>' +
-        (s.blocked === 'waiting' ? '稍后重试' : '需人工处理') + '</span>'
+        T(s.blocked === 'waiting' ? 'card.hud.retry' : 'card.hud.manual') + '</span>'
     }
     if (v === 'hold') return '<b>Holding</b><span>jobs ' + jobs + ' · agent ' + agent + '</span>'
     if (v === 'fire') return '<b>' + clock(s.sec || 0) + '</b><span>T-minus</span>'
-    if (v === 'fired') return '<b>Fired</b><span>已下发</span>'
+    if (v === 'fired') return '<b>Fired</b><span>' + T('card.hud.fired') + '</span>'
     if (v === 'off') return '<b>Offline</b><span>jobs 0 · agent 0</span>'
     return '<b>Standby</b><span>jobs 0 · agent 0</span>'
   }
@@ -1330,15 +2104,22 @@ box-shadow:0 0 7px color-mix(in srgb, var(--dsp-accent) 90%, transparent)}
     var v = s.view
     var jobs = s.jobs || 0
     var agent = s.agent || 0
-    if (v === 'blocked') return BLOCK_TEXT[s.blocked]
-    if (v === 'fire') return [clock(s.sec || 0), '系统即将关机 · 可撤销']
+    if (v === 'blocked') {
+      return [
+        T('card.a.blocked.' + s.blocked + '.big'),
+        T('card.a.blocked.' + s.blocked + '.meta'),
+      ]
+    }
+    if (v === 'fire') return [clock(s.sec || 0), T('card.a.fire.meta')]
     if (v === 'hold') {
       var bits = []
-      if (jobs) bits.push(jobs + ' 个后台任务')
-      if (agent) bits.push(agent + ' 个会话')
-      return ['等待后台任务', bits.join(' · ') + '，完成后关机']
+      if (jobs) bits.push(T('card.a.hold.jobs', { n: jobs }))
+      if (agent) bits.push(T('card.a.hold.agents', { n: agent }))
+      return [T('card.a.hold.big'), T('card.a.hold.meta', { bits: bits.join(' · ') })]
     }
-    return A_TEXT[v]
+    if (v === 'fired') return [T('card.a.fired.big'), T('card.a.fired.meta')]
+    if (v === 'off') return [T('card.a.off.big'), T('card.a.off.meta')]
+    return [T('card.a.armed.big'), T('card.a.armed.meta')]
   }
 
   // Variant C: terminal lines, LEDs and the footer string.
@@ -1361,9 +2142,9 @@ box-shadow:0 0 7px color-mix(in srgb, var(--dsp-accent) 90%, transparent)}
 
   function cCode(s) {
     if (s.view === 'blocked') {
-      return s.blocked === 'waiting' ? 'waiting · 自动重试' : 'halted · 需人工处理'
+      return T(s.blocked === 'waiting' ? 'card.c.waiting' : 'card.c.halted')
     }
-    return '条件 ' + ledState(s).filter(Boolean).length + '/6 已满足'
+    return T('card.c.cond', { n: ledState(s).filter(Boolean).length })
   }
 
   // Radar dots: one per background job and per running session. Positions come
@@ -1497,7 +2278,7 @@ box-shadow:0 0 7px color-mix(in srgb, var(--dsp-accent) 90%, transparent)}
     var v = s.view
     return '<div class="dsp-card" data-state="' + v + '" data-variant="' + (s.variant || 'A') +
       '" data-lum="dark" data-retry="' + ((v === 'blocked' && s.blocked === 'waiting') ? '1' : '0') + '">' +
-      '<div class="dsp-chead"><i class="dsp-live"></i><span class="dsp-ctitle">任务完成后关机</span>' +
+      '<div class="dsp-chead"><i class="dsp-live"></i><span class="dsp-ctitle">' + esc(T('card.title')) + '</span>' +
       '<span class="dsp-tag">' + tagOf(s) + '</span>' + CHEV + '</div>' +
       bodyHtml(s) +
       '<div class="dsp-cbtns">' + buttonOf(s) + '</div>' +
@@ -1512,13 +2293,13 @@ box-shadow:0 0 7px color-mix(in srgb, var(--dsp-accent) 90%, transparent)}
   function buttonOf(s) {
     var v = s.view
     var hint = s.btnHint ? ' dsp-btn-hint' : ''
-    if (v === 'off') return '<button class="dsp-btn dsp-btn-primary' + hint + '" data-act="arm">武装</button>'
-    if (v === 'fire') return '<button class="dsp-btn dsp-btn-danger" data-act="cancel">取消关机</button>'
+    if (v === 'off') return '<button class="dsp-btn dsp-btn-primary' + hint + '" data-act="arm">' + esc(T('card.arm')) + '</button>'
+    if (v === 'fire') return '<button class="dsp-btn dsp-btn-danger" data-act="cancel">' + esc(T('card.cancel')) + '</button>'
     if (v === 'blocked') {
       return '<button class="dsp-btn" data-act="' + (s.blocked === 'halted' ? 'retry' : 'disarm') + '">' +
-        (s.blocked === 'halted' ? '解除并重试' : '解除') + '</button>'
+        esc(s.blocked === 'halted' ? T('card.retry') : T('card.disarm')) + '</button>'
     }
-    return '<button class="dsp-btn dsp-btn-danger" data-act="disarm">解除</button>'
+    return '<button class="dsp-btn dsp-btn-danger" data-act="disarm">' + esc(T('card.disarm')) + '</button>'
   }
 
   // ---------------------------------------------------------------- state
@@ -1535,20 +2316,16 @@ box-shadow:0 0 7px color-mix(in srgb, var(--dsp-accent) 90%, transparent)}
   var counter = null
   var retrier = null
 
-  var LABEL = {
-    off: '未开启', armed: '待命', hold: '等待后台任务', fire: '倒计时', fired: '已下发',
-  }
-
   function describe(s) {
-    if (s.view === 'blocked') return s.blocked === 'halted' ? '阻断 · 需人工处理' : '阻断 · 等待自动恢复'
+    if (s.view === 'blocked') return T(s.blocked === 'halted' ? 'now.blocked.halted' : 'now.blocked.waiting')
     if (s.view === 'hold') {
       var bits = []
-      if (s.jobs) bits.push('后台任务 ' + s.jobs)
-      if (s.agent) bits.push('会话 ' + s.agent)
-      return '等待后台任务（' + bits.join(' · ') + '）'
+      if (s.jobs) bits.push(T('now.hold.jobs', { n: s.jobs }))
+      if (s.agent) bits.push(T('now.hold.agents', { n: s.agent }))
+      return T('now.hold', { bits: bits.join(' · ') })
     }
-    if (s.view === 'fire') return '倒计时 ' + clock(s.sec)
-    return LABEL[s.view]
+    if (s.view === 'fire') return T('now.countdown', { sec: clock(s.sec) })
+    return T('state.' + s.view + '.t')
   }
 
   function tone(s) {
@@ -1565,10 +2342,11 @@ box-shadow:0 0 7px color-mix(in srgb, var(--dsp-accent) 90%, transparent)}
   // restart from the left — one visible "jump" per tick. Only the parts that
   // actually change are touched; the strip is never rebuilt.
   function paint() {
+    if (!slot) return
     var cardEl = slot.querySelector('.dsp-card')
     if (!cardEl) {
       slot.innerHTML = card(state)
-      return
+      cardEl = slot.querySelector('.dsp-card')
     }
 
     var v = state.view
@@ -1579,6 +2357,10 @@ box-shadow:0 0 7px color-mix(in srgb, var(--dsp-accent) 90%, transparent)}
     var tagEl = cardEl.querySelector('.dsp-tag')
     var nextTag = tagOf(state)
     if (tagEl && tagEl.textContent !== nextTag) tagEl.textContent = nextTag
+
+    var titleEl = cardEl.querySelector('.dsp-ctitle')
+    var nextTitle = T('card.title')
+    if (titleEl && titleEl.textContent !== nextTitle) titleEl.textContent = nextTitle
 
     var oldBody = cardEl.querySelector('.dsp-cbody')
     if (!oldBody || oldBody.getAttribute('data-v') !== (state.variant || 'A')) {
@@ -1592,8 +2374,10 @@ box-shadow:0 0 7px color-mix(in srgb, var(--dsp-accent) 90%, transparent)}
     var btns = cardEl.querySelector('.dsp-cbtns')
     if (btns) btns.innerHTML = buttonOf(state)
 
-    nowEl.className = 'now ' + tone(state)
-    nowEl.innerHTML = '当前 <b>' + esc(describe(state)) + '</b>'
+    if (nowEl) {
+      nowEl.className = 'now ' + tone(state)
+      nowEl.innerHTML = T('try.now', { state: esc(describe(state)) })
+    }
     if (hintEl) {
       // the nudge appears only while the card is waiting for the 武装 click
       hintEl.hidden = state.phase !== 'ready'
@@ -1602,7 +2386,7 @@ box-shadow:0 0 7px color-mix(in srgb, var(--dsp-accent) 90%, transparent)}
       // nothing to stop while idle or already fired
       var idle = state.phase === 'idle' || state.phase === 'ready' || state.phase === 'fired'
       stopEl.disabled = idle
-      stopEl.textContent = state.phase === 'fired' ? '已下发，无需解除' : '解除'
+      stopEl.textContent = state.phase === 'fired' ? T('try.stopFired') : T('try.stop')
     }
   }
 
@@ -1611,16 +2395,26 @@ box-shadow:0 0 7px color-mix(in srgb, var(--dsp-accent) 90%, transparent)}
     return pad2(d.getHours()) + ':' + pad2(d.getMinutes()) + ':' + pad2(d.getSeconds())
   }
 
-  function log(text, kind) {
-    var empty = logEl.querySelector('.empty')
-    if (empty) empty.parentNode.removeChild(empty)
-    var li = document.createElement('li')
-    li.innerHTML = '<span class="t">' + stamp() + '</span><span class="k ' + (kind || '') +
-      '"></span><span>' + esc(text) + '</span>'
-    // newest at the bottom, and the window follows it
-    logEl.appendChild(li)
-    while (logEl.children.length > 40) logEl.removeChild(logEl.firstChild)
+  // The log keeps message keys rather than finished strings, so switching the
+  // page language re-renders the existing entries in the new language.
+  var entries = []
+
+  function renderLog() {
+    if (!logEl) return
+    var out = ''
+    for (var i = 0; i < entries.length; i++) {
+      var e = entries[i]
+      out += '<li><span class="t">' + e.time + '</span><span class="k ' + e.kind +
+        '"></span><span>' + esc(T(e.key, e.params)) + '</span></li>'
+    }
+    logEl.innerHTML = out
     logEl.scrollTop = logEl.scrollHeight
+  }
+
+  function log(key, params, kind) {
+    entries.push({ key: key, params: params || null, kind: kind || '', time: stamp() })
+    while (entries.length > 40) entries.shift()
+    renderLog()
   }
 
   // ---------------------------------------------------------------- timers
@@ -1643,8 +2437,8 @@ box-shadow:0 0 7px color-mix(in srgb, var(--dsp-accent) 90%, transparent)}
     state.phase = 'ready'
     state.btnHint = true
     paint()
-    log('随机成功：' + state.jobs + ' 个后台任务、' + state.agent + ' 个会话在跑', 'armed')
-    log('点卡片上的「武装」开始检测', 'armed')
+    log('log.rolled', { jobs: state.jobs, agent: state.agent }, 'armed')
+    log('log.hintArm', null, 'armed')
   }
 
   function arm() {
@@ -1652,7 +2446,7 @@ box-shadow:0 0 7px color-mix(in srgb, var(--dsp-accent) 90%, transparent)}
     state.phase = 'detect'
     state.btnHint = false
     sync()
-    log('已武装，开始检测：等所有任务结束再关机', 'armed')
+    log('log.armed', null, 'armed')
     startDetect()
   }
 
@@ -1690,17 +2484,17 @@ box-shadow:0 0 7px color-mix(in srgb, var(--dsp-accent) 90%, transparent)}
       var agentsLeft = state.agent
       if (Math.random() < jobsLeft / (jobsLeft + agentsLeft)) {
         state.jobs -= 1
-        log('一个后台任务结束，还剩 ' + state.jobs + ' 个', 'wait')
+        log('log.jobDone', { n: state.jobs }, 'wait')
       } else {
         state.agent -= 1
-        log('一个会话结束，还剩 ' + state.agent + ' 个', 'wait')
+        log('log.agentDone', { n: state.agent }, 'wait')
       }
     } else if (state.jobs > 0) {
       state.jobs -= 1
-      log('一个后台任务结束，还剩 ' + state.jobs + ' 个', 'wait')
+      log('log.jobDone', { n: state.jobs }, 'wait')
     } else if (state.agent > 0) {
       state.agent -= 1
-      log('一个会话结束，还剩 ' + state.agent + ' 个', 'wait')
+      log('log.agentDone', { n: state.agent }, 'wait')
     } else {
       beginCountdown()
       return
@@ -1723,7 +2517,7 @@ box-shadow:0 0 7px color-mix(in srgb, var(--dsp-accent) 90%, transparent)}
     state.view = 'fire'
     state.sec = COUNTDOWN
     paint()
-    log('全部任务已结束，开始倒计时 ' + COUNTDOWN + ' 秒', 'fire')
+    log('log.countdown', { sec: COUNTDOWN }, 'fire')
     counter = setInterval(function () {
       state.sec -= 1
       if (state.sec <= 0) {
@@ -1732,7 +2526,7 @@ box-shadow:0 0 7px color-mix(in srgb, var(--dsp-accent) 90%, transparent)}
         state.view = 'fired'
         state.sec = 0
         paint()
-        log('倒计时结束，关机指令已下发', 'fire')
+        log('log.fired', null, 'fire')
         return
       }
       paint()
@@ -1746,17 +2540,17 @@ box-shadow:0 0 7px color-mix(in srgb, var(--dsp-accent) 90%, transparent)}
     state.view = 'blocked'
     paint()
     if (level === 'halted') {
-      log('阻断：账户额度不足，需人工处理后点「解除并重试」', 'halted')
+      log('log.blockHalted', null, 'halted')
       return
     }
-    log('阻断：请求过于频繁，4 秒后自动重试', 'wait')
+    log('log.blockWaiting', null, 'wait')
     retrier = setTimeout(function () {
       retrier = null
       state.phase = 'detect'
       state.blocked = null
       sync()
       paint()
-      log('自动重试：继续检测', 'wait')
+      log('log.retried', null, 'wait')
       startDetect()
     }, 4000)
   }
@@ -1765,7 +2559,7 @@ box-shadow:0 0 7px color-mix(in srgb, var(--dsp-accent) 90%, transparent)}
     if (state.phase !== 'countdown') return
     if (counter) { clearInterval(counter); counter = null }
     state.sec = 0
-    log('已取消本次倒计时，模式仍保持武装', 'armed')
+    log('log.cancelled', null, 'armed')
     if (state.jobs === 0 && state.agent === 0) {
       // Nothing left to wait for. Resting armed with an empty queue is a valid
       // state — and re-arming the countdown here would fire again in 12s, which
@@ -1773,7 +2567,7 @@ box-shadow:0 0 7px color-mix(in srgb, var(--dsp-accent) 90%, transparent)}
       state.phase = 'parked'
       state.view = 'armed'
       paint()
-      log('队列已空，停在待命；点「解除」退出，或重新随机一轮', 'armed')
+      log('log.parked', null, 'armed')
       return
     }
     state.phase = 'detect'
@@ -1792,7 +2586,7 @@ box-shadow:0 0 7px color-mix(in srgb, var(--dsp-accent) 90%, transparent)}
     state.sec = 0
     state.btnHint = false
     paint()
-    log('已解除，停止检测', 'armed')
+    log('log.disarmed', null, 'armed')
   }
 
   function retryHalted() {
@@ -1801,7 +2595,7 @@ box-shadow:0 0 7px color-mix(in srgb, var(--dsp-accent) 90%, transparent)}
     state.phase = 'detect'
     sync()
     paint()
-    log('已解除阻断，继续检测', 'armed')
+    log('log.retryResumed', null, 'armed')
     if (state.jobs === 0 && state.agent === 0) beginCountdown()
     else startDetect()
   }
@@ -1812,7 +2606,7 @@ box-shadow:0 0 7px color-mix(in srgb, var(--dsp-accent) 90%, transparent)}
     if (!b) return
     var act = b.getAttribute('data-act')
     if (act === 'arm') {
-      if (state.phase === 'idle') log('先点「随机一个场景」', 'armed')
+      if (state.phase === 'idle') log('log.armFirst', null, 'armed')
       else arm()
     } else if (act === 'cancel') cancelCountdown()
     else if (act === 'retry') retryHalted()
@@ -1822,14 +2616,7 @@ box-shadow:0 0 7px color-mix(in srgb, var(--dsp-accent) 90%, transparent)}
   // ---------------------------------------------------------------- showcase
   // The 三种外观 and 六种状态 blocks render the same markup as the card, so what
   // you see there is what the plugin ships.
-  var SHOW_STATES = [
-    ['off', '未开启', '什么都没做'],
-    ['armed', '待命', '已武装，等任务结束'],
-    ['hold', '等待后台任务', '任务还在跑，先不关'],
-    ['fire', '倒计时', '已下发，可撤销'],
-    ['fired', '已下发', '指令生效，无法取消'],
-    ['blocked', '阻断', '遇到必须人处理的事'],
-  ]
+  var SHOW_STATES = ['off', 'armed', 'hold', 'fire', 'fired', 'blocked']
 
   function showcaseSpec(view) {
     if (view === 'hold') return { view: 'hold', jobs: 2, agent: 3 }
@@ -1847,19 +2634,35 @@ box-shadow:0 0 7px color-mix(in srgb, var(--dsp-accent) 90%, transparent)}
           : { view: 'armed', jobs: 2, agent: 3 }
       s.variant = v
       return '<div class="cell">' + card(s) + '<span class="cell-cap"><b>' + v + ' · ' +
-        (v === 'A' ? '警戒带' : v === 'B' ? '雷达' : '终端') + '</b>' +
-        (v === 'A' ? '大字状态 + 底部红黄斜纹' : v === 'B' ? '同心圆 + 扫描光束' : '命令行摘要 + 六段指示灯') +
+        esc(T('var.' + v + '.name')) + '</b>' +
+        esc(T('var.' + v + '.desc')) +
         '</span></div>'
     }).join('')
+  }
+
+  // Section 07 shows the card inside two static sidebars. They are live markup
+  // (not screenshots) so the sidebar chrome and the card follow the language.
+  function fillSidebars() {
+    ;[
+      ['card-slot-hold', { view: 'hold', jobs: 2, agent: 3 }],
+      ['card-slot-fire', { view: 'fire', sec: 42, jobs: 0, agent: 0 }],
+    ].forEach(function (pair) {
+      var host = document.getElementById(pair[0])
+      if (!host) return
+      var s = pair[1]
+      s.variant = 'A'
+      host.innerHTML = card(s)
+    })
   }
 
   function renderStates() {
     var host = document.getElementById('show-states')
     if (!host) return
-    host.innerHTML = SHOW_STATES.map(function (row) {
-      var s = showcaseSpec(row[0])
+    host.innerHTML = SHOW_STATES.map(function (view) {
+      var s = showcaseSpec(view)
       s.variant = showVariant
-      return '<div class="cell">' + card(s) + '<span class="cell-cap"><b>' + row[1] + '</b>' + row[2] + '</span></div>'
+      return '<div class="cell">' + card(s) + '<span class="cell-cap"><b>' + esc(T('state.' + view + '.t')) +
+        '</b>' + esc(T('state.' + view + '.d')) + '</span></div>'
     }).join('')
     var btns = document.querySelectorAll('#show-variant-pills button')
     for (var i = 0; i < btns.length; i++) {
@@ -1899,7 +2702,7 @@ box-shadow:0 0 7px color-mix(in srgb, var(--dsp-accent) 90%, transparent)}
       btns[i].classList.toggle('on', btns[i].getAttribute('data-v') === v)
     }
     paint()
-    log('切换外观：' + v, 'armed')
+    log('log.variant', { v: v }, 'armed')
   }
 
   // ---------------------------------------------------------------- boot
@@ -1949,12 +2752,27 @@ box-shadow:0 0 7px color-mix(in srgb, var(--dsp-accent) 90%, transparent)}
       if (a) { e.preventDefault(); setPane('try') }
     })
 
+    // A language switch must not restart the simulation: paint() rewrites the
+    // copy in place, and the log re-renders from its stored keys, so an
+    // in-flight countdown keeps ticking.
+    if (I18N && I18N.onChange) {
+      I18N.onChange(function (lang) {
+        LANG = lang
+        paint()
+        renderVariants()
+        renderStates()
+        renderLog()
+        fillSidebars()
+      })
+    }
+
     renderVariants()
     renderStates()
+    fillSidebars()
 
     state = { variant: 'A', view: 'off', blocked: null, jobs: 0, agent: 0, sec: 0, phase: 'idle', btnHint: false }
     paint()
-    log('点「随机一个场景」开始', 'armed')
+    log('log.boot', null, 'armed')
 
     // #try opens the playground directly — that is the link the README points at.
     if (location.hash === '#try') setPane('try')
