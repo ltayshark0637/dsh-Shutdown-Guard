@@ -1,0 +1,48 @@
+name: publish
+
+# 发布由 npm 的 Trusted Publisher（OIDC）授权，仓库里不存任何 token。
+# 首次使用前，需要在这个包的 npm 设置页里登记本工作流：
+#   https://www.npmjs.com/package/dsh-shutdown-guard/access
+#   → Trusted Publisher → GitHub Actions
+#      Organization or user : ltayshark0637
+#      Repository           : dsh-Shutdown-Guard
+#      Workflow filename    : publish.yml
+#      Environment          : （留空）
+
+on:
+  push:
+    tags:
+      - 'v*'
+  workflow_dispatch:
+
+permissions:
+  contents: read
+  id-token: write
+
+jobs:
+  publish:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '24'
+          registry-url: 'https://registry.npmjs.org'
+
+      # OIDC 发布要求 npm >= 11.5.1
+      - name: Ensure recent npm
+        run: npm install -g npm@latest && npm --version
+
+      - name: Guard against version drift
+        run: |
+          PKG=$(node -p "require('./package.json').version")
+          TAG=${GITHUB_REF_NAME#v}
+          echo "package.json=$PKG  tag=$TAG"
+          if [ "$PKG" != "$TAG" ]; then
+            echo "::error::package.json version ($PKG) does not match tag ($TAG)"
+            exit 1
+          fi
+
+      - name: Publish
+        run: npm publish --provenance --access public
