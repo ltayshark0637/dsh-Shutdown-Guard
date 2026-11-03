@@ -1,5 +1,6 @@
 /* Interactive demo page — same visual language as the README banner:
-   one continuous wash, faint grid, film grain, amber eyebrow, hazard rule. */
+   one continuous wash, faint grid, film grain, amber eyebrow, hazard rule.
+   Two panes share the hero: 了解 (what the plugin does) and 试一试 (playground). */
 
 * { box-sizing: border-box }
 
@@ -95,7 +96,7 @@ h1 em { font-style: normal; color: #f0a83a }
 
 .lede {
   margin: 15px 0 0;
-  max-width: 580px;
+  max-width: 620px;
   font-size: 13.5px;
   line-height: 1.82;
   color: #c2c0b6;
@@ -120,16 +121,229 @@ h1 em { font-style: normal; color: #f0a83a }
   white-space: nowrap;
 }
 
-/* ---------------------------------------------------------------- layout */
+/* ---------------------------------------------------------------- tabs */
+/* Two pill buttons right under the banner. They read as one control, so the
+   inactive one stays quiet: no border, no fill, just dimmed text. */
+.tabs {
+  display: flex;
+  gap: 8px;
+  margin: 40px 0 0;
+}
+
+.tab {
+  appearance: none;
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  padding: 9px 22px;
+  border-radius: 999px;
+  border: 1px solid rgba(255, 255, 255, .1);
+  background: transparent;
+  color: #8b887e;
+  font: inherit;
+  font-size: 13.5px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: background .14s, color .14s, border-color .14s;
+  white-space: nowrap;
+}
+
+.tab:hover { color: #faf9f5; border-color: rgba(255, 255, 255, .2) }
+
+.tab.on {
+  background: rgba(240, 168, 58, .13);
+  border-color: rgba(240, 168, 58, .45);
+  color: #f0a83a;
+}
+
+.tab .n {
+  font-size: 11px;
+  font-weight: 600;
+  opacity: .6;
+  font-variant-numeric: tabular-nums;
+}
+
+.pane { padding-top: 38px }
+.pane[hidden] { display: none }
+
+/* ---------------------------------------------------------------- readme pane */
+.about {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) minmax(0, 1fr);
+  gap: 44px 52px;
+  padding-bottom: 84px;
+}
+
+.about .full { grid-column: 1 / -1 }
+
+.sect { margin: 0 0 8px }
+
+.sect h2 {
+  margin: 0 0 12px;
+  font-size: 15.5px;
+  font-weight: 650;
+  letter-spacing: -.005em;
+  color: #faf9f5;
+}
+
+.sect h2 span {
+  display: inline-block;
+  margin-right: 9px;
+  font-size: 11px;
+  font-weight: 600;
+  letter-spacing: .1em;
+  color: #6f6d66;
+  vertical-align: 1px;
+}
+
+.sect p {
+  margin: 0 0 12px;
+  font-size: 13px;
+  line-height: 1.85;
+  color: #b8b6ac;
+}
+
+.sect p:last-child { margin-bottom: 0 }
+
+.sect b { color: #faf9f5; font-weight: 600 }
+
+.sect code {
+  font-family: ui-monospace, Consolas, monospace;
+  font-size: 11.5px;
+  padding: 1px 5px;
+  border-radius: 4px;
+  background: rgba(255, 255, 255, .07);
+  color: #d4d2c8;
+}
+
+.gates {
+  margin: 0;
+  padding: 0;
+  list-style: none;
+  counter-reset: gate;
+}
+
+.gates li {
+  counter-increment: gate;
+  position: relative;
+  padding: 7px 0 7px 30px;
+  font-size: 13px;
+  line-height: 1.7;
+  color: #b8b6ac;
+  border-top: 1px solid rgba(255, 255, 255, .055);
+}
+
+.gates li:first-child { border-top: 0 }
+
+.gates li::before {
+  content: counter(gate);
+  position: absolute;
+  left: 0;
+  top: 9px;
+  width: 18px;
+  height: 18px;
+  border-radius: 50%;
+  background: rgba(240, 168, 58, .14);
+  color: #f0a83a;
+  font-size: 10.5px;
+  font-weight: 700;
+  line-height: 18px;
+  text-align: center;
+}
+
+.gates li b { color: #faf9f5; font-weight: 600 }
+
+/* image strips */
+.strip {
+  display: grid;
+  gap: 12px;
+  margin-top: 4px;
+}
+
+.strip.three { grid-template-columns: repeat(3, minmax(0, 1fr)) }
+.strip.two { grid-template-columns: repeat(2, minmax(0, 1fr)) }
+
+.shot {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  min-width: 0;
+}
+
+.shot img {
+  display: block;
+  width: 100%;
+  height: auto;
+  border-radius: 10px;
+  background: #1a1a19;
+}
+
+.shot span {
+  font-size: 11px;
+  line-height: 1.55;
+  color: #7d7b72;
+  text-align: center;
+}
+
+.shot span b { color: #a8a69d; font-weight: 600 }
+
+/* inline definition list for the blocked levels */
+.levels {
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.levels li {
+  padding: 9px 0;
+  font-size: 12.5px;
+  line-height: 1.75;
+  color: #b8b6ac;
+  border-top: 1px solid rgba(255, 255, 255, .055);
+}
+
+.levels li:first-child { border-top: 0 }
+
+.levels em {
+  font-style: normal;
+  font-weight: 600;
+  margin-right: 6px;
+}
+
+.levels .halted em { color: #9aa7c2 }
+.levels .waiting em { color: #86a894 }
+
+/* the one-line install */
+.install {
+  display: flex;
+  align-items: baseline;
+  flex-wrap: wrap;
+  gap: 10px;
+  padding: 16px 18px;
+  border-radius: 12px;
+  border: 1px solid rgba(255, 168, 58, .2);
+  background: rgba(240, 168, 58, .055);
+  font-size: 12.5px;
+  line-height: 1.8;
+  color: #c2c0b6;
+}
+
+.install b { color: #faf9f5; font-weight: 600 }
+.install .go { margin-left: auto }
+.install a {
+  color: #f0a83a;
+  text-decoration: none;
+  border-bottom: 1px solid rgba(240, 168, 58, .4);
+}
+
+/* ---------------------------------------------------------------- try pane */
 .main {
   display: flex;
   gap: 48px;
   align-items: flex-start;
-  margin-top: 52px;
-  padding-bottom: 80px;
+  padding-bottom: 84px;
 }
 
-/* ---------------------------------------------------------------- stage */
 .stage-col { flex: 0 0 300px }
 
 .stage-frame {
@@ -140,26 +354,16 @@ h1 em { font-style: normal; color: #f0a83a }
   box-shadow: 0 28px 64px -34px rgba(0, 0, 0, .95);
 }
 
-.stage-note {
-  margin: 16px 0 0;
-  font-size: 11.5px;
-  line-height: 1.78;
-  color: #6f6d66;
-}
-
-.stage-note b { color: #8b887e; font-weight: 600 }
-
-/* the sidebar mock is a hair wider than a screenshot frame */
+/* the sidebar mock fills its frame instead of sitting at screenshot width */
 .sb { width: 100% }
 
-/* ---------------------------------------------------------------- panel */
 .panel {
   flex: 1 1 auto;
   min-width: 0;
   max-width: 560px;
 }
 
-.block { margin-bottom: 32px }
+.block { margin-bottom: 30px }
 
 .blabel {
   display: flex;
@@ -209,6 +413,25 @@ h1 em { font-style: normal; color: #f0a83a }
   background: rgba(255, 255, 255, .1);
   color: #faf9f5;
   box-shadow: inset 0 0 0 1px rgba(255, 255, 255, .08);
+}
+
+/* the try-it pointer: a short line that draws attention to the button once */
+.tryhint {
+  display: flex;
+  align-items: center;
+  gap: 7px;
+  margin: 0 0 9px;
+  font-size: 12px;
+  font-weight: 600;
+  color: #f0a83a;
+}
+
+.tryhint svg { flex: 0 0 auto; animation: tap-nudge 2.4s ease-in-out infinite }
+
+@keyframes tap-nudge {
+  0%, 62%, 100% { transform: translateY(0) }
+  72% { transform: translateY(3px) }
+  82% { transform: translateY(0) }
 }
 
 /* primary action — the one thing we want people to click */
@@ -303,15 +526,46 @@ h1 em { font-style: normal; color: #f0a83a }
 
 .log .empty { padding: 18px 15px; font-size: 12.5px; color: #6f6d66 }
 
-/* footnote under the log */
-.hint {
-  margin: 14px 0 0;
-  font-size: 11.5px;
-  line-height: 1.75;
-  color: #6f6d66;
+/* numbered notes under the log */
+.tips {
+  margin: 16px 0 0;
+  padding: 0;
+  list-style: none;
+  counter-reset: tip;
 }
 
-.hint code {
+.tips li {
+  counter-increment: tip;
+  position: relative;
+  padding: 9px 0 9px 26px;
+  font-size: 12px;
+  line-height: 1.78;
+  color: #6f6d66;
+  border-top: 1px solid rgba(255, 255, 255, .05);
+}
+
+.tips li:first-child { border-top: 0; padding-top: 0 }
+.tips li:first-child::before { top: 0 }
+
+.tips li::before {
+  content: counter(tip);
+  position: absolute;
+  left: 0;
+  top: 9px;
+  width: 16px;
+  height: 16px;
+  border-radius: 50%;
+  border: 1px solid rgba(255, 255, 255, .14);
+  color: #8b887e;
+  font-size: 9.5px;
+  font-weight: 600;
+  line-height: 15px;
+  text-align: center;
+}
+
+.tips b { color: #a8a69d; font-weight: 600 }
+
+.tips code {
   font-family: ui-monospace, Consolas, monospace;
   font-size: 11px;
   padding: 1px 5px;
@@ -362,11 +616,18 @@ h1 em { font-style: normal; color: #f0a83a }
 .colophon a:hover { color: #faf9f5 }
 
 /* ---------------------------------------------------------------- narrow */
-@media (max-width: 900px) {
+@media (max-width: 980px) {
   .page { padding: 44px 22px 0 }
   h1 { font-size: 38px }
-  .main { flex-direction: column; gap: 36px; margin-top: 36px }
+  .about { grid-template-columns: minmax(0, 1fr); gap: 34px }
+  .main { flex-direction: column; gap: 36px }
   .stage-col { flex: 0 0 auto; width: 100%; max-width: 300px }
   .panel { max-width: none }
   .colophon { padding: 20px 22px 30px }
+}
+
+@media (max-width: 620px) {
+  .strip.three { grid-template-columns: repeat(2, minmax(0, 1fr)) }
+  .tabs { width: 100% }
+  .tab { flex: 1 1 auto; justify-content: center }
 }

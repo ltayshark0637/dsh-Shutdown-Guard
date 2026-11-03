@@ -54,6 +54,8 @@
 
 设置里切换，立即生效，无需重启。
 
+想自己动手试试？打开 **[交互演示页](https://ltayshark0637.github.io/dsh-Shutdown-Guard/demo.html#try)** —— 换外观、掷状态、看日志，都是本地随机的，不联网。
+
 ### 阻断态
 
 | halted · 需人工处理                                            | waiting · 自动重试                                                                |

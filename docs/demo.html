@@ -1,11 +1,12 @@
 <!doctype html>
 <html lang="zh"><head><meta charset="utf-8">
 <meta name="viewport" content="width=device-width,initial-scale=1">
-<title>Shutdown Guard · 交互演示</title>
+<title>Shutdown Guard · 任务完成后自动关机</title>
 <meta name="description" content="任务完成后自动关机 —— 侧边栏守夜卡片。三种外观、六种状态，可在这里直接试。">
 <style>
 /* Interactive demo page — same visual language as the README banner:
-   one continuous wash, faint grid, film grain, amber eyebrow, hazard rule. */
+   one continuous wash, faint grid, film grain, amber eyebrow, hazard rule.
+   Two panes share the hero: 了解 (what the plugin does) and 试一试 (playground). */
 
 * { box-sizing: border-box }
 
@@ -101,7 +102,7 @@ h1 em { font-style: normal; color: #f0a83a }
 
 .lede {
   margin: 15px 0 0;
-  max-width: 580px;
+  max-width: 620px;
   font-size: 13.5px;
   line-height: 1.82;
   color: #c2c0b6;
@@ -126,16 +127,229 @@ h1 em { font-style: normal; color: #f0a83a }
   white-space: nowrap;
 }
 
-/* ---------------------------------------------------------------- layout */
+/* ---------------------------------------------------------------- tabs */
+/* Two pill buttons right under the banner. They read as one control, so the
+   inactive one stays quiet: no border, no fill, just dimmed text. */
+.tabs {
+  display: flex;
+  gap: 8px;
+  margin: 40px 0 0;
+}
+
+.tab {
+  appearance: none;
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  padding: 9px 22px;
+  border-radius: 999px;
+  border: 1px solid rgba(255, 255, 255, .1);
+  background: transparent;
+  color: #8b887e;
+  font: inherit;
+  font-size: 13.5px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: background .14s, color .14s, border-color .14s;
+  white-space: nowrap;
+}
+
+.tab:hover { color: #faf9f5; border-color: rgba(255, 255, 255, .2) }
+
+.tab.on {
+  background: rgba(240, 168, 58, .13);
+  border-color: rgba(240, 168, 58, .45);
+  color: #f0a83a;
+}
+
+.tab .n {
+  font-size: 11px;
+  font-weight: 600;
+  opacity: .6;
+  font-variant-numeric: tabular-nums;
+}
+
+.pane { padding-top: 38px }
+.pane[hidden] { display: none }
+
+/* ---------------------------------------------------------------- readme pane */
+.about {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) minmax(0, 1fr);
+  gap: 44px 52px;
+  padding-bottom: 84px;
+}
+
+.about .full { grid-column: 1 / -1 }
+
+.sect { margin: 0 0 8px }
+
+.sect h2 {
+  margin: 0 0 12px;
+  font-size: 15.5px;
+  font-weight: 650;
+  letter-spacing: -.005em;
+  color: #faf9f5;
+}
+
+.sect h2 span {
+  display: inline-block;
+  margin-right: 9px;
+  font-size: 11px;
+  font-weight: 600;
+  letter-spacing: .1em;
+  color: #6f6d66;
+  vertical-align: 1px;
+}
+
+.sect p {
+  margin: 0 0 12px;
+  font-size: 13px;
+  line-height: 1.85;
+  color: #b8b6ac;
+}
+
+.sect p:last-child { margin-bottom: 0 }
+
+.sect b { color: #faf9f5; font-weight: 600 }
+
+.sect code {
+  font-family: ui-monospace, Consolas, monospace;
+  font-size: 11.5px;
+  padding: 1px 5px;
+  border-radius: 4px;
+  background: rgba(255, 255, 255, .07);
+  color: #d4d2c8;
+}
+
+.gates {
+  margin: 0;
+  padding: 0;
+  list-style: none;
+  counter-reset: gate;
+}
+
+.gates li {
+  counter-increment: gate;
+  position: relative;
+  padding: 7px 0 7px 30px;
+  font-size: 13px;
+  line-height: 1.7;
+  color: #b8b6ac;
+  border-top: 1px solid rgba(255, 255, 255, .055);
+}
+
+.gates li:first-child { border-top: 0 }
+
+.gates li::before {
+  content: counter(gate);
+  position: absolute;
+  left: 0;
+  top: 9px;
+  width: 18px;
+  height: 18px;
+  border-radius: 50%;
+  background: rgba(240, 168, 58, .14);
+  color: #f0a83a;
+  font-size: 10.5px;
+  font-weight: 700;
+  line-height: 18px;
+  text-align: center;
+}
+
+.gates li b { color: #faf9f5; font-weight: 600 }
+
+/* image strips */
+.strip {
+  display: grid;
+  gap: 12px;
+  margin-top: 4px;
+}
+
+.strip.three { grid-template-columns: repeat(3, minmax(0, 1fr)) }
+.strip.two { grid-template-columns: repeat(2, minmax(0, 1fr)) }
+
+.shot {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  min-width: 0;
+}
+
+.shot img {
+  display: block;
+  width: 100%;
+  height: auto;
+  border-radius: 10px;
+  background: #1a1a19;
+}
+
+.shot span {
+  font-size: 11px;
+  line-height: 1.55;
+  color: #7d7b72;
+  text-align: center;
+}
+
+.shot span b { color: #a8a69d; font-weight: 600 }
+
+/* inline definition list for the blocked levels */
+.levels {
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.levels li {
+  padding: 9px 0;
+  font-size: 12.5px;
+  line-height: 1.75;
+  color: #b8b6ac;
+  border-top: 1px solid rgba(255, 255, 255, .055);
+}
+
+.levels li:first-child { border-top: 0 }
+
+.levels em {
+  font-style: normal;
+  font-weight: 600;
+  margin-right: 6px;
+}
+
+.levels .halted em { color: #9aa7c2 }
+.levels .waiting em { color: #86a894 }
+
+/* the one-line install */
+.install {
+  display: flex;
+  align-items: baseline;
+  flex-wrap: wrap;
+  gap: 10px;
+  padding: 16px 18px;
+  border-radius: 12px;
+  border: 1px solid rgba(255, 168, 58, .2);
+  background: rgba(240, 168, 58, .055);
+  font-size: 12.5px;
+  line-height: 1.8;
+  color: #c2c0b6;
+}
+
+.install b { color: #faf9f5; font-weight: 600 }
+.install .go { margin-left: auto }
+.install a {
+  color: #f0a83a;
+  text-decoration: none;
+  border-bottom: 1px solid rgba(240, 168, 58, .4);
+}
+
+/* ---------------------------------------------------------------- try pane */
 .main {
   display: flex;
   gap: 48px;
   align-items: flex-start;
-  margin-top: 52px;
-  padding-bottom: 80px;
+  padding-bottom: 84px;
 }
 
-/* ---------------------------------------------------------------- stage */
 .stage-col { flex: 0 0 300px }
 
 .stage-frame {
@@ -146,26 +360,16 @@ h1 em { font-style: normal; color: #f0a83a }
   box-shadow: 0 28px 64px -34px rgba(0, 0, 0, .95);
 }
 
-.stage-note {
-  margin: 16px 0 0;
-  font-size: 11.5px;
-  line-height: 1.78;
-  color: #6f6d66;
-}
-
-.stage-note b { color: #8b887e; font-weight: 600 }
-
-/* the sidebar mock is a hair wider than a screenshot frame */
+/* the sidebar mock fills its frame instead of sitting at screenshot width */
 .sb { width: 100% }
 
-/* ---------------------------------------------------------------- panel */
 .panel {
   flex: 1 1 auto;
   min-width: 0;
   max-width: 560px;
 }
 
-.block { margin-bottom: 32px }
+.block { margin-bottom: 30px }
 
 .blabel {
   display: flex;
@@ -215,6 +419,25 @@ h1 em { font-style: normal; color: #f0a83a }
   background: rgba(255, 255, 255, .1);
   color: #faf9f5;
   box-shadow: inset 0 0 0 1px rgba(255, 255, 255, .08);
+}
+
+/* the try-it pointer: a short line that draws attention to the button once */
+.tryhint {
+  display: flex;
+  align-items: center;
+  gap: 7px;
+  margin: 0 0 9px;
+  font-size: 12px;
+  font-weight: 600;
+  color: #f0a83a;
+}
+
+.tryhint svg { flex: 0 0 auto; animation: tap-nudge 2.4s ease-in-out infinite }
+
+@keyframes tap-nudge {
+  0%, 62%, 100% { transform: translateY(0) }
+  72% { transform: translateY(3px) }
+  82% { transform: translateY(0) }
 }
 
 /* primary action — the one thing we want people to click */
@@ -309,15 +532,46 @@ h1 em { font-style: normal; color: #f0a83a }
 
 .log .empty { padding: 18px 15px; font-size: 12.5px; color: #6f6d66 }
 
-/* footnote under the log */
-.hint {
-  margin: 14px 0 0;
-  font-size: 11.5px;
-  line-height: 1.75;
-  color: #6f6d66;
+/* numbered notes under the log */
+.tips {
+  margin: 16px 0 0;
+  padding: 0;
+  list-style: none;
+  counter-reset: tip;
 }
 
-.hint code {
+.tips li {
+  counter-increment: tip;
+  position: relative;
+  padding: 9px 0 9px 26px;
+  font-size: 12px;
+  line-height: 1.78;
+  color: #6f6d66;
+  border-top: 1px solid rgba(255, 255, 255, .05);
+}
+
+.tips li:first-child { border-top: 0; padding-top: 0 }
+.tips li:first-child::before { top: 0 }
+
+.tips li::before {
+  content: counter(tip);
+  position: absolute;
+  left: 0;
+  top: 9px;
+  width: 16px;
+  height: 16px;
+  border-radius: 50%;
+  border: 1px solid rgba(255, 255, 255, .14);
+  color: #8b887e;
+  font-size: 9.5px;
+  font-weight: 600;
+  line-height: 15px;
+  text-align: center;
+}
+
+.tips b { color: #a8a69d; font-weight: 600 }
+
+.tips code {
   font-family: ui-monospace, Consolas, monospace;
   font-size: 11px;
   padding: 1px 5px;
@@ -368,13 +622,20 @@ h1 em { font-style: normal; color: #f0a83a }
 .colophon a:hover { color: #faf9f5 }
 
 /* ---------------------------------------------------------------- narrow */
-@media (max-width: 900px) {
+@media (max-width: 980px) {
   .page { padding: 44px 22px 0 }
   h1 { font-size: 38px }
-  .main { flex-direction: column; gap: 36px; margin-top: 36px }
+  .about { grid-template-columns: minmax(0, 1fr); gap: 34px }
+  .main { flex-direction: column; gap: 36px }
   .stage-col { flex: 0 0 auto; width: 100%; max-width: 300px }
   .panel { max-width: none }
   .colophon { padding: 20px 22px 30px }
+}
+
+@media (max-width: 620px) {
+  .strip.three { grid-template-columns: repeat(2, minmax(0, 1fr)) }
+  .tabs { width: 100% }
+  .tab { flex: 1 1 auto; justify-content: center }
 }
 
 </style>
@@ -573,7 +834,7 @@ box-shadow:0 0 7px color-mix(in srgb, var(--dsp-accent) 90%, transparent)}
   <div class="eyebrow"><i></i>DeepSeek Harness Plugin</div>
   <h1>Shutdown <em>Guard</em></h1>
   <div class="zh">任务完成后自动关机<span>·</span>侧边栏守夜卡片</div>
-  <p class="lede">为 DeepSeek Harness 的侧边栏添加「所有任务完成后自动关机」卡片，拥有更好且多样的<b>视觉效果</b>、<b>判定逻辑</b>与<b>个性化定制</b>。下面的卡片是真的：换外观、掷一次状态，看它怎么变。</p>
+  <p class="lede">为 DeepSeek Harness 的侧边栏添加「所有任务完成后自动关机」卡片，拥有更好且多样的<b>视觉效果</b>、<b>判定逻辑</b>与<b>个性化定制</b>。</p>
   <div class="chips">
     <span class="chip">五道判定闸</span>
     <span class="chip">三种外观</span>
@@ -582,9 +843,101 @@ box-shadow:0 0 7px color-mix(in srgb, var(--dsp-accent) 90%, transparent)}
     <span class="chip">阻断态分级</span>
   </div>
 
-  <div class="main">
-    <div class="stage-col">
-      <div class="stage-frame"><div class="sb">
+  <div class="tabs" role="tablist">
+    <button class="tab on" id="tab-about" role="tab" aria-selected="true" aria-controls="pane-about" data-pane="about">
+      <span class="n">01</span>了解
+    </button>
+    <button class="tab" id="tab-try" role="tab" aria-selected="false" aria-controls="pane-try" data-pane="try">
+      <span class="n">02</span>试一试
+    </button>
+  </div>
+
+  <div class="pane" id="pane-about" role="tabpanel" aria-labelledby="tab-about">
+    <div class="about">
+
+  <div class="sect">
+    <h2><span>01</span>为什么需要它</h2>
+    <p>跑长任务的人常有这个场景：晚上让 agent 把一批活干完，想让它干完就关机，人不在跟前。</p>
+    <p>但「任务结束」不等于「可以关机」——后台任务还在跑、会话报错了、agent 在等你回答问题、你在半路手动终止了……这些情况下关机全是事故。这个插件把这些情况逐个挡下来，只有真的可以关的时候才关。</p>
+  </div>
+
+  <div class="sect">
+    <h2><span>02</span>判定：什么时候才关</h2>
+    <p>处于阻断态时直接不下发；其余五道闸门同时满足才下发 <code>shutdown /s</code>：</p>
+    <ol class="gates">
+      <li><b>已武装</b> —— 你手动点的</li>
+      <li><b>没有倒计时在跑</b> —— 避免重复下发</li>
+      <li><b>所有 root 会话都空闲</b> —— 没有任何 agent 还在干活</li>
+      <li><b>没有运行中 / 停止中的后台任务</b> —— <code>blockOnJobs</code>，默认开</li>
+      <li><b>本批次没有会话报错</b> —— <code>onlyOnSuccess</code>，默认开</li>
+    </ol>
+  </div>
+
+  <div class="sect full">
+    <h2><span>03</span>六种运行状态</h2>
+    <div class="strip three">
+      <div class="shot"><img src="screenshots/01-off.png" alt="<b>未开启</b> · 什么都没做" loading="lazy"><span><b>未开启</b> · 什么都没做</span></div>
+      <div class="shot"><img src="screenshots/02-armed.png" alt="<b>待命</b> · 已武装，等任务结束" loading="lazy"><span><b>待命</b> · 已武装，等任务结束</span></div>
+      <div class="shot"><img src="screenshots/03-hold.png" alt="<b>等待后台任务</b> · 任务还在跑，先不关" loading="lazy"><span><b>等待后台任务</b> · 任务还在跑，先不关</span></div>
+      <div class="shot"><img src="screenshots/04-fire.png" alt="<b>倒计时</b> · 已下发，可撤销" loading="lazy"><span><b>倒计时</b> · 已下发，可撤销</span></div>
+      <div class="shot"><img src="screenshots/05-fired.png" alt="<b>已下发</b> · 指令生效，无法取消" loading="lazy"><span><b>已下发</b> · 指令生效，无法取消</span></div>
+      <div class="shot"><img src="screenshots/08-blocked-halted.png" alt="<b>阻断</b> · 遇到必须人处理的事" loading="lazy"><span><b>阻断</b> · 遇到必须人处理的事</span></div>
+    </div>
+    <p>倒计时期间随时可取消，<b>取消后仍保持武装</b>——下一批任务干完照样会关。</p>
+  </div>
+
+  <div class="sect full">
+    <h2><span>04</span>三种外观</h2>
+    <div class="strip three">
+      <div class="shot"><img src="screenshots/02-armed.png" alt="<b>A · 警戒带</b> —— 大字状态 + 底部红黄斜纹" loading="lazy"><span><b>A · 警戒带</b> —— 大字状态 + 底部红黄斜纹</span></div>
+      <div class="shot"><img src="screenshots/06-variant-b-radar.png" alt="<b>B · 雷达</b> —— 同心圆 + 扫描光束" loading="lazy"><span><b>B · 雷达</b> —— 同心圆 + 扫描光束</span></div>
+      <div class="shot"><img src="screenshots/07-variant-c-terminal.png" alt="<b>C · 终端</b> —— 命令行摘要 + 六段指示灯" loading="lazy"><span><b>C · 终端</b> —— 命令行摘要 + 六段指示灯</span></div>
+    </div>
+    <p>雷达里的圆点按数量增删、不重排：数量变化时，你正在看的那几个点不会跳位置。设置里切换，立即生效，无需重启。</p>
+  </div>
+
+  <div class="sect">
+    <h2><span>05</span>阻断态</h2>
+    <p>遇到没法当普通失败处理的错误，插件<b>不解除武装</b>，卡片转色、把原因写出来：</p>
+    <ul class="levels">
+      <li class="halted"><em>halted · 灰蓝</em>额度不足、凭证失效、上下文超限、能力不支持、磁盘写满。只有人能处理，点「解除并重试」。</li>
+      <li class="waiting"><em>waiting · 灰绿</em>限流、5xx、网络中断、空响应、超时、图片卸载。按策略自动重试，到点注入「继续原计划」指令。</li>
+    </ul>
+  </div>
+
+  <div class="sect">
+    <h2><span>06</span>AFK 自动接管</h2>
+    <p>人不在跟前时，插件替你顶三件事：</p>
+    <ul class="levels">
+      <li><em>自动回答提问</em>agent 问你问题时，回复「用户处于 AFK，先完成已交代的任务，汇总报告并落盘」。返回 <code>selected: []</code> + 自定义文本，<b>不会替你选中任何选项</b>；关掉后提问照常抛给你。</li>
+      <li><em>错误恢复</em>会话报错时先要求 agent 排查并继续原计划；同一会话再失败改为「停止重试、写报告收尾」。</li>
+      <li><em>中断保护</em>你在半路手动终止任务，不会触发关机。</li>
+    </ul>
+  </div>
+
+  <div class="sect full">
+    <h2><span>07</span>装在哪里</h2>
+    <div class="strip two">
+      <div class="shot"><img src="screenshots/10-sidebar-hold.png" alt="武装时：技能中心下方、会话列表上方" loading="lazy"><span>武装时：技能中心下方、会话列表上方</span></div>
+      <div class="shot"><img src="screenshots/11-sidebar-fire.png" alt="倒计时：同一位置，整条转红" loading="lazy"><span>倒计时：同一位置，整条转红</span></div>
+    </div>
+    <p>卡片目前固定在侧边栏的这个位置。后续计划把它做成可以独立出现的形态，届时这里会补充说明。</p>
+  </div>
+
+  <div class="slide full">
+    <div class="install">
+      <span>设置 → 插件 → 添加，填<b>插件目录的绝对路径</b> → 安装 → 重启 DSH。客户端的 bundle 只在启动时编入模块图，改完代码必须重启，刷新页面无效。</span>
+      <span class="go"><a href="https://github.com/ltayshark0637/dsh-Shutdown-Guard">完整说明在 GitHub →</a></span>
+    </div>
+  </div>
+
+</div>
+  </div>
+
+  <div class="pane" id="pane-try" role="tabpanel" aria-labelledby="tab-try" hidden>
+    <div class="main">
+  <div class="stage-col">
+    <div class="stage-frame"><div class="sb">
   <div class="sb-top"><span>deepseek</span><span class="sb-badge">HARNESS</span></div>
   <div class="sb-row"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7"><circle cx="12" cy="12" r="9"/><path d="M12 8v8M8 12h8"/></svg><span>新会话</span></div>
   <div class="sb-row"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7"><rect x="3" y="3" width="7" height="7" rx="1.5"/><rect x="14" y="3" width="7" height="7" rx="1.5"/><rect x="3" y="14" width="7" height="7" rx="1.5"/><rect x="14" y="14" width="7" height="7" rx="1.5"/></svg><span>工作台</span></div>
@@ -598,31 +951,41 @@ box-shadow:0 0 7px color-mix(in srgb, var(--dsp-accent) 90%, transparent)}
   <div class="sb-sess"><i></i><span class="nm">iOS 构建脚本</span><span class="tm">昨天</span></div>
   <div class="sb-sess"><i></i><span class="nm">合同条款比对</span><span class="tm">2 天</span></div>
 </div></div>
-      <p class="stage-note"><b>左边是它真正待的地方</b>：技能中心下方、会话列表上方。卡片上的按钮在这里只是样子，真正的交互在右边。</p>
-    </div>
+  </div>
 
-    <div class="panel">
-      <div class="block">
-        <div class="blabel">外观</div>
-        <div class="seg" id="variants" role="group" aria-label="外观">
-          <button data-v="A" class="on">A · 警戒带</button>
-          <button data-v="B">B · 雷达</button>
-          <button data-v="C">C · 终端</button>
-        </div>
-      </div>
-
-      <div class="block">
-        <div class="blabel">状态</div>
-        <button class="roll" id="roll">随机一个状态</button>
-        <div class="now" id="now" role="status" aria-live="polite">正在模拟 <b>等待后台任务</b></div>
-      </div>
-
-      <div class="block">
-        <div class="blabel">运行日志</div>
-        <ul class="log" id="log"><li class="empty">还没有记录</li></ul>
-        <p class="hint">每次点击掷一次：三成概率落进阻断态，其余在未开启 / 待命 / 等待后台任务 / 倒计时 / 已下发之间分布，后台任务与会话数各自 0–9 随机。真实插件的这条日志在 <code>settings → 状态</code> 里。</p>
+  <div class="panel">
+    <div class="block">
+      <div class="blabel">外观</div>
+      <div class="seg" id="variants" role="group" aria-label="外观">
+        <button data-v="A" class="on">A · 警戒带</button>
+        <button data-v="B">B · 雷达</button>
+        <button data-v="C">C · 终端</button>
       </div>
     </div>
+
+    <div class="block">
+      <div class="blabel">状态</div>
+      <div class="tryhint">
+        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 5v14M5 12l7 7 7-7"/></svg>
+        点这里试一试
+      </div>
+      <button class="roll" id="roll">随机一个状态</button>
+      <div class="now" id="now" role="status" aria-live="polite">正在模拟 <b>等待后台任务</b></div>
+    </div>
+
+    <div class="block">
+      <div class="blabel">运行日志</div>
+      <ul class="log" id="log"><li class="empty">还没有记录</li></ul>
+      <ol class="tips">
+        <li><b>左边是它真正待的地方</b>：技能中心下方、会话列表上方。目前卡片固定在这个位置；后续会支持让它独立出现，届时这里的交互会跟着变。卡片上的按钮在这页只是样子，真正的交互在右边。</li>
+        <li>每次点击掷一次：<b>三成概率</b>落进阻断态，其余在未开启 / 待命 / 等待后台任务 / 倒计时 / 已下发之间分布。</li>
+        <li>后台任务数与会话数各自 <b>0–9 随机</b>；两者都大于 0 时才会进入「等待后台任务」。</li>
+        <li>抽到倒计时会真的走秒，走完自动转为「已下发」并记一条日志。</li>
+        <li>真实插件的日志在 <code>设置 → 状态</code>，完整流水写在 <code>data/events.log</code>。</li>
+      </ol>
+    </div>
+  </div>
+</div>
   </div>
 </div>
 
@@ -903,6 +1266,27 @@ box-shadow:0 0 7px color-mix(in srgb, var(--dsp-accent) 90%, transparent)}
     log('切换外观：' + v, 'armed')
   }
 
+  // ---------------------------------------------------------------- tabs
+  // Two panes, one visible at a time. The tab bar sits under the hero so the
+  // page can carry both the "what is this" copy and the playground without
+  // one burying the other.
+  function setPane(name) {
+    var tabs = document.querySelectorAll('.tabs .tab')
+    for (var i = 0; i < tabs.length; i++) {
+      var on = tabs[i].getAttribute('data-pane') === name
+      tabs[i].classList.toggle('on', on)
+      tabs[i].setAttribute('aria-selected', on ? 'true' : 'false')
+    }
+    var panes = document.querySelectorAll('.pane')
+    for (var j = 0; j < panes.length; j++) {
+      panes[j].hidden = panes[j].id !== 'pane-' + name
+    }
+    if (name === 'try') paint()
+    if (history.replaceState) {
+      history.replaceState(null, '', name === 'try' ? '#try' : '#about')
+    }
+  }
+
   // ---------------------------------------------------------------- boot
   function start() {
     slot = document.getElementById('card-slot')
@@ -916,9 +1300,17 @@ box-shadow:0 0 7px color-mix(in srgb, var(--dsp-accent) 90%, transparent)}
     })
     document.getElementById('roll').addEventListener('click', applyRoll)
 
+    document.querySelector('.tabs').addEventListener('click', function (e) {
+      var b = e.target.closest('.tab')
+      if (b) setPane(b.getAttribute('data-pane'))
+    })
+
     state = { variant: 'A', view: 'hold', blocked: null, jobs: 2, agent: 3, sec: 42 }
     paint()
     log('演示已就绪，点「随机一个状态」开始', 'armed')
+
+    // #try opens the playground directly — that is the link the README points at.
+    if (location.hash === '#try') setPane('try')
   }
 
   if (document.readyState === 'loading') document.addEventListener('DOMContentLoaded', start)

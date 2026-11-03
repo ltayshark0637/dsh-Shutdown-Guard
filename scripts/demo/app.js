@@ -266,6 +266,27 @@
     log('切换外观：' + v, 'armed')
   }
 
+  // ---------------------------------------------------------------- tabs
+  // Two panes, one visible at a time. The tab bar sits under the hero so the
+  // page can carry both the "what is this" copy and the playground without
+  // one burying the other.
+  function setPane(name) {
+    var tabs = document.querySelectorAll('.tabs .tab')
+    for (var i = 0; i < tabs.length; i++) {
+      var on = tabs[i].getAttribute('data-pane') === name
+      tabs[i].classList.toggle('on', on)
+      tabs[i].setAttribute('aria-selected', on ? 'true' : 'false')
+    }
+    var panes = document.querySelectorAll('.pane')
+    for (var j = 0; j < panes.length; j++) {
+      panes[j].hidden = panes[j].id !== 'pane-' + name
+    }
+    if (name === 'try') paint()
+    if (history.replaceState) {
+      history.replaceState(null, '', name === 'try' ? '#try' : '#about')
+    }
+  }
+
   // ---------------------------------------------------------------- boot
   function start() {
     slot = document.getElementById('card-slot')
@@ -279,9 +300,17 @@
     })
     document.getElementById('roll').addEventListener('click', applyRoll)
 
+    document.querySelector('.tabs').addEventListener('click', function (e) {
+      var b = e.target.closest('.tab')
+      if (b) setPane(b.getAttribute('data-pane'))
+    })
+
     state = { variant: 'A', view: 'hold', blocked: null, jobs: 2, agent: 3, sec: 42 }
     paint()
     log('演示已就绪，点「随机一个状态」开始', 'armed')
+
+    // #try opens the playground directly — that is the link the README points at.
+    if (location.hash === '#try') setPane('try')
   }
 
   if (document.readyState === 'loading') document.addEventListener('DOMContentLoaded', start)
