@@ -7,6 +7,8 @@
         marginSec: 5
         onlyOnSuccess: true
         blockOnJobs: true
+        # auto | zh | en | ru — 'auto' follows the OS locale
+        language: auto
         retryPolicies:
           rate-limit: { mode: backoff, base: 30, max: 300 }
           transient: { mode: fixed, every: 20 }
