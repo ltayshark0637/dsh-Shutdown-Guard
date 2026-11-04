@@ -344,3 +344,8 @@ function drawVariant(cv, n, scale) {
 }
 
 main();
+
+// 生成器本体只在直接运行时执行；gen-candidates.cjs 复用下面这些画法。
+if (require.main === module) main();
+
+module.exports = { C, SS, Canvas, sdf, cover, maskCover, polyMask, encodePNG, powerGlyph, hazardMask, drawVariant, writePng, OUT_DIR };
