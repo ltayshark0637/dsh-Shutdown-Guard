@@ -121,7 +121,7 @@ const flush = () => new Promise((resolve) => setImmediate(resolve))
 
 assert.deepStrictEqual(
   [...routes.keys()].sort(),
-  ['/api/dsh-shutdown-guard/arm', '/api/dsh-shutdown-guard/cancel', '/api/dsh-shutdown-guard/config', '/api/dsh-shutdown-guard/disarm', '/api/dsh-shutdown-guard/events', '/api/dsh-shutdown-guard/state'],
+  ['/api/dsh-shutdown-guard/arm', '/api/dsh-shutdown-guard/cancel', '/api/dsh-shutdown-guard/config', '/api/dsh-shutdown-guard/disarm', '/api/dsh-shutdown-guard/events', '/api/dsh-shutdown-guard/state', '/api/dsh-shutdown-guard/window'],
 )
 
 // 1. initial state
@@ -512,6 +512,16 @@ for (const lang of LANGS) {
   assert.strictEqual(Object.keys(MESSAGES[lang]).length, coverage.base.length, `${lang} has the same key count as the base`)
 }
 calls.push('i18n-coverage-ok')
+
+// 25. Floating window page: a self-contained read-only document served by the
+// host. Assert only the contract (status, type, doctype, product name) — the
+// copy inside the page changes with language and must not be locked here.
+res = await request('GET', '/api/dsh-shutdown-guard/window')
+assert.strictEqual(res.status, 200, 'the window page responds')
+assert.match(String(res.headers['content-type'] || ''), /text\/html/i, 'the window page is HTML')
+assert.ok(res.body.toLowerCase().includes('<!doctype html'), 'the window page is a full document')
+assert.ok(res.body.includes('dsh-shutdown-guard'), 'the window page names the plugin')
+calls.push('window-page-ok')
 
 dispose()
 assert.strictEqual(routes.size, 0, 'disposer removes HTTP routes')
