@@ -3,7 +3,7 @@
 
 <p align="center"><img src="https://cdn.jsdelivr.net/gh/ltayshark0637/dsh-Shutdown-Guard@main/docs/screenshots/banner.png" width="880" alt="Shutdown Guard — 任务完成后自动关机，侧边栏守夜卡片"></p>
 
-[![version](https://img.shields.io/badge/version-1.5.1-2ea44f)](CHANGELOG.md)
+[![version](https://img.shields.io/badge/version-1.5.2-2ea44f)](CHANGELOG.md)
 [![demo](https://img.shields.io/badge/%E2%96%B6-%E4%BA%A4%E4%BA%92%E6%BC%94%E7%A4%BA-d97757)](https://ltayshark0637.github.io/dsh-Shutdown-Guard/demo.html)
 [![DSH](https://img.shields.io/badge/DSH-%E2%89%A50.1.5--rc.1-4a90d9)](https://github.com/deepseek-ai)
 [![platform](https://img.shields.io/badge/platform-Windows-0078d4)](#约束)
