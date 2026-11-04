@@ -8,6 +8,8 @@
 - 文档：三份 README 补独立悬浮窗口的说明；`docs/screenshots/` 下 20 张截图与 3 段动画（共 23 个文件）按 v1.5.2 重新生成，截图文案改由 `scripts/gen-gallery.cjs` 直接从 `lib/client.js` 的 MSG 目录与内联 CSS 读取，不再手工同步（出图仍走 `scripts/screenshot.ps1`，不手工 P 图）。
 - 图标：新增 `scripts/gen-icon.cjs`，由脚本生成 `assets/` 下的 180px 站点图标与图标集；`package.json` 的 `icon` 字段指向 `assets/icon-shield-2-128.png`（琥珀盾牌 + 30% 透明内层做厚度 + 实心关机符号，36px 档单独绘制），插件列表里不再显示默认齿轮。
 - 测试：新增 `window-page-ok` 断言 —— `/window` 返回 200、`text/html`、完整文档且含产品名；路由清单断言同步加入该路由，宿主断言共 28 项。
+- 修复：热重载后侧边栏偶发出现两个卡片（第二个是改动前的旧卡片，文案还是英文）。原因是新的模块实例只认自己内存里的 `host`，旧实例留在 DOM 里的节点和它的轮询定时器都没人管。现在用实例令牌 `window.__dshShutdownGuardOwner` 定主：新实例挂载即接管，旧实例下一拍发现主人不是自己就清掉自己的节点并停手；建 host 前先清掉 `regionArea` 里残留的同类节点；`<style>` 标签同样去重。
+- 修复：中文下 `code.waiting` / `code.halted` 两条闸位说明仍显示 `waiting` / `halted`，已改为「等待中 · 自动重试」「已停止 · 需人工处理」。
 
 ## v1.5.1 — 2026-11-04
 
