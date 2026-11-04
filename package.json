@@ -15,10 +15,10 @@
     "url": "https://github.com/ltayshark0637/dsh-Shutdown-Guard/issues"
   },
   "main": "lib/index.mjs",
-  "icon": "assets/icon-shield-1-128.png",
+  "icon": "assets/icon-shield-2-128.png",
   "files": [
     "lib",
-    "assets/icon-shield-1-128.png",
+    "assets/icon-shield-2-128.png",
     "cordis.patch.yml",
     "README.md",
     "README.en.md",

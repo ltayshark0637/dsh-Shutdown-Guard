@@ -6,7 +6,7 @@
 - 设置菜单标题跟随宿主语言即时切换：语言一变，设置里的标题立即跟着变，不需要重启 DSH。两条路径都覆盖了——`ctx.locale.register` 注册命名空间（宿主在 locale revision 变化时重读设置台账），以及切换语言后重新注册 `settings.section` 槽位（槽位版本变化时宿主才会重读标签）。语言偏好仍经 `POST /config` 的 `language` 字段写入，权威值落在 `data/config.json`。
 - 6 组卡片文案补齐三语：状态标签（TAG）、HUD 状态词、任务 / 会话计数单位、终端风状态行、倒计时预设（30 秒 / 60 秒 / 2 分钟 / 5 分钟），卡片里不再有写死的中文或英文。
 - 文档：三份 README 补独立悬浮窗口的说明；`docs/screenshots/` 下 20 张截图与 3 段动画（共 23 个文件）按 v1.5.2 重新生成，截图文案改由 `scripts/gen-gallery.cjs` 直接从 `lib/client.js` 的 MSG 目录与内联 CSS 读取，不再手工同步（出图仍走 `scripts/screenshot.ps1`，不手工 P 图）。
-- 图标：新增 `scripts/gen-icon.cjs`，由脚本生成 `assets/` 下的 180px 站点图标与图标集；`package.json` 的 `icon` 字段指向 `assets/icon-shield-1-128.png`（琥珀盾牌 + 打穿的关机符号，36px 档单独绘制），插件列表里不再显示默认齿轮。
+- 图标：新增 `scripts/gen-icon.cjs`，由脚本生成 `assets/` 下的 180px 站点图标与图标集；`package.json` 的 `icon` 字段指向 `assets/icon-shield-2-128.png`（琥珀盾牌 + 30% 透明内层做厚度 + 实心关机符号，36px 档单独绘制），插件列表里不再显示默认齿轮。
 - 测试：新增 `window-page-ok` 断言 —— `/window` 返回 200、`text/html`、完整文档且含产品名；路由清单断言同步加入该路由，宿主断言共 28 项。
 
 ## v1.5.1 — 2026-11-04
