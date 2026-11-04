@@ -19,6 +19,8 @@
     "lib",
     "cordis.patch.yml",
     "README.md",
+    "README.en.md",
+    "README.ru.md",
     "CHANGELOG.md",
     "LICENSE"
   ],
