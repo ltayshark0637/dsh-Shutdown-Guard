@@ -21,8 +21,13 @@ on:
       - 'v*'
   workflow_dispatch:
 
+# contents: write 只给最后一步「建 GitHub Release」用（要往 releases API 写）。
+# 它与 id-token: write 是**并列的两个 scope**，互不占位：npm 的 Trusted Publisher
+# 只认 id-token: write 换来的 OIDC 令牌，跟 contents 的读写权限无关。
+# 所以这里把 contents 从 read 抬到 write 不影响 OIDC 发版；要动手前只需确认
+# id-token: write 这一行还在。
 permissions:
-  contents: read
+  contents: write # 建 Release 需要；OIDC 发版只用 id-token
   id-token: write # OIDC 必需
 
 jobs:
@@ -74,3 +79,17 @@ jobs:
 
       - name: Publish to npm
         run: npm publish --provenance --access public
+
+      # npm 发出去之后再建 Release：发布失败就不该留下一个「已发布」的 Release。
+      # github.ref_name 对 tag 触发已经是 "v1.5.1"（含 v），这里直接用，不要再拼 v。
+      # body 用 generate_release_notes：正文由 GitHub 按 commit/PR 生成，不必在
+      # bash 里 awk 切 CHANGELOG（runner 是 Windows + Git Bash，切段落易受 CRLF 影响）。
+      - name: Create the GitHub release
+        if: startsWith(github.ref, 'refs/tags/')
+        uses: softprops/action-gh-release@v2
+        with:
+          name: ${{ github.ref_name }}
+          tag_name: ${{ github.ref_name }}
+          generate_release_notes: true
+          draft: false
+          prerelease: false
