@@ -261,3 +261,5 @@ A：暂时不能，等待后续开发。
 ## 许可
 
 [MIT](LICENSE)
+
+DPH-CLAIM-34e77c2fc5f4f37fbad49b4123dd1de1
