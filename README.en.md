@@ -173,6 +173,7 @@ Written in `cordis.patch.yml` (the patch inside the plugin package), or changed 
 | `onlyOnSuccess` | bool   | `true` | Skip the shutdown when any session in this batch errored |
 | `blockOnJobs`   | bool   | `true` | Skip the shutdown while background jobs are running |
 | `afkAutoAnswer` | bool   | `true` | Answer questions and perform error recovery for the user while armed |
+| `language`      | enum   | `auto` | UI language; `auto` follows the system language, or pin it to `zh` / `en` / `ru` |
 
 ### Retry policies
 
@@ -208,7 +209,7 @@ Prefix `/api/dsh-shutdown-guard`, used by the card's own same-origin polling:
 | ---- | -------------------------- | -------------------------------------------------------------------------------- |
 | GET  | `/state?since=<ms>`        | Full state plus incremental events                                                              |
 | POST | `/arm` `/disarm` `/cancel` | Arm / disarm / cancel this countdown                                                     |
-| POST | `/config`                  | Change configuration: `customEnabled`, `activeProfileId`, `profileId`+`patch`, `afkAutoAnswer` |
+| POST | `/config`                  | Change configuration: `customEnabled`, `activeProfileId`, `profileId`+`patch`, `afkAutoAnswer`, `language` |
 | GET  | `/events?since=&limit=`    | Event stream                                                                         |
 
 POSTs from a non-local Origin return 403; non-POST returns 405.

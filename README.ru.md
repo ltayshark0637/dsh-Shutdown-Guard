@@ -173,6 +173,7 @@ dsh plugin --profile web add github:ltayshark0637/dsh-Shutdown-Guard
 | `onlyOnSuccess` | bool   | `true` | Пропускать выключение при ошибке в любой сессии этой партии |
 | `blockOnJobs`   | bool   | `true` | Пропускать выключение, пока выполняются фоновые задачи |
 | `afkAutoAnswer` | bool   | `true` | Отвечать на вопросы за пользователя и выполнять восстановление после ошибок во время охраны |
+| `language`      | список | `auto` | Язык интерфейса; `auto` следует языку системы, можно закрепить `zh` / `en` / `ru` |
 
 ### Политики повторов
 
@@ -208,7 +209,7 @@ retryPolicies:
 | ---- | -------------------------- | -------------------------------------------------------------------------------- |
 | GET  | `/state?since=<ms>`        | Полное состояние + инкрементальные события                                                              |
 | POST | `/arm` `/disarm` `/cancel` | Включить охрану / снять / отменить текущий обратный отсчёт                                                     |
-| POST | `/config`                  | Изменить настройки: `customEnabled`, `activeProfileId`, `profileId`+`patch`, `afkAutoAnswer` |
+| POST | `/config`                  | Изменить настройки: `customEnabled`, `activeProfileId`, `profileId`+`patch`, `afkAutoAnswer`, `language` |
 | GET  | `/events?since=&limit=`    | Поток событий                                                                         |
 
 POST с Origin не с этого компьютера возвращает 403; запрос не методом POST — 405.

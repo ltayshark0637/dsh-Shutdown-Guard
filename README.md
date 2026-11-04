@@ -173,6 +173,7 @@ AFK 自动接管开启时，插件会在武装期间替你回答 agent 的提问
 | `onlyOnSuccess` | bool   | `true` | 本批次有会话报错时跳过关机                |
 | `blockOnJobs`   | bool   | `true` | 有运行中的后台任务时跳过关机              |
 | `afkAutoAnswer` | bool   | `true` | 武装期间替用户回答提问、做错误恢复        |
+| `language`      | 枚举   | `auto` | 界面语言；`auto` 跟随系统语言，也可固定为 `zh` / `en` / `ru` |
 
 ### 重试策略
 
@@ -208,7 +209,7 @@ UI 偏好存在浏览器 `localStorage`：`dsh-shutdown-guard.variant` / `.theme
 | ---- | -------------------------- | -------------------------------------------------------------------------------- |
 | GET  | `/state?since=<ms>`        | 完整状态 + 增量事件                                                              |
 | POST | `/arm` `/disarm` `/cancel` | 武装 / 解除 / 取消本次倒计时                                                     |
-| POST | `/config`                  | 改配置：`customEnabled`、`activeProfileId`、`profileId`+`patch`、`afkAutoAnswer` |
+| POST | `/config`                  | 改配置：`customEnabled`、`activeProfileId`、`profileId`+`patch`、`afkAutoAnswer`、`language` |
 | GET  | `/events?since=&limit=`    | 事件流水                                                                         |
 
 非本机 Origin 的 POST 返回 403；非 POST 返回 405。
