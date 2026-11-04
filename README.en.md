@@ -92,6 +92,8 @@ The card is currently pinned to this sidebar slot. A future version plans to mak
 
 ## Other details
 
+- **Floating window**: the button in the card's top-right corner opens the status panel in a window of its own, so it stays in view when you switch to another session.
+
 - **Vertical collapse**: collapsed it keeps only the title and status; click the title to expand.
 
   <img src="https://cdn.jsdelivr.net/gh/ltayshark0637/dsh-Shutdown-Guard@main/docs/screenshots/16-folded.png" width="250" align="right" alt="Collapsed state">

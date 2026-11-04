@@ -92,6 +92,8 @@
 
 ## 其他
 
+- **悬浮窗口**：点卡片右上角按钮可把状态面板拉成独立悬浮窗口，切到别的会话也看得见。
+
 - **纵向折叠**：收起只留标题和状态，点标题展开。
 
   <img src="https://cdn.jsdelivr.net/gh/ltayshark0637/dsh-Shutdown-Guard@main/docs/screenshots/16-folded.png" width="250" align="right" alt="折叠态">

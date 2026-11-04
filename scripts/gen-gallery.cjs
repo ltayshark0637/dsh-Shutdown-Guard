@@ -40,75 +40,133 @@ const DOTS = [
 
 const CHEV = '<svg class="dsp-chev" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><path d="M6 9l6 6 6-6"/></svg>'
 
-// view: off | armed | hold | fire | fired | blocked
-const A_TEXT = {
-  off: ['未开启', '仅在点击「武装」后才会运行程序'],
-  armed: ['待命', '所有任务已结束 · 等待下一次触发'],
-  hold: ['等待后台任务', '2 个后台任务 · 3 个会话，完成后关机'],
-  fire: ['00:42', '系统即将关机 · 可撤销'],
-  fired: ['已下发', '关机指令已生效，无法取消'],
+// ---------------------------------------------------------------- copy source
+// Card text comes from the same inlined catalog that ships in lib/client.js, so
+// a copy change there shows up here on the next run instead of drifting silently.
+function extractMsg() {
+  const head = src.indexOf('var MSG = {')
+  if (head < 0) throw new Error('MSG block not found in lib/client.js')
+  const out = {}
+  const langs = ['zh', 'en', 'ru']
+  const starts = langs.map((l) => src.indexOf(l + ': {', head))
+  for (let i = 0; i < langs.length; i++) {
+    if (starts[i] < 0) throw new Error('MSG.' + langs[i] + ' not found')
+    const stop = i + 1 < langs.length ? starts[i + 1] : src.indexOf('\n      }', starts[i])
+    if (stop < 0) throw new Error('MSG end not found')
+    out[langs[i]] = {}
+    const re = /'([^']+)':\s*'((?:[^'\\]|\\.)*)'/g
+    let m
+    const chunk = src.slice(starts[i], stop)
+    while ((m = re.exec(chunk))) out[langs[i]][m[1]] = m[2].replace(/\\'/g, "'")
+  }
+  return out
 }
-const TAG = { off: 'OFF', armed: 'ARMED', hold: 'WAIT', fire: 'FIRE', fired: 'FIRED' }
+const MSG = extractMsg()
+// 图集沿用中文界面；README.en / README.ru 复用这同一组截图。
+const LANG = 'zh'
+
+function tr(key, vars) {
+  const raw = MSG[LANG][key]
+  if (raw === undefined) throw new Error('missing copy key: ' + key)
+  return raw.replace(/\{(\w+)\}/g, (all, k) => (vars && k in vars ? String(vars[k]) : all))
+}
+
+// Little "open in a window" glyph — same path as lib/client.js:707.
+const FLOAT_ICON = '<svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="3" y="5" width="18" height="14" rx="2"/><path d="M3 9h18"/></svg>'
+
+// view: off | armed | hold | fire | fired | blocked
+function bigFor(c) {
+  if (c.view === 'blocked') return c.big || (c.retry ? tr('big.retry') : tr('big.paused'))
+  if (c.view === 'fire') return c.t || '00:42'
+  return tr('big.' + c.view)
+}
+
+function metaFor(c) {
+  const jobs = c.jobs ?? (c.view === 'off' ? 0 : 2)
+  const agent = c.agent ?? (c.view === 'off' ? 1 : 3)
+  if (c.view === 'blocked') return c.meta || tr('set.blocked.waiting')
+  if (c.view === 'fire') return tr('meta.fire')
+  if (c.view === 'fired') return tr('meta.fired')
+  if (c.view === 'hold') {
+    // Mirrors lib/client.js metaText: only non-zero counts are listed.
+    const parts = []
+    if (jobs > 0) parts.push(tr('meta.jobs', { n: jobs }))
+    if (agent > 0) parts.push(tr('meta.sessions', { n: agent }))
+    return tr('meta.hold', { parts: parts.join(' · ') })
+  }
+  return tr('meta.' + c.view)
+}
+
+function termLine(c) {
+  // Mirrors lib/client.js:935 — armed falls through to the "waiting" line.
+  if (c.view === 'fire') return tr('term.fire', { t: c.t || '00:42' })
+  if (c.view === 'hold') return tr('term.hold')
+  if (c.view === 'off') return tr('term.off')
+  if (c.view === 'blocked') return c.retry ? tr('term.retry') : tr('term.halted')
+  if (c.view === 'fired') return tr('term.done')
+  return tr('term.wait')
+}
+
+function hudFor(c) {
+  const jobs = c.jobs ?? (c.view === 'off' ? 0 : 2)
+  const agent = c.agent ?? (c.view === 'off' ? 1 : 3)
+  const b = c.view === 'fire' ? (c.t || '00:42')
+    : c.view === 'hold' ? tr('hud.state.hold')
+      : c.view === 'fired' ? tr('hud.state.fired')
+        : c.view === 'off' ? tr('hud.state.off')
+          : c.view === 'blocked' ? (c.retry ? tr('hud.state.retrying') : tr('hud.state.paused'))
+            : tr('hud.state.standby')
+  const span = c.view === 'blocked'
+    ? (c.retry ? tr('hud.retry', { n: c.retryN || 2 }) : tr('hud.manual'))
+    : tr('unit.jobs', { n: jobs }) + ' · ' + tr('unit.agent', { n: agent })
+  return { b, span }
+}
 
 function bodyHtml(c) {
   if (c.variant === 'B') {
-    const hud = c.view === 'blocked'
-      ? `<b>${c.retry ? 'Retrying' : 'Paused'}</b><span>${esc(c.hudNote || (c.retry ? '第 2 次重试' : '需人工处理'))}</span>`
-      : c.view === 'hold' ? '<b>Holding</b><span>jobs 2 · agent 3</span>'
-        : c.view === 'fire' ? '<b>00:42</b><span>T-minus</span>'
-          : c.view === 'fired' ? '<b>Fired</b><span>已下发</span>'
-            : c.view === 'off' ? '<b>Offline</b><span>jobs 0 · agent 1</span>'
-              : '<b>Standby</b><span>jobs 0 · agent 1</span>'
+    const hud = hudFor(c)
     return `<div class="dsp-cbody dsp-v-b"><div class="dsp-disc">
       <div class="dsp-sweep"></div>
       <div class="dsp-rings"><svg class="dsp-radar-svg" viewBox="0 0 238 202">${RINGS}</svg></div>
       <div class="dsp-ping"></div>
       <div class="dsp-dots">${DOTS}</div>
-      <div class="dsp-hud">${hud}</div></div></div>`
+      <div class="dsp-hud"><b>${esc(hud.b)}</b><span>${esc(hud.span)}</span></div></div></div>`
   }
   if (c.variant === 'C') {
     // Mirrors lib/client.js: line 2 is the live counts, line 3 is the phase.
     const jobs = c.view === 'off' ? 0 : 2
     const agent = c.view === 'off' ? 1 : 3
-    const l2 = `jobs ${jobs} · agent ${agent}`
-    const l3 = c.view === 'fire' ? 'T-minus 00:42'
-      : c.view === 'hold' ? 'holding'
-        : c.view === 'off' ? 'offline'
-          : c.view === 'blocked' ? (c.retry ? 'retrying' : 'halted')
-            : c.view === 'fired' ? 'done' : 'waiting'
+    const l2 = tr('unit.jobs', { n: jobs }) + ' · ' + tr('unit.agent', { n: agent })
     const lines = `<div class="dsp-term-line"><span class="dsp-pr">&gt;</span>shutdown --when idle</div>
-      <div class="dsp-term-line"><span class="dsp-pr">&gt;</span><span class="dsp-l2">${l2}</span></div>
-      <div class="dsp-term-line"><span class="dsp-pr">&gt;</span><span class="dsp-l3">${l3}</span><i class="dsp-caret"></i></div>`
+      <div class="dsp-term-line"><span class="dsp-pr">&gt;</span><span class="dsp-l2">${esc(l2)}</span></div>
+      <div class="dsp-term-line"><span class="dsp-pr">&gt;</span><span class="dsp-l3">${esc(termLine(c))}</span><i class="dsp-caret"></i></div>`
     const ledState = [c.view !== 'off', true, agent === 0, jobs === 0, true, c.view === 'fire']
     const led = [0, 1, 2, 3, 4, 5].map((i) => `<i class="dsp-led-seg${ledState[i] ? ' on' : ''}" data-i="${i}"></i>`).join('')
     const code = c.view === 'blocked'
-      ? (c.retry ? 'waiting · 自动重试' : 'halted · 需人工处理')
-      : `条件 ${ledState.filter(Boolean).length}/6 已满足`
+      ? (c.retry ? tr('code.waiting') : tr('code.halted'))
+      : tr('code.gates', { n: ledState.filter(Boolean).length })
     return `<div class="dsp-cbody dsp-v-c"><div class="dsp-screen">${lines}</div>
-      <div class="dsp-led">${led}</div><div class="dsp-code">${code}</div></div>`
+      <div class="dsp-led">${led}</div><div class="dsp-code">${esc(code)}</div></div>`
   }
-  const [big, meta] = c.view === 'blocked'
-    ? [c.big || '已暂停', c.meta || '等待外部条件恢复']
-    : A_TEXT[c.view]
-  return `<div class="dsp-cbody dsp-v-a"><div class="dsp-big">${esc(big)}</div><div class="dsp-meta">${esc(meta)}</div></div>`
+  return `<div class="dsp-cbody dsp-v-a"><div class="dsp-big">${esc(bigFor(c))}</div><div class="dsp-meta">${esc(metaFor(c))}</div></div>`
 }
 
 function card(c) {
   const variant = c.variant || 'A'
   const view = c.view || 'armed'
-  const tag = view === 'blocked' ? (c.retry ? 'RETRY' : 'PAUSED') : TAG[view]
+  const tag = c.retry && view === 'blocked' ? tr('hud.state.retrying') : tr('tag.' + view)
   const cls = ['dsp-card', c.folded && 'is-folded', c.claude && 'dsp-claude'].filter(Boolean).join(' ')
-  const btn = view === 'off'
-    ? '<button class="dsp-btn dsp-btn-primary">武装</button>'
-    : view === 'fire'
-      ? '<button class="dsp-btn dsp-btn-danger">取消关机</button>'
-      : view === 'blocked'
-        ? `<button class="dsp-btn">${esc(c.btn || '解除')}</button>`
-        : '<button class="dsp-btn dsp-btn-danger">解除</button>'
+  const btnLabel = c.btn || (view === 'off' ? tr('btn.arm') : view === 'fire' ? tr('btn.cancel') : tr('btn.disarm'))
+  const btnCls = view === 'off' ? 'dsp-btn dsp-btn-primary' : view === 'fire' ? 'dsp-btn dsp-btn-danger' : 'dsp-btn'
+  const btn = `<button class="${btnCls}">${esc(btnLabel)}</button>`
   const inner = c.folded ? '' : bodyHtml(c) + `<div class="dsp-cbtns">${btn}</div><div class="dsp-hazard"></div>`
+  const floatLabel = esc(tr('card.float'))
   return `<div class="${cls}" data-state="${view}" data-variant="${variant}" data-lum="${c.lum || 'dark'}" data-retry="${c.retry ? '1' : '0'}">
-    <div class="dsp-chead"><i class="dsp-live"></i><span class="dsp-ctitle">任务完成后关机</span>
-      <span class="dsp-tag">${tag}</span>${CHEV}</div>${inner}</div>`
+    <div class="dsp-hrow">
+      <div class="dsp-chead" role="button" tabindex="0"><i class="dsp-live"></i><span class="dsp-ctitle">${esc(tr('app.title'))}</span>
+        <span class="dsp-tag">${esc(tag)}</span>${CHEV}</div>
+      <button type="button" class="dsp-float" title="${floatLabel}" aria-label="${floatLabel}">${FLOAT_ICON}</button>
+    </div>${inner}</div>`
 }
 
 // ---------------------------------------------------------------- page chrome
@@ -189,26 +247,27 @@ const evlog = `<div class="dsp-evlog">${EVENTS.map(([t, k, s]) => `<div class="d
 function settingsPanel(opts = {}) {
   return `<div class="dsp-settings">
     <div class="dsp-sgroup-box">
-      <div class="dsp-sgroup">外观</div>
-      ${row('卡片外观', '三种外观共用同一套判定逻辑。', seg(['A', 'B', 'C'], opts.variant ?? 0))}
-      ${row('配色', '跟随系统时按当前主题自动取深色或浅色。', seg(['跟随', '深色', '浅色', 'Claude'], opts.theme ?? 0))}
-      ${row('默认折叠', '折叠后只保留标题和状态。', sw(false))}
+      <div class="dsp-sgroup">${esc(tr('set.look'))}</div>
+      ${row(tr('set.variant'), tr('set.variant.desc'), seg(['A', 'B', 'C'], opts.variant ?? 0))}
+      ${row(tr('set.theme'), tr('set.theme.desc'), seg([tr('theme.auto'), tr('theme.dark'), tr('theme.light'), tr('theme.claude')], opts.theme ?? 0))}
+      ${row(tr('set.fold'), tr('set.fold.desc'), sw(false))}
+      ${row(tr('set.lang'), tr('set.lang.desc'), seg([tr('lang.auto'), tr('lang.zh'), tr('lang.en'), tr('lang.ru')], opts.lang ?? 0))}
     </div>
     <div class="dsp-sgroup-box">
-      <div class="dsp-sgroup">何时关机</div>
-      ${row('自定义配置', '正在使用自定义配置，默认配置暂时挂起。', sw(true))}
-      ${row('选择配置', '当前：自定义 3（120 秒）', slotbar(3))}
-      ${row('会话都停下来', '底线条件，始终开启。', '<span class="dsp-sval">总是开启</span>', 'dsp-srow-ro')}
-      ${row('后台任务跑完', '有后台任务在跑时，先不下发关机指令。', sw(true))}
-      ${row('有会话报错就跳过这一轮', '只认成功的任务，出过错的批次不关机。', sw(false))}
-      ${row('倒计时时长', '关机前留出的取消时间，10–600 秒。', seg(['30s', '60s', '2min', '5min'], 2))}
-      ${row('AFK 自动回答', '武装后 agent 若向你提问，自动代为回复：告知你处于 AFK、先完成已交代的任务、汇总报告并落盘，不碰未交代的分支。回复不会替你选中任何选项，关闭后提问照常弹给你。', sw(true))}
+      <div class="dsp-sgroup">${esc(tr('set.when'))}</div>
+      ${row(tr('set.custom'), tr('set.custom.on'), sw(true))}
+      ${row(tr('set.pick'), tr('set.pick.cur', { label: '自定义 3', sec: 120 }), slotbar(3))}
+      ${row(tr('set.bottom'), tr('set.bottom.desc'), `<span class="dsp-sval">${esc(tr('set.always'))}</span>`, 'dsp-srow-ro')}
+      ${row(tr('set.jobs'), tr('set.jobs.desc'), sw(true))}
+      ${row(tr('set.err'), tr('set.err.desc'), sw(false))}
+      ${row(tr('set.cd'), tr('set.cd.desc'), seg([tr('cd.30'), tr('cd.60'), tr('cd.120'), tr('cd.300')], 2))}
+      ${row(tr('set.afk'), tr('set.afk.desc'), sw(true))}
     </div>
     <div class="dsp-sgroup-box">
-      <div class="dsp-sgroup">状态</div>
-      ${row('当前阻断', '外部服务暂时不可用，插件会按策略自动重试。', '<span class="dsp-sval" style="color:#6f8f7a">等待 · 第 1 次重试</span>', 'dsp-srow-stack')}
-      ${row('上次为什么没关机', '', '<span class="dsp-sval">还有 2 个后台任务在运行，暂不关机（模式保持开启）</span>', 'dsp-srow-stack')}
-      ${row('事件日志', '最近 4 条，完整记录在插件 data/events.log。', evlog, 'dsp-srow-stack')}
+      <div class="dsp-sgroup">${esc(tr('set.status'))}</div>
+      ${row(tr('set.blocked'), tr('set.blocked.waiting'), `<span class="dsp-sval" style="color:#6f8f7a">${esc(tr('hud.state.retrying') + ' · ' + tr('hud.retry', { n: 1 }))}</span>`, 'dsp-srow-stack')}
+      ${row(tr('set.skip'), '', `<span class="dsp-sval">还有 2 个后台任务在运行，暂不关机（模式保持开启）</span>`, 'dsp-srow-stack')}
+      ${row(tr('set.events'), tr('set.events.desc', { n: 4 }), evlog, 'dsp-srow-stack')}
     </div>
   </div>`
 }
