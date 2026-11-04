@@ -5,8 +5,11 @@
 - 三语界面：中文 / English / Русский。宿主侧文案目录 78 键、侧边栏卡片 74 键，三语键集齐平、零缺失；日志与提示全部改走 `t(lang, key)`，`lib/index.mjs` 内已无硬编码中文串。
 - 新增语言选择器：设置 → 插件 → 任务完成后关机 → 「语言」，切换即时生效——经 `POST /api/dsh-shutdown-guard/config` 的 `language` 字段落盘，卡片强制重绘，不需要重启 DSH。
 - 新增 `language` 配置项：取值 `auto` | `zh` | `en` | `ru`，默认 `auto`（跟随系统语言）。它由 `loadStore`（`lib/index.mjs:283`）读取、经 `POST /config` 在运行时写入；**不是** `normalizeProfile` 字段，三份 README 的配置表已单独为它补一行。
-- 语言偏好持久化在浏览器 `localStorage` 的 `dsh-shutdown-guard.lang`。
+- 语言偏好同时写入宿主配置（`data/config.json`）与浏览器 `localStorage`：前者是权威值，后者让卡片在首帧就按所选语言渲染，重启后不再闪一下中文。
 - 文档：新增 `README.en.md`、`README.ru.md`，三份 README 的配置表统一补 `language` 行；演示页改成三语（`scripts/demo/i18n.js`，157 键）。
+- 修复：切换语言后，事件日志里切换前的旧行会永久停留在旧语言；现在切换时整环重取（`lib/client.js` `setSnapshot`）。
+- 修复：`saveStore()` 在 `apply()` 外引用越界变量，写 `data/config.json` 失败时会抛 `ReferenceError`、`log.configWriteFailed` 提示永远打不出来（`lib/index.mjs:292-295`、`:1039`）。
+- 可访问性：设置里 5 个开关补 `aria-label`，屏幕阅读器可读出开关名称（未新增文案键）。
 - 测试：新增 i18n 目录断言——`LANGS` 固定为三语、`catalogCoverage().missing` 为空、每语键数与基准一致。
 - ⚠️ 升级注意：**已有配置无需任何改动或迁移**。`language` 缺省即 `auto`，与 v1.5.0 的行为一致；升级后若想固定语言，在设置里选一次即可。
 
