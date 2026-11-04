@@ -69,6 +69,9 @@ node test/client.test.cjs   # 客户端 bundle smoke，用假 React 跑真 clien
 - PowerShell 执行策略禁止运行 `npm.ps1`：用 `npm.cmd`（`npm.cmd pack --dry-run`、`npm.cmd view ...`）
 - PowerShell 写 JSON/UTF-8 会带 BOM，node 侧 `JSON.parse` 前必须 `strip` BOM
 - 插件只在 win32 生效（`lib/index.mjs` 内有 `process.platform` 判断），非 Windows 上跑测试的失败不能当作代码问题
+- `raw.githubusercontent.com` / `api.github.com` / `codeload.github.com` 在本机不通（`curl (28)` 超时），`web_fetch` 也打不开 github.com；**GitHub 上的文件正文改用 `cdn.jsdelivr.net/gh/<owner>/<repo>@main/<path>`**，页面操作走浏览器通道
+- `Invoke-WebRequest` 偶发报「Windows PowerShell 处于非交互模式」：改用 `curl.exe`，或直接在浏览器里取
+- 浏览器工具（pi-control-chrome）偶发整体 120 秒超时：先 `browser_status` 看连接，`browser_restart` 常报 `BRIDGE_RESTART_BUSY`，改用 `browser_reload_extension(confirmed:true)` + `browser_status({acknowledgeBrowserId:…})` 可恢复；`BROWSER_OPERATION_UNCERTAIN` 后先读 `location`/`readyState`，不要重放导航
 
 ## 8. 角色与调度
 
