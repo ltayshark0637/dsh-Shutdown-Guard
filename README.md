@@ -8,6 +8,7 @@
 [![DSH](https://img.shields.io/badge/DSH-%E2%89%A50.1.5--rc.1-4a90d9)](https://github.com/deepseek-ai)
 [![platform](https://img.shields.io/badge/platform-Windows-0078d4)](#约束)
 [![license](https://img.shields.io/badge/license-MIT-blue)](LICENSE)
+[![dshbase 实装验证](https://dshbase.com/badges/dsh-shutdown-guard.svg)](https://dshbase.com/plugins/dsh-shutdown-guard/)
 
 为 DeepSeek Harness 中的侧边栏添加「所有任务完成后自动关机」卡片，拥有更好且多样的视觉效果、判定逻辑与个性化定制。位于「技能中心」下方、会话列表上方，随任务状态实时变化。
 
