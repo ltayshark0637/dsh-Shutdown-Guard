@@ -1,5 +1,6 @@
 import assert from 'node:assert'
 import { apply } from '../lib/index.mjs'
+import { LANGS, MESSAGES, catalogCoverage } from '../lib/i18n.mjs'
 
 const spawns = []
 const timers = new Map()
@@ -500,6 +501,17 @@ assert.strictEqual(serverSecond, 20, 'server polling does not grow')
 const offloadFirst = await delayFor('IMAGE_OFFLOAD_REQUIRED', 0)
 assert.strictEqual(offloadFirst, 5, 'image offload retries quickly')
 calls.push('retry-policy-ok')
+
+// 24. i18n catalog: the three shipped languages keep the same key set, so a
+// half-translated card can never ship unnoticed.
+assert.deepStrictEqual(LANGS, ['zh', 'en', 'ru'], 'the shipped language list is fixed')
+const coverage = catalogCoverage()
+assert.deepStrictEqual(coverage.missing, {}, 'every language defines every zh key')
+assert.ok(coverage.base.length > 0, 'the base catalog is not empty')
+for (const lang of LANGS) {
+  assert.strictEqual(Object.keys(MESSAGES[lang]).length, coverage.base.length, `${lang} has the same key count as the base`)
+}
+calls.push('i18n-coverage-ok')
 
 dispose()
 assert.strictEqual(routes.size, 0, 'disposer removes HTTP routes')
