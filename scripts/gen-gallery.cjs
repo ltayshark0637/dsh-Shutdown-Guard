@@ -330,55 +330,87 @@ const eventsFor = () => [
 const evlog = () => `<div class="dsp-evlog">${eventsFor().map(([t, k, s]) => `<div class="dsp-ev dsp-ev-${k}">
   <span class="dsp-ev-time">${t}</span><span class="dsp-ev-text">${esc(s)}</span></div>`).join('')}</div>`
 
-// 六组：外观 / 配置 / 判定与关机 / 守夜行为 / 通知 / 状态
+// 设置页现在是四个标签页：外观（含配置）/ 守夜（判定与关机 + 守夜行为）/ 通知 / 状态。
+// 与 lib/client.js 的 SETTINGS_TABS = ['look','watch','notify','status'] 一致。
+const SETTINGS_TABS = ['look', 'watch', 'notify', 'status']
+
+// 外观选择是三张带缩略图的卡片（极简 / 雷达 / 终端），缩略图随语言与背景深浅换图；
+// 这里直接读 assets/variant-<v>-<lang>-<theme>.png 内联成 base64，和产品内联的是同一批图。
+function thumbB64(variant, lang, theme) {
+  const file = path.join(root, 'assets', `variant-${variant}-${lang}-${theme}.png`)
+  if (!fs.existsSync(file)) return ''
+  return 'data:image/png;base64,' + fs.readFileSync(file).toString('base64')
+}
+
+function variantCards(current, lang, theme) {
+  return `<div class="dsp-cards">${['a', 'b', 'c'].map((v) => {
+    const on = current === v
+    return `<button type="button" role="radio" aria-checked="${on}" class="dsp-vcard${on ? ' on' : ''}">
+      <span class="dsp-thumb"><img class="dsp-thumb-img" src="${thumbB64(v, lang, theme)}" alt="" draggable="false"></span>
+      <span class="dsp-vcard-label">${esc(tr('set.variant.' + v))}</span></button>`
+  }).join('')}</div>`
+}
+
+function settingsTabs(active) {
+  return `<div class="dsp-tabs" role="tablist">${SETTINGS_TABS.map((id) => {
+    const on = id === active
+    return `<button type="button" role="tab" class="dsp-tab${on ? ' on' : ''}" aria-selected="${on}" tabindex="${on ? 0 : -1}">${esc(tr('tab.' + id))}</button>`
+  }).join('')}</div>`
+}
+
 function settingsPanel(opts = {}) {
-  const variant = opts.variant ?? 0
-  return `<div class="dsp-settings">
-    <div class="dsp-sgroup-box">
-      ${group('look', tr('set.look'))}
-      ${row(tr('set.variant'), '', seg(['A', 'B', 'C'], variant))}
-      ${variant === 2 ? row(tr('set.led'), tr('set.led.desc'), '', 'dsp-srow-stack') : ''}
-      ${row(tr('set.theme'), '', seg([tr('theme.auto'), tr('theme.dark'), tr('theme.light'), tr('theme.claude')], opts.theme ?? 0))}
-      ${row(tr('set.fold'), '', sw(false))}
-      ${row(tr('set.compact'), '', sw(true))}
-      ${row(tr('set.lang'), '', seg([tr('lang.auto'), tr('lang.zh'), tr('lang.en'), tr('lang.ru')], opts.lang ?? 0))}
-    </div>
-    <div class="dsp-sgroup-box">
-      ${group('prof', tr('set.prof.group'))}
-      ${row(tr('set.pick'), tr('set.prof.current', { label: D('profName', { n: 3 }), sec: 120 }), '', 'dsp-srow-plain')}
-      ${profileRow(tr('set.default'), 60, { default: true })}
-      ${profileRow(D('profName', { n: 1 }), 90)}
-      ${profileRow(D('profName', { n: 2 }), 120)}
-      ${profileRow(D('profName', { n: 3 }), 120, { active: true })}
-      <div class="dsp-srow dsp-srow-new"><div class="dsp-srow-text"></div><button class="dsp-sbtn">${esc(tr('set.prof.new'))}</button></div>
-    </div>
-    <div class="dsp-sgroup-box">
-      ${group('rule', tr('set.when'))}
-      ${row(tr('set.custom'), '', sw(true))}
-      ${row(tr('set.bottom'), tr('set.bottom.desc'), val(tr('set.always')), 'dsp-srow-ro')}
-      ${row(tr('set.jobs'), tr('set.jobs.desc'), sw(true))}
-      ${row(tr('set.err'), tr('set.err.desc'), sw(false))}
-      ${row(tr('set.cd'), tr('set.cd.desc'), seg([tr('cd.30'), tr('cd.60'), tr('cd.120'), tr('cd.300')], 2))}
-    </div>
-    <div class="dsp-sgroup-box">
-      ${group('watch', tr('set.watch'))}
-      ${row(tr('set.afk'), tr('set.afk.desc'), sw(true))}
-    </div>
-    <div class="dsp-sgroup-box">
-      ${group('notify', tr('set.notify.group'))}
-      ${row(tr('set.notify'), tr('set.notify.desc'), sw(true))}
-      ${row(tr('set.notify.countdown'), '', sw(true), 'dsp-srow-sub')}
-      ${row(tr('set.notify.fired'), '', sw(true), 'dsp-srow-sub')}
-      ${row(tr('set.notify.blocked'), '', sw(true), 'dsp-srow-sub')}
-      ${row(tr('set.notify.recovered'), '', sw(false), 'dsp-srow-sub')}
-    </div>
-    <div class="dsp-sgroup-box">
-      ${group('status', tr('set.status'))}
-      ${row(tr('set.blocked'), tr('set.blocked.waiting'), val(tr('hud.state.retrying') + ' · ' + tr('hud.retry', { n: 1 }), 'color:#6f8f7a'), 'dsp-srow-stack')}
-      ${row(tr('set.skip'), '', val(D('skipLine')), 'dsp-srow-stack')}
-      ${row(tr('set.events'), tr('set.events.desc', { n: 4 }), evlog(), 'dsp-srow-stack')}
-    </div>
-  </div>`
+  const variant = ['a', 'b', 'c'][opts.variant ?? 0]
+  const tab = opts.tab ?? 'look'
+  const thumbTheme = opts.thumbTheme ?? 'dark'
+  const panes = {
+    look: `<div class="dsp-sgroup-box">
+        ${group('look', tr('set.look'))}
+        ${row(tr('set.variant'), '', variantCards(variant, LANG === 'en' || LANG === 'ru' ? LANG : 'zh', thumbTheme), 'dsp-srow-stack')}
+        ${variant === 'c' ? row(tr('set.led'), tr('set.led.desc'), '', 'dsp-srow-stack') : ''}
+        ${row(tr('set.theme'), '', seg([tr('theme.auto'), tr('theme.dark'), tr('theme.light'), tr('theme.claude')], opts.theme ?? 0))}
+        ${row(tr('set.fold'), '', sw(false))}
+        ${row(tr('set.compact'), '', sw(true))}
+        ${row(tr('set.lang'), '', seg([tr('lang.auto'), tr('lang.zh'), tr('lang.en'), tr('lang.ru')], opts.lang ?? 0))}
+      </div>
+      <div class="dsp-sgroup-box">
+        ${group('prof', tr('set.prof.group'))}
+        ${row(tr('set.pick'), tr('set.prof.current', { label: D('profName', { n: 3 }), sec: 120 }), '', 'dsp-srow-plain')}
+        ${profileRow(tr('set.default'), 60, { default: true })}
+        ${profileRow(D('profName', { n: 1 }), 90)}
+        ${profileRow(D('profName', { n: 2 }), 120)}
+        ${profileRow(D('profName', { n: 3 }), 120, { active: true })}
+        <div class="dsp-srow dsp-srow-new"><div class="dsp-srow-text"></div><button class="dsp-sbtn">${esc(tr('set.prof.new'))}</button></div>
+      </div>`,
+    watch: `<div class="dsp-sgroup-box">
+        ${group('rule', tr('set.when'))}
+        ${row(tr('set.custom'), '', sw(true))}
+        ${row(tr('set.bottom'), tr('set.bottom.desc'), val(tr('set.always')), 'dsp-srow-ro')}
+        ${row(tr('set.jobs'), tr('set.jobs.desc'), sw(true))}
+        ${row(tr('set.err'), tr('set.err.desc'), sw(false))}
+        ${row(tr('set.cd'), tr('set.cd.desc'), seg([tr('cd.30'), tr('cd.60'), tr('cd.120'), tr('cd.300')], 2))}
+      </div>
+      <div class="dsp-sgroup-box">
+        ${group('watch', tr('set.watch'))}
+        ${row(tr('set.afk'), tr('set.afk.desc'), sw(true))}
+      </div>`,
+    notify: `<div class="dsp-sgroup-box">
+        ${group('notify', tr('set.notify.group'))}
+        ${row(tr('set.notify'), tr('set.notify.desc'), sw(true))}
+        ${row(tr('set.notify.countdown'), '', sw(true), 'dsp-srow-sub')}
+        ${row(tr('set.notify.fired'), '', sw(true), 'dsp-srow-sub')}
+        ${row(tr('set.notify.blocked'), '', sw(true), 'dsp-srow-sub')}
+        ${row(tr('set.notify.recovered'), '', sw(false), 'dsp-srow-sub')}
+      </div>`,
+    status: `<div class="dsp-sgroup-box">
+        ${group('status', tr('set.status'))}
+        ${row(tr('set.blocked'), tr('set.blocked.waiting'), val(tr('hud.state.retrying') + ' · ' + tr('hud.retry', { n: 1 }), 'color:#6f8f7a'), 'dsp-srow-stack')}
+        ${row(tr('set.skip'), '', val(D('skipLine')), 'dsp-srow-stack')}
+        ${row(tr('set.events'), tr('set.events.desc', { n: 4 }), evlog(), 'dsp-srow-stack')}
+      </div>`,
+  }
+  return `<div class="dsp-settings">${settingsTabs(tab)}
+      <div class="dsp-tabpanel" role="tabpanel" data-tab="${tab}">${panes[tab]}</div>
+    </div>`
 }
 
 // ---------------------------------------------------------------- pages
@@ -400,6 +432,12 @@ const single = (inner, extra = '') => `<!doctype html><html lang="${LANG}"><head
 
 const frame = (html, cls = '') => `<div class="frame ${cls}">${html}</div>`
 const cardOnly = (c) => single(frame(card(c)))
+
+// 设置页截图里把选中药丸的几何写死：静态页不跑 measureTabs()，不补这一段就只有
+// 文字变白、看不到滑块。只有第一个 tab 会被选中，宽度按「容器 - padding - gap」四等分。
+// 设置页截图里把选中药丸的几何写死：静态页不跑 measureTabs()，也没有宿主主题变量，
+// 不补这一段就只有文字变白、看不到滑块（还容易在深色页上刷成一块白）。
+const tabPill = (theme) => `.dsp-tabs::before{opacity:1 !important;--tab-x:2px;--tab-y:2px;--tab-w:128px;--tab-h:32px;background:${theme === 'dark' ? 'rgba(255,255,255,.12)' : '#ffffff'} !important;box-shadow:${theme === 'dark' ? 'none' : '0 1px 2px rgba(0,0,0,.12)'} !important}`
 
 // 主图矩阵用：同一张卡按主题出浅/深两版。浅色走 `lum:'light'`（卡片自带的
 // 浅色配色）+ `.frame.light`（外框底色）；与 14-light 同一套写法。
@@ -497,9 +535,10 @@ const shotDefs = {
   '10-sidebar-hold': () => sidebarOnly({ view: 'hold', variant: 'A' }),
   '11-sidebar-fire': () => sidebarOnly({ view: 'fire', variant: 'A' }),
 
-  // 12-13: settings, dark and light
-  '12-settings-dark': () => single(`<div style="background:#1a1a19;border-radius:14px;padding:6px 20px 16px;width:560px">${settingsPanel()}</div>`),
-  '13-settings-light': () => single(`<div class="theme-light" style="background:#fff;color:#1b2030;border-radius:14px;padding:6px 20px 16px;width:560px;--dsp-fg:#1b2030;--dsp-muted:#5b6472;--dsp-line:rgba(0,0,0,.15);--dsp-accent:#e08f13;--dsp-danger:#d92d20;--dsp-track:rgba(0,0,0,.13);--dsw-alias-label-primary:#1b2030;--dsw-alias-label-secondary:#3d4859;--dsw-alias-label-tertiary:#5b6472;--dsw-alias-border-l2:rgba(0,0,0,.12);--dsw-alias-border-l3:rgba(0,0,0,.18);--dsw-alias-bg-layer-2:#f7f8fa;--dsw-alias-button-primary-fill:#e08f13">${settingsPanel({ theme: 2 })}</div>`),
+  // 12-13: settings, dark and light —— 只出第一屏（外观标签页）。
+  // 静态 HTML 里没有 measureTabs() 跑的 JS，所以把选中药丸的几何写死（第一个 tab）。
+  '12-settings-dark': () => single(`<div style="background:#1a1a19;border-radius:14px;padding:6px 20px 16px;width:560px">${settingsPanel({ theme: 1, thumbTheme: 'dark' })}</div>`, tabPill('dark')),
+  '13-settings-light': () => single(`<div class="theme-light" style="background:#fff;color:#1b2030;border-radius:14px;padding:6px 20px 16px;width:560px;--dsp-fg:#1b2030;--dsp-muted:#5b6472;--dsp-line:rgba(0,0,0,.15);--dsp-accent:#e08f13;--dsp-danger:#d92d20;--dsp-track:rgba(0,0,0,.13);--dsw-alias-label-primary:#1b2030;--dsw-alias-label-secondary:#3d4859;--dsw-alias-label-tertiary:#5b6472;--dsw-alias-border-l2:rgba(0,0,0,.12);--dsw-alias-border-l3:rgba(0,0,0,.18);--dsw-alias-bg-layer-2:#f7f8fa;--dsw-alias-button-primary-fill:#e08f13">${settingsPanel({ theme: 2, thumbTheme: 'light' })}</div>`, tabPill('light')),
 
   // 14-15: light and Claude palettes
   '14-light': () => single(frame(card({ view: 'armed', variant: 'A', lum: 'light' }), 'light')),

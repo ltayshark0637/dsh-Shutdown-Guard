@@ -36,20 +36,20 @@ If any one is missing, it does not shut down and writes the reason on the card a
 
 The same look in light and dark; the trilingual captures live in `docs/screenshots/` as `<nn>-armed-<look>-<lang>-<theme>.png`.
 
-| A · Hazard tape (light)                                                             | B · Radar (light)                                                        | C · Terminal (light)                                                                             |
+| Minimal (light)                                                             | Radar (light)                                                        | Terminal (light)                                                                             |
 |:------------------------------------------------------------------------------:|:-----------------------------------------------------------------------:|:--------------------------------------------------------------------------------------------:|
 | <img src="https://cdn.jsdelivr.net/gh/ltayshark0637/dsh-Shutdown-Guard@main/docs/screenshots/03-armed-a-en-light.png" width="250"> | <img src="https://cdn.jsdelivr.net/gh/ltayshark0637/dsh-Shutdown-Guard@main/docs/screenshots/09-armed-b-en-light.png" width="250"> | <img src="https://cdn.jsdelivr.net/gh/ltayshark0637/dsh-Shutdown-Guard@main/docs/screenshots/15-armed-c-en-light.png" width="250"> |
 
-| A · Hazard tape (dark)                                                             | B · Radar (dark)                                                        | C · Terminal (dark)                                                                             |
+| Minimal (dark)                                                             | Radar (dark)                                                        | Terminal (dark)                                                                             |
 |:------------------------------------------------------------------------------:|:-----------------------------------------------------------------------:|:--------------------------------------------------------------------------------------------:|
 | <img src="https://cdn.jsdelivr.net/gh/ltayshark0637/dsh-Shutdown-Guard@main/docs/screenshots/04-armed-a-en-dark.png" width="250"> | <img src="https://cdn.jsdelivr.net/gh/ltayshark0637/dsh-Shutdown-Guard@main/docs/screenshots/10-armed-b-en-dark.png" width="250"> | <img src="https://cdn.jsdelivr.net/gh/ltayshark0637/dsh-Shutdown-Guard@main/docs/screenshots/16-armed-c-en-dark.png" width="250"> |
-| Large status text + scrolling red-and-yellow stripes at the bottom                                          | Concentric rings + a scanning beam, sessions and background jobs shown as dots                      | Command-line summary + six indicator lights for the gate conditions                                                      |
+| Large status text + one-line explanation, scrolling red-and-yellow hazard tape at the bottom                                          | Radar + a status line, sessions and background jobs shown as dots                      | Three terminal lines (command, counts, waiting) over six gate indicator lights                                                      |
 
 Dots in the radar are added and removed, never reordered: when the count changes, the dots you are looking at do not jump.
 
 <p align="center"><img src="https://cdn.jsdelivr.net/gh/ltayshark0637/dsh-Shutdown-Guard@main/docs/screenshots/anim-radar.gif" width="330" alt="Radar sweep"></p>
 
-Switch in settings; takes effect immediately, no restart needed.
+Pick one of the three thumbnail cards in the Appearance tab; it takes effect immediately, no restart. The picture switches with the UI language and the lightness of the surface behind it.
 
 ## Six runtime states
 
@@ -118,12 +118,11 @@ The card is pinned to this sidebar slot by default; the button on the card heade
 |:---------------------------------------------------------------------------------------------:|:----------------------------------------------------------------------------------------------:|
 | <img src="https://cdn.jsdelivr.net/gh/ltayshark0637/dsh-Shutdown-Guard@main/docs/screenshots/12-settings-dark.png" width="380"> | <img src="https://cdn.jsdelivr.net/gh/ltayshark0637/dsh-Shutdown-Guard@main/docs/screenshots/13-settings-light.png" width="380"> |
 
-Six groups: Appearance / Profiles / When to shut down / Watch behaviour / Notifications / Status. Every switch takes effect immediately.
+Four tabs: **Appearance** (profiles included) / **Vigil** (when to shut down + watch behaviour) / **Notifications** / **Status**. It opens on Appearance, and every switch takes effect immediately.
 
-- **Appearance**: card look A/B/C, theme (follow / dark / light / Claude), collapse by default, compact floating window, UI language.
-- **Profiles**: one default profile plus any number of custom profiles. The default is locked at 60 seconds and acts as the floor; a custom profile starts as a copy of the current one and can then be tuned.
-- **When to shut down**: "All sessions idle" is the floor condition, always on and not switchable; "Background jobs finished" blocks background jobs, "skip this round if any session errored" blocks erroring batches; the countdown length is only editable in a custom profile.
-- **Watch behaviour**: "AFK auto-answer" controls whether questions are answered for you while armed; the description states "replies never select an option for you; turn this off and questions come to you as usual."
+- **Appearance**: three thumbnail cards at the top — Minimal (large title plus one line), Radar (radar plus a status line), Terminal (three terminal lines); the picture follows the UI language and the lightness of the surface. Below them: theme (follow / dark / light / Claude), collapse by default, compact floating window, UI language.
+- **Profiles** (further down the same tab): one default profile plus any number of custom profiles. The default is locked at 60 seconds and acts as the floor; a custom profile starts as a copy of the current one and can then be tuned.
+- **Vigil**: the top half is when to shut down — "All sessions idle" is the floor condition, always on and not switchable; "Background jobs finished" blocks background jobs, "skip this round if any session errored" blocks erroring batches; the countdown length is only editable in a custom profile. The bottom half is watch behaviour — "AFK auto-answer" controls whether questions are answered for you while armed; the description states "replies never select an option for you; turn this off and questions come to you as usual."
 - **Notifications**: one master switch plus four per-kind switches (countdown started / shutting down / first block / block recovered). Arming, disarming and cancelling by hand stay silent.
 - **Status**: current block, why it did not shut down last time, recent events.
 
