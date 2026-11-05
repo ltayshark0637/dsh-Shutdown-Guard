@@ -559,25 +559,25 @@ calls.push('window-page-ok')
 // an unknown value is rejected instead of silently replaced, and the choice
 // survives a restart through data/ui.json.
 res = await request('GET', '/api/dsh-shutdown-guard/state')
-assert.deepStrictEqual(JSON.parse(res.body).ui, { variant: 'A', theme: 'auto', lang: 'auto' }, 'UI defaults are A / auto / auto')
+assert.deepStrictEqual(JSON.parse(res.body).ui, { variant: 'A', theme: 'auto', lang: 'auto', compact: false }, 'UI defaults are A / auto / auto')
 
-res = await request('POST', '/api/dsh-shutdown-guard/ui', 'http://127.0.0.1:43129', { variant: 'B', theme: 'light', lang: 'ru' })
+res = await request('POST', '/api/dsh-shutdown-guard/ui', 'http://127.0.0.1:43129', { variant: 'B', theme: 'light', lang: 'ru', compact: false })
 assert.strictEqual(res.status, 200, 'a valid UI update is accepted')
-assert.deepStrictEqual(JSON.parse(res.body).ui, { variant: 'B', theme: 'light', lang: 'ru' }, 'the POST response already carries the new UI')
+assert.deepStrictEqual(JSON.parse(res.body).ui, { variant: 'B', theme: 'light', lang: 'ru', compact: false }, 'the POST response already carries the new UI')
 
 res = await request('GET', '/api/dsh-shutdown-guard/state')
-assert.deepStrictEqual(JSON.parse(res.body).ui, { variant: 'B', theme: 'light', lang: 'ru' }, '/state reports the stored UI')
+assert.deepStrictEqual(JSON.parse(res.body).ui, { variant: 'B', theme: 'light', lang: 'ru', compact: false }, '/state reports the stored UI')
 
 res = await request('POST', '/api/dsh-shutdown-guard/ui', 'http://127.0.0.1:43129', { theme: 'dark' })
 assert.strictEqual(res.status, 200, 'an omitted field is not required')
-assert.deepStrictEqual(JSON.parse(res.body).ui, { variant: 'B', theme: 'dark', lang: 'ru' }, 'omitted fields keep their value')
+assert.deepStrictEqual(JSON.parse(res.body).ui, { variant: 'B', theme: 'dark', lang: 'ru', compact: false }, 'omitted fields keep their value')
 
 for (const bad of [{ variant: 'D' }, { theme: 'sepia' }, { lang: 'fr' }]) {
   res = await request('POST', '/api/dsh-shutdown-guard/ui', 'http://127.0.0.1:43129', bad)
   assert.strictEqual(res.status, 400, `unknown value ${JSON.stringify(bad)} is rejected, not silently replaced`)
 }
 res = await request('GET', '/api/dsh-shutdown-guard/state')
-assert.deepStrictEqual(JSON.parse(res.body).ui, { variant: 'B', theme: 'dark', lang: 'ru' }, 'a rejected update leaves the stored UI untouched')
+assert.deepStrictEqual(JSON.parse(res.body).ui, { variant: 'B', theme: 'dark', lang: 'ru', compact: false }, 'a rejected update leaves the stored UI untouched')
 
 {
   const fs = await import('node:fs')
@@ -588,8 +588,33 @@ assert.deepStrictEqual(JSON.parse(res.body).ui, { variant: 'B', theme: 'dark', l
   assert.deepStrictEqual({ variant: saved.variant, theme: saved.theme, lang: saved.lang }, { variant: 'B', theme: 'dark', lang: 'ru' }, 'the UI choice is persisted for the next start')
 }
 
-await request('POST', '/api/dsh-shutdown-guard/ui', 'http://127.0.0.1:43129', { variant: 'A', theme: 'auto', lang: 'auto' })
+await request('POST', '/api/dsh-shutdown-guard/ui', 'http://127.0.0.1:43129', { variant: 'A', theme: 'auto', lang: 'auto', compact: false })
 calls.push('ui-state-ok')
+
+// 27. Compact mode is one more host-held UI field: the floating window reads it
+// from /state, so it survives a reload and does not depend on localStorage.
+res = await request('GET', '/api/dsh-shutdown-guard/state')
+assert.strictEqual(JSON.parse(res.body).ui.compact, false, 'compact ships off')
+
+res = await request('POST', '/api/dsh-shutdown-guard/ui', 'http://127.0.0.1:43129', { compact: true })
+assert.strictEqual(res.status, 200, 'compact can be turned on')
+assert.strictEqual(JSON.parse(res.body).ui.compact, true, 'the POST response carries it')
+assert.deepStrictEqual(
+  { variant: JSON.parse(res.body).ui.variant, theme: JSON.parse(res.body).ui.theme, lang: JSON.parse(res.body).ui.lang },
+  { variant: 'A', theme: 'auto', lang: 'auto' },
+  'turning compact on leaves the other UI fields alone',
+)
+res = await request('GET', '/api/dsh-shutdown-guard/state')
+assert.strictEqual(JSON.parse(res.body).ui.compact, true, '/state reports compact, so the window follows without localStorage')
+
+res = await request('POST', '/api/dsh-shutdown-guard/ui', 'http://127.0.0.1:43129', { compact: 'yes' })
+assert.strictEqual(res.status, 400, 'a non-boolean compact is rejected')
+res = await request('GET', '/api/dsh-shutdown-guard/state')
+assert.strictEqual(JSON.parse(res.body).ui.compact, true, 'the rejection does not change the stored value')
+
+res = await request('POST', '/api/dsh-shutdown-guard/ui', 'http://127.0.0.1:43129', { compact: false })
+assert.strictEqual(JSON.parse(res.body).ui.compact, false, 'compact can be turned off again')
+calls.push('ui-compact-ok')
 
 dispose()
 assert.strictEqual(routes.size, 0, 'disposer removes HTTP routes')
