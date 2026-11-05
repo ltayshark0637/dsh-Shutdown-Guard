@@ -195,6 +195,9 @@ The default profile is **everyone's safe floor**: 60 seconds, wait for backgroun
 
 Settings → **Appearance** → **Profiles** → `+ New`: it copies the current profile, you name it (≤24 characters) and save; it becomes the active profile.
 
+- A fresh install has exactly one profile, the default one. The second one has to be created with `+ New` — no empty slots are pre-seeded.
+- Turn the "custom profiles" switch off and back on, and you land on the profile you were using; if that one was deleted in the meantime, you stay on the default profile.
+- On upgrade, slots you never touched are cleaned up. A profile you renamed, or one whose switches you changed at least once, is kept.
 - Every custom profile can be made the default, renamed, or deleted.
 - Deleting the profile in use falls back to the default profile, with a confirmation first.
 - When the "custom profiles" master switch is off, no custom profile applies and the default is used.
