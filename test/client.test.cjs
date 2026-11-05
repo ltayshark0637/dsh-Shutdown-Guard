@@ -338,7 +338,9 @@ void (async () => {
   const element = slots['settings.section'].render({})
   const rendered = typeof element.type === 'function' ? element.type({}) : element
   const text = flat(rendered, []).join(' | ')
-  const missing = ['外观', '判定与关机', 'AFK 自动回答', '自定义配置', '选择配置', '会话都停下来', '后台任务跑完', '倒计时时长', '状态', '上次为什么没关机', '事件日志']
+  // 「判定与关机」这个组标题随结构变更不再渲染（四行并进了「守夜行为」），所以从
+  // 清单里删的是标题，不是行：下面四行必须继续在清单里。
+  const missing = ['外观', 'AFK 自动回答', '自定义配置', '选择配置', '会话都停下来', '后台任务跑完', '有会话报错就跳过这一轮', '倒计时时长', '状态', '上次为什么没关机', '事件日志']
     .filter((n) => !text.includes(n))
   assert.deepStrictEqual(missing, [], 'missing settings labels; got: ' + text.slice(0, 300))
   assert.ok(!text.includes('终端里的 6 个小块'), 'LED legend hidden while variant != C')
