@@ -545,6 +545,54 @@ const offloadFirst = await delayFor('IMAGE_OFFLOAD_REQUIRED', 0)
 assert.strictEqual(offloadFirst, 5, 'image offload retries quickly')
 calls.push('retry-policy-ok')
 
+// 24. A blocked event stores a *reference* to its reason, not a finished
+// sentence: switching the language must re-render the inner reason too, with the
+// wrapper and the retry suffix around it. Params that are plain strings keep
+// working exactly as before, so old history is never lost or re-interpreted.
+await request('POST', '/api/dsh-shutdown-guard/disarm', 'http://127.0.0.1:43129')
+await request('POST', '/api/dsh-shutdown-guard/arm', 'http://127.0.0.1:43129')
+rootAgent.status = 'running'
+statusHandler({ agent: rootAgent, status: 'running' })
+errorHandler({ agent: rootAgent, error: { code: 'RATE_LIMIT', message: 'slow down' } })
+await flush()
+
+async function eventByKey(key) {
+  const r = await request('GET', '/api/dsh-shutdown-guard/events?since=0')
+  const list = JSON.parse(r.body).events.filter((e) => e.key === key)
+  return list[list.length - 1] || null
+}
+
+const blockedEventZh = await eventByKey('log.retryScheduled')
+assert.ok(blockedEventZh, 'the blocked event is recorded')
+assert.ok(blockedEventZh.text.includes('等待恢复'), 'the wrapper survives the nesting')
+assert.ok(blockedEventZh.text.includes('被限流'), 'the nested reason renders in Chinese')
+assert.ok(/第 \d+ 次/.test(blockedEventZh.text), 'the retry suffix survives the nesting')
+assert.ok(!blockedEventZh.text.includes('[object Object]'), 'the reference is expanded, never stringified')
+assert.ok(blockedEventZh.params && typeof blockedEventZh.params.reason === 'object', 'the stored param is a reference, so it can be re-rendered')
+
+await request('POST', '/api/dsh-shutdown-guard/config', 'http://127.0.0.1:43129', { language: 'ru' })
+const blockedEventRu = await eventByKey('log.retryScheduled')
+assert.ok(blockedEventRu.text.includes('Ожидание восстановления'), 'the wrapper re-renders in Russian')
+assert.ok(blockedEventRu.text.includes('Ограничение частоты'), 'the nested reason re-renders in Russian')
+assert.ok(/[\u0400-\u04FF]/.test(blockedEventRu.text), 'the Russian line carries Cyrillic')
+assert.ok(!/[\u4e00-\u9fff]/.test(blockedEventRu.text), 'no Chinese is left inside the Russian line')
+assert.ok(!blockedEventRu.text.includes('[object Object]'), 'the Russian line is expanded too')
+assert.strictEqual(blockedEventRu.at, blockedEventZh.at, 'the same event is re-rendered, not replaced')
+
+await request('POST', '/api/dsh-shutdown-guard/config', 'http://127.0.0.1:43129', { language: 'zh' })
+const blockedEventBack = await eventByKey('log.retryScheduled')
+assert.strictEqual(blockedEventBack.text, blockedEventZh.text, 'switching back restores the Chinese line exactly')
+
+// Legacy shape: a param that was stored as a plain string still renders as-is,
+// and mixing plain values with references in one event works.
+const plain = await eventByKey('log.retryScheduled')
+assert.strictEqual(typeof plain.params.code, 'string', 'plain string params are untouched')
+assert.ok(plain.text.includes('RATE_LIMIT'), 'plain string params still land in the text')
+const renderedEvents = JSON.parse((await request('GET', '/api/dsh-shutdown-guard/events?since=0')).body).events
+assert.ok(renderedEvents.length > 0 && renderedEvents.every((e) => typeof e.text === 'string' && e.text.length > 0), 'every event keeps a rendered line')
+assert.ok(renderedEvents.every((e) => !e.text.includes('[object Object]')), 'no event ever leaks a stringified object')
+calls.push('events-nested-i18n-ok')
+
 // 24. i18n catalog: the three shipped languages keep the same key set, so a
 // half-translated card can never ship unnoticed.
 assert.deepStrictEqual(LANGS, ['zh', 'en', 'ru'], 'the shipped language list is fixed')
