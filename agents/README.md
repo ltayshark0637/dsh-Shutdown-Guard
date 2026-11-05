@@ -1,6 +1,6 @@
-# 本仓库的六个身份
+# 本仓库的七个身份
 
-一个调度台 + 五个执行身份。调度台不写产品代码，只拆活、派活、验收；执行身份各自拥有文件，**只改自己名下的路径**。
+一个调度台 + 六个执行身份。调度台不写产品代码，只拆活、派活、验收；执行身份各自拥有文件，**只改自己名下的路径**。
 
 | # | 身份 | 文件 | 拥有（写权限） |
 | --- | --- | --- | --- |
@@ -10,6 +10,9 @@
 | 30 | 测试与验证 | `30-test-verify.md` | `test/**` |
 | 40 | 文档与素材 | `40-docs-assets.md` | `README*.md`、`docs/**`、`scripts/gen-*.cjs`、`scripts/screenshot.ps1`、`screenshots.json`、`preview/**`（只读引用） |
 | 50 | 发布与运维 | `50-release-ops.md` | `package.json`、`CHANGELOG.md`、`cordis.patch.yml`、`.github/**`、`scripts/push*.ps1`、`scripts/npm-publish.ps1`、git 提交与 tag、DSH 加载链 |
+| 60 | Claude Style 适配 | `60-claude-theme.md` | `lib/client.js` 的主题相关段（`THEMES`/`applyTheme()`/`--dsp-*` 注入） |
+
+**显示名与派生编号**：DSH 的 agent 列表里，显示名一律写成 `编号 名称：一句话职责`（例：`60 Claude Style 适配：跟随 Claude Style 实际配色`）。派生 agent 随父姓 —— `20` 派出的第一个是 `21`、第二个是 `22`；`21` 再派出的是 `211`、`212`，序号在本层内递增且不复用。
 
 ## 为什么必须跨 Agent 通讯
 
