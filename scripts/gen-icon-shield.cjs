@@ -249,4 +249,7 @@ function main() {
   }
 }
 
-main();
+// 单色 mask 版（gen-icon-mono.cjs）复用同一套盾形与关机符号，避免两处各画一遍。
+if (require.main === module) main();
+
+module.exports = { SHAPE, buildShieldPts, convexSDF, glyphParts, GLYPH, RIM_PX, renderShield };
