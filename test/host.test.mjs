@@ -13,6 +13,9 @@ const timers = new Map()
   const here = pathMod.dirname(fileURLToPath(import.meta.url))
   const cfg = pathMod.join(here, '..', 'data', 'config.json')
   try { fs.unlinkSync(cfg) } catch { /* absent on a first run */ }
+  // Same for the UI preferences: assertion 26 expects the shipped defaults.
+  const uiFile = pathMod.join(here, '..', 'data', 'ui.json')
+  try { fs.unlinkSync(uiFile) } catch { /* absent on a first run */ }
 }
 const routes = new Map()
 let statusHandler = null
@@ -121,7 +124,7 @@ const flush = () => new Promise((resolve) => setImmediate(resolve))
 
 assert.deepStrictEqual(
   [...routes.keys()].sort(),
-  ['/api/dsh-shutdown-guard/arm', '/api/dsh-shutdown-guard/cancel', '/api/dsh-shutdown-guard/config', '/api/dsh-shutdown-guard/disarm', '/api/dsh-shutdown-guard/events', '/api/dsh-shutdown-guard/state', '/api/dsh-shutdown-guard/window'],
+  ['/api/dsh-shutdown-guard/arm', '/api/dsh-shutdown-guard/cancel', '/api/dsh-shutdown-guard/config', '/api/dsh-shutdown-guard/disarm', '/api/dsh-shutdown-guard/events', '/api/dsh-shutdown-guard/state', '/api/dsh-shutdown-guard/ui', '/api/dsh-shutdown-guard/window'],
 )
 
 // 1. initial state
@@ -549,6 +552,44 @@ assert.match(String(res.headers['content-type'] || ''), /text\/html/i, 'the wind
 assert.ok(res.body.toLowerCase().includes('<!doctype html'), 'the window page is a full document')
 assert.ok(res.body.includes('dsh-shutdown-guard'), 'the window page names the plugin')
 calls.push('window-page-ok')
+
+// 26. UI preferences live on the host, not in the window's localStorage: both
+// surfaces must agree even when they sit in different storage partitions.
+// The defaults ship as A / auto / auto, a POST replaces only the given fields,
+// an unknown value is rejected instead of silently replaced, and the choice
+// survives a restart through data/ui.json.
+res = await request('GET', '/api/dsh-shutdown-guard/state')
+assert.deepStrictEqual(JSON.parse(res.body).ui, { variant: 'A', theme: 'auto', lang: 'auto' }, 'UI defaults are A / auto / auto')
+
+res = await request('POST', '/api/dsh-shutdown-guard/ui', 'http://127.0.0.1:43129', { variant: 'B', theme: 'light', lang: 'ru' })
+assert.strictEqual(res.status, 200, 'a valid UI update is accepted')
+assert.deepStrictEqual(JSON.parse(res.body).ui, { variant: 'B', theme: 'light', lang: 'ru' }, 'the POST response already carries the new UI')
+
+res = await request('GET', '/api/dsh-shutdown-guard/state')
+assert.deepStrictEqual(JSON.parse(res.body).ui, { variant: 'B', theme: 'light', lang: 'ru' }, '/state reports the stored UI')
+
+res = await request('POST', '/api/dsh-shutdown-guard/ui', 'http://127.0.0.1:43129', { theme: 'dark' })
+assert.strictEqual(res.status, 200, 'an omitted field is not required')
+assert.deepStrictEqual(JSON.parse(res.body).ui, { variant: 'B', theme: 'dark', lang: 'ru' }, 'omitted fields keep their value')
+
+for (const bad of [{ variant: 'D' }, { theme: 'sepia' }, { lang: 'fr' }]) {
+  res = await request('POST', '/api/dsh-shutdown-guard/ui', 'http://127.0.0.1:43129', bad)
+  assert.strictEqual(res.status, 400, `unknown value ${JSON.stringify(bad)} is rejected, not silently replaced`)
+}
+res = await request('GET', '/api/dsh-shutdown-guard/state')
+assert.deepStrictEqual(JSON.parse(res.body).ui, { variant: 'B', theme: 'dark', lang: 'ru' }, 'a rejected update leaves the stored UI untouched')
+
+{
+  const fs = await import('node:fs')
+  const pathMod = await import('node:path')
+  const { fileURLToPath } = await import('node:url')
+  const here = pathMod.dirname(fileURLToPath(import.meta.url))
+  const saved = JSON.parse(fs.readFileSync(pathMod.join(here, '..', 'data', 'ui.json'), 'utf8'))
+  assert.deepStrictEqual({ variant: saved.variant, theme: saved.theme, lang: saved.lang }, { variant: 'B', theme: 'dark', lang: 'ru' }, 'the UI choice is persisted for the next start')
+}
+
+await request('POST', '/api/dsh-shutdown-guard/ui', 'http://127.0.0.1:43129', { variant: 'A', theme: 'auto', lang: 'auto' })
+calls.push('ui-state-ok')
 
 dispose()
 assert.strictEqual(routes.size, 0, 'disposer removes HTTP routes')
