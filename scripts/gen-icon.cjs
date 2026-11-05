@@ -343,8 +343,6 @@ function drawVariant(cv, n, scale) {
   cv.paint(cover(sdf.disc(T(68), T(13), T(2.5))), C.green, 0.65);
 }
 
-main();
-
 // 生成器本体只在直接运行时执行；gen-candidates.cjs 复用下面这些画法。
 if (require.main === module) main();
 

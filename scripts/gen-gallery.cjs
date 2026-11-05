@@ -510,6 +510,25 @@ const shotDefs = {
   '16-folded': () => cardOnly({ view: 'armed', variant: 'A', folded: true }),
 }
 
+// 设置面板里的外观缩略图：A/B/C × zh/en/ru × 浅/深 = 18 张，armed 态。
+// 卡片里有文案（待命 / Armed / Взведено）与卡面底色，所以颜色和语言都必须真渲染，
+// 不能靠 CSS 反色。`cardOnly` 的 ink 就是卡片本体（`.bare .frame` 透明、零内边距），
+// 截图脚本 Trim 之后没有多余留白。
+function thumbShots() {
+  const out = {}
+  for (const [key, variant] of [['a', 'A'], ['b', 'B'], ['c', 'C']]) {
+    for (const lang of LANGS) {
+      for (const theme of ['light', 'dark']) {
+        out['thumb-' + key + '-' + lang + '-' + theme] = {
+          lang,
+          html: () => themedCard({ view: 'armed', variant }, theme),
+        }
+      }
+    }
+  }
+  return out
+}
+
 
 // 只在需要时执行 thunk：--only 过滤掉未选的页面，避免某页文案漂移拖垮整批。
 function buildShots(only = []) {
@@ -528,6 +547,7 @@ if (require.main === module) {
   //   node scripts/gen-gallery.cjs --lang ru            只出俄语
   //   node scripts/gen-gallery.cjs --matrix             18 张主图：A/B/C × zh/en/ru × 浅/深
   //   node scripts/gen-gallery.cjs --matrix --state off 换主图状态（默认 armed）
+  //   node scripts/gen-gallery.cjs --thumbs             18 张设置页缩略图：A/B/C × zh/en/ru × 浅/深
   //   node scripts/gen-gallery.cjs --only 02-armed      只生成名字含该子串的页（可重复）
   // 之后统一跑 `powershell -NoProfile -ExecutionPolicy Bypass -File scripts/screenshot.ps1`
   // （可用 -Filter '01-*.html' 只渲一批）。
@@ -544,8 +564,10 @@ if (require.main === module) {
     console.log('wrote', path.relative(root, file))
   }
 
-  if (argv.includes('--matrix')) {
-    for (const [name, shot] of Object.entries(matrixShots(state))) {
+  if (argv.includes('--matrix') || argv.includes('--thumbs')) {
+    const matrix = argv.includes('--matrix')
+    const shots = matrix ? matrixShots(state) : thumbShots()
+    for (const [name, shot] of Object.entries(shots)) {
       if (only.length && !only.some((o) => name.includes(o))) continue
       setLang(shot.lang)
       write(name, shot.html())
@@ -563,4 +585,4 @@ if (require.main === module) {
 }
 
 // gen-banner.cjs reuses these so the banner is built from the same markup.
-module.exports = { CSS, esc, card, sidebar, settingsPanel, single, frame, BASE_CSS, SIDEBAR_CSS, LANGS, setLang, buildShots, matrixShots }
+module.exports = { CSS, esc, card, sidebar, settingsPanel, single, frame, BASE_CSS, SIDEBAR_CSS, LANGS, setLang, buildShots, matrixShots, thumbShots }
