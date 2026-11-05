@@ -62,12 +62,70 @@ function extractMsg() {
   return out
 }
 const MSG = extractMsg()
-// 图集沿用中文界面；README.en / README.ru 复用这同一组截图。
-const LANG = 'zh'
+// 图集默认中文（文件名保持 02-armed.html 这类原名）；传 --lang en|ru|all 时
+// 输出带语言后缀的文件（02-armed.en.html），由 screenshot.ps1 一并渲染。
+let LANG = 'zh'
+const LANGS = ['zh', 'en', 'ru']
+function setLang(lang) {
+  if (!LANGS.includes(lang)) throw new Error('unknown language: ' + lang + ' (expected zh|en|ru)')
+  LANG = lang
+}
+
+// 截图夹具：这些串不是产品文案（产品文案来自 client.js 的 MSG / 宿主
+// i18n.mjs 的生成文案），而是演示用的示例内容（会话名、事件流水、阻塞原因），
+// 所以单独维护三语，保证三份 README 的图不出现「英文界面里夹中文」。
+const DEMO = {
+  zh: {
+    navNew: '新会话', navBoard: '工作台', navPlugins: '插件', navSkills: '技能中心',
+    sess1: '重构关机插件', sess2: '周报数据整理',
+    time1: '1 分钟', time2: '14 小时',
+    slotDefault: '默认', slotCustom: '自定义 {n}',
+    haltedBig: '已暂停', haltedMeta: '账户额度不足，需充值后解除', haltedBtn: '解除并重试',
+    waitingBig: '等待恢复', waitingMeta: '请求过于频繁，30 秒后自动重试（第 1 次）',
+    skipLine: '还有 2 个后台任务在运行，暂不关机（模式保持开启）',
+    ev1: '外部服务暂不可用（RATE_LIMIT，策略 rate-limit）：请求过于频繁，等待自动重试（第 1 次，30 秒后重试）',
+    ev2: '还有 2 个后台任务在运行，暂不关机（模式保持开启）',
+    ev3: '切换配置：自定义 3',
+    ev4: '已开启：任务完成后自动关机',
+  },
+  en: {
+    navNew: 'New chat', navBoard: 'Workspace', navPlugins: 'Plugins', navSkills: 'Skills',
+    sess1: 'Refactor the shutdown guard', sess2: 'Weekly report cleanup',
+    time1: '1 min', time2: '14 hr',
+    slotDefault: 'Default', slotCustom: 'Custom {n}',
+    haltedBig: 'Paused', haltedMeta: 'Account quota exhausted — top up to resume', haltedBtn: 'Resume and retry',
+    waitingBig: 'Waiting to recover', waitingMeta: 'Too many requests — retrying in 30 s (attempt 1)',
+    skipLine: '2 background tasks are still running, so no shutdown (mode stays armed)',
+    ev1: 'External service unavailable (RATE_LIMIT, policy rate-limit): too many requests, retrying in 30 s (attempt 1)',
+    ev2: '2 background tasks are still running, so no shutdown (mode stays armed)',
+    ev3: 'Profile changed: custom 3',
+    ev4: 'Armed: shut down when tasks finish',
+  },
+  ru: {
+    navNew: 'Новый чат', navBoard: 'Рабочий стол', navPlugins: 'Плагины', navSkills: 'Навыки',
+    sess1: 'Переписать сторожа выключения', sess2: 'Разбор недельного отчёта',
+    time1: '1 мин', time2: '14 ч',
+    slotDefault: 'По умолчанию', slotCustom: 'Своя {n}',
+    haltedBig: 'Пауза', haltedMeta: 'Квота аккаунта исчерпана — пополните счёт, чтобы снять паузу', haltedBtn: 'Снять паузу и повторить',
+    waitingBig: 'Ждём восстановления', waitingMeta: 'Слишком много запросов — повтор через 30 с (попытка 1)',
+    skipLine: 'Ещё 2 фоновые задачи в работе, выключения не будет (режим остаётся взведённым)',
+    ev1: 'Внешний сервис недоступен (RATE_LIMIT, политика rate-limit): слишком много запросов, повтор через 30 с (попытка 1)',
+    ev2: 'Ещё 2 фоновые задачи в работе, выключения не будет (режим остаётся взведённым)',
+    ev3: 'Профиль изменён: своя 3',
+    ev4: 'Взведено: выключение по завершении задач',
+  },
+}
+
+function D(key, vars) {
+  const table = DEMO[LANG]
+  const raw = table[key]
+  if (raw === undefined) throw new Error('missing demo copy: ' + key + ' (' + LANG + ')')
+  return raw.replace(/\{(\w+)\}/g, (all, k) => (vars && k in vars ? String(vars[k]) : all))
+}
 
 function tr(key, vars) {
   const raw = MSG[LANG][key]
-  if (raw === undefined) throw new Error('missing copy key: ' + key)
+  if (raw === undefined) throw new Error('missing copy key: ' + key + ' (' + LANG + ')')
   return raw.replace(/\{(\w+)\}/g, (all, k) => (vars && k in vars ? String(vars[k]) : all))
 }
 
@@ -210,15 +268,15 @@ const ICON = {
 function sidebar(cardHtml, opts = {}) {
   return `<div class="sb">
     <div class="sb-top"><span>deepseek</span><span class="sb-badge">HARNESS</span></div>
-    <div class="sb-row">${ICON.chat}<span>新会话</span></div>
-    <div class="sb-row">${ICON.board}<span>工作台</span></div>
-    <div class="sb-row">${ICON.plug}<span>插件</span></div>
-    <div class="sb-row">${ICON.skill}<span>技能中心</span></div>
+    <div class="sb-row">${ICON.chat}<span>${esc(D('navNew'))}</span></div>
+    <div class="sb-row">${ICON.board}<span>${esc(D('navBoard'))}</span></div>
+    <div class="sb-row">${ICON.plug}<span>${esc(D('navPlugins'))}</span></div>
+    <div class="sb-row">${ICON.skill}<span>${esc(D('navSkills'))}</span></div>
     <div class="sb-gap"></div>
     ${cardHtml}
     <div class="sb-gap"></div>
-    <div class="sb-sess"><i></i><span class="nm">${esc(opts.s1 || '重构关机插件')}</span><span class="tm">1 分钟</span></div>
-    <div class="sb-sess"><i></i><span class="nm">${esc(opts.s2 || '周报数据整理')}</span><span class="tm">14 小时</span></div>
+    <div class="sb-sess"><i></i><span class="nm">${esc(opts.s1 || D('sess1'))}</span><span class="tm">${esc(D('time1'))}</span></div>
+    <div class="sb-sess"><i></i><span class="nm">${esc(opts.s2 || D('sess2'))}</span><span class="tm">${esc(D('time2'))}</span></div>
   </div>`
 }
 
@@ -231,17 +289,18 @@ function row(title, desc, control, extra = '') {
 const seg = (items, on) => `<div class="dsp-seg">${items.map((t, i) => `<button class="dsp-segbtn${i === on ? ' on' : ''}">${t}</button>`).join('')}</div>`
 const sw = (on, off) => `<button class="dsp-switch${on ? ' on' : ''}"${off ? ' disabled' : ''}><i></i></button>`
 const slotbar = (active) => `<div class="dsp-slotbar">${Array.from({ length: 9 }, (_, i) => {
-  const label = i === 0 ? '默认' : String(i)
+  const label = i === 0 ? D('slotDefault') : String(i)
   return `<button class="dsp-slotbtn${active === i ? ' on' : ''}${i > 0 && !active ? ' locked' : ''}">${label}</button>`
 }).join('')}</div>`
 
-const EVENTS = [
-  ['12:07:41', 'afk', '外部服务暂不可用（RATE_LIMIT，策略 rate-limit）：请求过于频繁，等待自动重试（第 1 次，30 秒后重试）'],
-  ['12:07:12', 'skip', '还有 2 个后台任务在运行，暂不关机（模式保持开启）'],
-  ['12:06:58', 'config', '切换配置：自定义 3'],
-  ['12:06:31', 'info', '已开启：任务完成后自动关机'],
+// 事件流水是演示内容，三语各自成套（见 DEMO）。
+const eventsFor = () => [
+  ['12:07:41', 'afk', D('ev1')],
+  ['12:07:12', 'skip', D('ev2')],
+  ['12:06:58', 'config', D('ev3')],
+  ['12:06:31', 'info', D('ev4')],
 ]
-const evlog = `<div class="dsp-evlog">${EVENTS.map(([t, k, s]) => `<div class="dsp-ev dsp-ev-${k}">
+const evlog = () => `<div class="dsp-evlog">${eventsFor().map(([t, k, s]) => `<div class="dsp-ev dsp-ev-${k}">
   <span class="dsp-ev-time">${t}</span><span class="dsp-ev-text">${esc(s)}</span></div>`).join('')}</div>`
 
 function settingsPanel(opts = {}) {
@@ -256,7 +315,7 @@ function settingsPanel(opts = {}) {
     <div class="dsp-sgroup-box">
       <div class="dsp-sgroup">${esc(tr('set.when'))}</div>
       ${row(tr('set.custom'), tr('set.custom.on'), sw(true))}
-      ${row(tr('set.pick'), tr('set.pick.cur', { label: '自定义 3', sec: 120 }), slotbar(3))}
+      ${row(tr('set.pick'), tr('set.pick.cur', { label: D('slotCustom', { n: 3 }), sec: 120 }), slotbar(3))}
       ${row(tr('set.bottom'), tr('set.bottom.desc'), `<span class="dsp-sval">${esc(tr('set.always'))}</span>`, 'dsp-srow-ro')}
       ${row(tr('set.jobs'), tr('set.jobs.desc'), sw(true))}
       ${row(tr('set.err'), tr('set.err.desc'), sw(false))}
@@ -266,15 +325,15 @@ function settingsPanel(opts = {}) {
     <div class="dsp-sgroup-box">
       <div class="dsp-sgroup">${esc(tr('set.status'))}</div>
       ${row(tr('set.blocked'), tr('set.blocked.waiting'), `<span class="dsp-sval" style="color:#6f8f7a">${esc(tr('hud.state.retrying') + ' · ' + tr('hud.retry', { n: 1 }))}</span>`, 'dsp-srow-stack')}
-      ${row(tr('set.skip'), '', `<span class="dsp-sval">还有 2 个后台任务在运行，暂不关机（模式保持开启）</span>`, 'dsp-srow-stack')}
-      ${row(tr('set.events'), tr('set.events.desc', { n: 4 }), evlog, 'dsp-srow-stack')}
+      ${row(tr('set.skip'), '', `<span class="dsp-sval">${esc(D('skipLine'))}</span>`, 'dsp-srow-stack')}
+      ${row(tr('set.events'), tr('set.events.desc', { n: 4 }), evlog(), 'dsp-srow-stack')}
     </div>
   </div>`
 }
 
 // ---------------------------------------------------------------- pages
 function page(title, sub, inner, extraCss = '') {
-  return `<!doctype html><html lang="zh"><head><meta charset="utf-8"><title>${esc(title)}</title>
+  return `<!doctype html><html lang="${LANG}"><head><meta charset="utf-8"><title>${esc(title)}</title>
 <style>${BASE_CSS}${SIDEBAR_CSS}${extraCss}\n${CSS}</style></head><body><div class="page">
 <div class="h1">${esc(title)}</div><div class="sub">${esc(sub)}</div>${inner}</div></body></html>`
 }
@@ -284,55 +343,125 @@ function page(title, sub, inner, extraCss = '') {
 // below renders exactly one card (or one panel) on its own canvas, so the
 // filename doubles as the image caption and nothing is cropped by its
 // neighbours.
-const single = (inner, extra = '') => `<!doctype html><html lang="zh"><head><meta charset="utf-8">
+const single = (inner, extra = '') => `<!doctype html><html lang="${LANG}"><head><meta charset="utf-8">
 <style>${BASE_CSS}${SIDEBAR_CSS}body{display:inline-block;background:transparent}
 .wrap{padding:16px}.bare .frame{background:transparent;padding:0;width:280px}</style>
 <style>${extra}</style><style>${CSS}</style></head><body><div class="wrap bare">${inner}</div></body></html>`
 
 const frame = (html, cls = '') => `<div class="frame ${cls}">${html}</div>`
 const cardOnly = (c) => single(frame(card(c)))
+
+// 主图矩阵用：同一张卡按主题出浅/深两版。浅色走 `lum:'light'`（卡片自带的
+// 浅色配色）+ `.frame.light`（外框底色）；与 14-light 同一套写法。
+const themedCard = (c, theme) => single(frame(card({ ...c, lum: theme === 'light' ? 'light' : 'dark' }), theme === 'light' ? 'light' : ''))
+
+// 18 张主图：样式 A/B/C × 语言 zh/en/ru × 主题 浅/深。
+// 排序按「样式 → 语言 → 主题」，文件名自带全部维度，排序即分组。
+const MATRIX = { variants: ['a', 'b', 'c'], langs: LANGS, themes: ['light', 'dark'] }
+function matrixShots(state = 'armed') {
+  const out = {}
+  let n = 0
+  for (const variant of MATRIX.variants) {
+    for (const lang of MATRIX.langs) {
+      for (const theme of MATRIX.themes) {
+        n += 1
+        const id = String(n).padStart(2, '0')
+        const name = `${id}-${state}-${variant}-${lang}-${theme}`
+        out[name] = { lang, html: () => themedCard({ view: state, variant: variant.toUpperCase() }, theme) }
+      }
+    }
+  }
+  return out
+}
+
 // No `.frame` here: it is 280px wide, and the sidebar is 264px, so wrapping the
 // card in one made it bleed past the sidebar edges.
 const sidebarOnly = (c) => single(`<div style="padding:8px">${sidebar(card(c))}</div>`)
 
-const shots = {
+// 每次切换语言都要按当前 LANG 重新生成一遍（文案在生成时求值）。
+const shotDefs = {
   // 1-5: the five running states, one picture each
-  '01-off': cardOnly({ view: 'off', variant: 'A' }),
-  '02-armed': cardOnly({ view: 'armed', variant: 'A' }),
-  '03-hold': cardOnly({ view: 'hold', variant: 'A' }),
-  '04-fire': cardOnly({ view: 'fire', variant: 'A' }),
-  '05-fired': cardOnly({ view: 'fired', variant: 'A' }),
+  '01-off': () => cardOnly({ view: 'off', variant: 'A' }),
+  '02-armed': () => cardOnly({ view: 'armed', variant: 'A' }),
+  '03-hold': () => cardOnly({ view: 'hold', variant: 'A' }),
+  '04-fire': () => cardOnly({ view: 'fire', variant: 'A' }),
+  '05-fired': () => cardOnly({ view: 'fired', variant: 'A' }),
 
   // 6-7: the other two skins
-  '06-variant-b-radar': cardOnly({ view: 'armed', variant: 'B' }),
-  '07-variant-c-terminal': cardOnly({ view: 'armed', variant: 'C' }),
+  '06-variant-b-radar': () => cardOnly({ view: 'armed', variant: 'B' }),
+  '07-variant-c-terminal': () => cardOnly({ view: 'armed', variant: 'C' }),
 
   // 8-9: blocked, halted vs waiting
-  '08-blocked-halted': cardOnly({ view: 'blocked', variant: 'A', big: '已暂停', meta: '账户额度不足，需充值后解除', btn: '解除并重试' }),
-  '09-blocked-waiting': cardOnly({ view: 'blocked', variant: 'A', retry: true, big: '等待恢复', meta: '请求过于频繁，30 秒后自动重试（第 1 次）' }),
+  '08-blocked-halted': () => cardOnly({ view: 'blocked', variant: 'A', big: D('haltedBig'), meta: D('haltedMeta'), btn: D('haltedBtn') }),
+  '09-blocked-waiting': () => cardOnly({ view: 'blocked', variant: 'A', retry: true, big: D('waitingBig'), meta: D('waitingMeta') }),
 
   // 10-11: the card where it actually lives
-  '10-sidebar-hold': sidebarOnly({ view: 'hold', variant: 'A' }),
-  '11-sidebar-fire': sidebarOnly({ view: 'fire', variant: 'A' }),
+  '10-sidebar-hold': () => sidebarOnly({ view: 'hold', variant: 'A' }),
+  '11-sidebar-fire': () => sidebarOnly({ view: 'fire', variant: 'A' }),
 
   // 12-13: settings, dark and light
-  '12-settings-dark': single(`<div style="background:#1a1a19;border-radius:14px;padding:6px 20px 16px;width:560px">${settingsPanel()}</div>`),
-  '13-settings-light': single(`<div class="theme-light" style="background:#fff;color:#1b2030;border-radius:14px;padding:6px 20px 16px;width:560px;--dsp-fg:#1b2030;--dsp-muted:#5b6472;--dsp-line:rgba(0,0,0,.15);--dsp-accent:#e08f13;--dsp-danger:#d92d20;--dsp-track:rgba(0,0,0,.13);--dsw-alias-label-primary:#1b2030;--dsw-alias-label-secondary:#3d4859;--dsw-alias-label-tertiary:#5b6472;--dsw-alias-border-l2:rgba(0,0,0,.12);--dsw-alias-border-l3:rgba(0,0,0,.18);--dsw-alias-bg-layer-2:#f7f8fa;--dsw-alias-button-primary-fill:#e08f13">${settingsPanel({ theme: 2 })}</div>`),
+  '12-settings-dark': () => single(`<div style="background:#1a1a19;border-radius:14px;padding:6px 20px 16px;width:560px">${settingsPanel()}</div>`),
+  '13-settings-light': () => single(`<div class="theme-light" style="background:#fff;color:#1b2030;border-radius:14px;padding:6px 20px 16px;width:560px;--dsp-fg:#1b2030;--dsp-muted:#5b6472;--dsp-line:rgba(0,0,0,.15);--dsp-accent:#e08f13;--dsp-danger:#d92d20;--dsp-track:rgba(0,0,0,.13);--dsw-alias-label-primary:#1b2030;--dsw-alias-label-secondary:#3d4859;--dsw-alias-label-tertiary:#5b6472;--dsw-alias-border-l2:rgba(0,0,0,.12);--dsw-alias-border-l3:rgba(0,0,0,.18);--dsw-alias-bg-layer-2:#f7f8fa;--dsw-alias-button-primary-fill:#e08f13">${settingsPanel({ theme: 2 })}</div>`),
 
   // 14-15: light and Claude palettes
-  '14-light': single(frame(card({ view: 'armed', variant: 'A', lum: 'light' }), 'light')),
-  '15-claude': cardOnly({ view: 'fire', variant: 'A', claude: true }),
+  '14-light': () => single(frame(card({ view: 'armed', variant: 'A', lum: 'light' }), 'light')),
+  '15-claude': () => cardOnly({ view: 'fire', variant: 'A', claude: true }),
 
   // 16: folded
-  '16-folded': cardOnly({ view: 'armed', variant: 'A', folded: true }),
+  '16-folded': () => cardOnly({ view: 'armed', variant: 'A', folded: true }),
+}
+
+
+// 只在需要时执行 thunk：--only 过滤掉未选的页面，避免某页文案漂移拖垮整批。
+function buildShots(only = []) {
+  const out = {}
+  for (const [name, make] of Object.entries(shotDefs)) {
+    if (only.length && !only.some((o) => name.includes(o))) continue
+    out[name] = make()
+  }
+  return out
 }
 
 if (require.main === module) {
-  for (const [name, html] of Object.entries(shots)) {
-    fs.writeFileSync(path.join(OUT, name + '.html'), html)
-    console.log('wrote', path.relative(root, path.join(OUT, name + '.html')))
+  // 用法（全部从仓库根跑）：
+  //   node scripts/gen-gallery.cjs                      中文一套，沿用 02-armed.html 这类原名
+  //   node scripts/gen-gallery.cjs --lang all           zh/en/ru 各一套（02-armed.en.html）
+  //   node scripts/gen-gallery.cjs --lang ru            只出俄语
+  //   node scripts/gen-gallery.cjs --matrix             18 张主图：A/B/C × zh/en/ru × 浅/深
+  //   node scripts/gen-gallery.cjs --matrix --state off 换主图状态（默认 armed）
+  //   node scripts/gen-gallery.cjs --only 02-armed      只生成名字含该子串的页（可重复）
+  // 之后统一跑 `powershell -NoProfile -ExecutionPolicy Bypass -File scripts/screenshot.ps1`
+  // （可用 -Filter '01-*.html' 只渲一批）。
+  const argv = process.argv.slice(2)
+  const val = (flag) => (argv.includes(flag) ? argv[argv.indexOf(flag) + 1] : null)
+  const langArg = val('--lang')
+  const state = val('--state') || 'armed'
+  const only = []
+  argv.forEach((a, i) => { if (a === '--only' && argv[i + 1]) only.push(argv[i + 1]) })
+
+  const write = (name, html) => {
+    const file = path.join(OUT, name + '.html')
+    fs.writeFileSync(file, html)
+    console.log('wrote', path.relative(root, file))
+  }
+
+  if (argv.includes('--matrix')) {
+    for (const [name, shot] of Object.entries(matrixShots(state))) {
+      if (only.length && !only.some((o) => name.includes(o))) continue
+      setLang(shot.lang)
+      write(name, shot.html())
+    }
+  } else {
+    const jobs = langArg === 'all' ? LANGS : langArg ? [langArg] : [null]
+    for (const lang of jobs) {
+      if (lang) setLang(lang)
+      const suffix = lang ? '.' + lang : ''
+      for (const [name, html] of Object.entries(buildShots(only))) {
+        write(name + suffix, html)
+      }
+    }
   }
 }
 
 // gen-banner.cjs reuses these so the banner is built from the same markup.
-module.exports = { CSS, esc, card, sidebar, settingsPanel, single, frame, BASE_CSS, SIDEBAR_CSS }
+module.exports = { CSS, esc, card, sidebar, settingsPanel, single, frame, BASE_CSS, SIDEBAR_CSS, LANGS, setLang, buildShots, matrixShots }

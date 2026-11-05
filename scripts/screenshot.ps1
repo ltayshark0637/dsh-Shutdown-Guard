@@ -1,6 +1,10 @@
 # Renders every docs/screenshots/*.html into its own PNG using headless Edge.
 #
 #   powershell -NoProfile -ExecutionPolicy Bypass -File scripts/screenshot.ps1
+#   powershell ... -File scripts/screenshot.ps1 -Filter '02-armed.*.html'   # 只渲一批
+#
+# 语言由 gen-gallery.cjs 决定：`node scripts/gen-gallery.cjs --lang all` 会为
+# zh/en/ru 各写一套 <name>.<lang>.html，本脚本按文件名原样输出 <name>.<lang>.png。
 #
 # Two details make this reproducible:
 #  * each run gets a throwaway user-data-dir; reusing the default profile makes
@@ -8,6 +12,8 @@
 #  * --default-background-color=00000000 keeps the page transparent, so the
 #    images drop straight onto any README background. The alpha border is then
 #    trimmed away, which is why the window is deliberately oversized.
+param([string]$Filter = '*.html')
+
 $ErrorActionPreference = 'Stop'
 Add-Type -AssemblyName System.Drawing
 
@@ -73,7 +79,7 @@ function Trim-Png($path) {
   Move-Item -LiteralPath $tmp -Destination $path -Force
 }
 
-$pages = Get-ChildItem $shots -Filter *.html | Where-Object { $_.Name -ne 'banner.html' } | Sort-Object Name
+$pages = Get-ChildItem $shots -Filter $Filter | Where-Object { $_.Name -ne 'banner.html' } | Sort-Object Name
 foreach ($page in $pages) {
   $name = [System.IO.Path]::GetFileNameWithoutExtension($page.Name)
   $png = Join-Path $shots "$name.png"
