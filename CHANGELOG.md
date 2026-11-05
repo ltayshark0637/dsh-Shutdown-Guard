@@ -2,7 +2,7 @@
 
 ## v1.5.2 — 2026-11-04
 
-- 新增独立悬浮窗口：宿主侧新增 `GET /api/dsh-shutdown-guard/window`，返回一个自包含的只读页面（内联 CSS / JS，除同源 `/state` 外不外联任何资源），侧边栏卡片上多一个入口按钮，点开即得到真正的第二个窗口，可以拖到副屏一直盯着倒计时。页面自带三语文案，不占用宿主目录的键；文案由宿主按当前语言渲染好后直接显示。
+- 新增独立悬浮窗口：宿主侧新增 `GET /api/dsh-shutdown-guard/window`，返回一个自包含的只读页面（内联 CSS / JS，除同源 `/state` 外不外联任何资源），侧边栏卡片上多一个入口按钮，点开即得到真正的第二个窗口，可以拖到副屏一直盯着倒计时。页面自带三语文案，不占用宿主目录的键；文案由宿主按当前语言渲染好后直接显示。窗口内部就是把侧边栏卡片原样搬过去（同一套状态机与配色）：左上角指示点跟随 `blocked / off / fired / countdown / hold / armed` 六种状态变色与呼吸、脉冲，卡片上的主按钮在窗口里同样可用，最近事件列表保留在卡片下方。
 - 设置菜单标题跟随宿主语言即时切换：语言一变，设置里的标题立即跟着变，不需要重启 DSH。两条路径都覆盖了——`ctx.locale.register` 注册命名空间（宿主在 locale revision 变化时重读设置台账），以及切换语言后重新注册 `settings.section` 槽位（槽位版本变化时宿主才会重读标签）。语言偏好仍经 `POST /config` 的 `language` 字段写入，权威值落在 `data/config.json`。
 - 卡片文案全部走三语目录（100 键 × 3 语，键集齐平）。**中文界面刻意保留一批英文技术词**：状态方块（`OFF` / `ARMED` / `WAIT` / `FIRE` / `DONE` / `PAUSED`）、雷达 HUD 状态词（`Holding` / `Offline` / `Retrying` …）、终端风命令行（`T-minus` / `holding` / `halted` …）、`shutdown --when idle` 这类命令名；其余说明、计数、按钮、设置页全为中文。英文与俄文界面各自完整翻译，不受这条混排约定影响。
 - 文档：三份 README 补独立悬浮窗口的说明；`docs/screenshots/` 下 20 张截图与 3 段动画（共 23 个文件）按 v1.5.2 重新生成，截图文案改由 `scripts/gen-gallery.cjs` 直接从 `lib/client.js` 的 MSG 目录与内联 CSS 读取，不再手工同步（出图仍走 `scripts/screenshot.ps1`，不手工 P 图）。
