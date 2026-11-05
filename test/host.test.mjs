@@ -324,11 +324,24 @@ calls.push('events-since-ok')
 
 await request('POST', '/api/dsh-shutdown-guard/config', 'http://127.0.0.1:43129', { customEnabled: false, activeProfileId: 'default' })
 
-// 14. default profile is locked to 60s
-res = await request('POST', '/api/dsh-shutdown-guard/config', 'http://127.0.0.1:43129', { profileId: 'default', patch: { countdownSec: 300 } })
+// 14. the default profile is the safety baseline: the timer and the three hard
+// gates cannot be edited there, and the rejection names the field.
+res = await request('POST', '/api/dsh-shutdown-guard/config', 'http://127.0.0.1:43129', { updateProfile: { id: 'default', patch: { countdownSec: 300 } } })
+body = JSON.parse(res.body)
+assert.strictEqual(res.status, 400, 'the default profile rejects a timer change')
+assert.ok(body.error.includes('countdownSec'), 'the rejection names the locked field')
+res = await request('POST', '/api/dsh-shutdown-guard/config', 'http://127.0.0.1:43129', { updateProfile: { id: 'default', patch: { blockOnJobs: false } } })
+assert.strictEqual(res.status, 400, 'the default profile rejects a gate change')
+res = await request('GET', '/api/dsh-shutdown-guard/state')
 body = JSON.parse(res.body)
 assert.strictEqual(body.profiles.find((p) => p.id === 'default').countdownSec, 60, 'default countdown is locked')
+assert.strictEqual(body.profiles.find((p) => p.id === 'default').onlyOnSuccess, true, 'default gates stay on')
 calls.push('default-locked-ok')
+
+// Behaviour tests below need a profile whose gates can be loosened: c3 was
+// patched above and is the one the user would arm with.
+res = await request('POST', '/api/dsh-shutdown-guard/config', 'http://127.0.0.1:43129', { customEnabled: true, activeProfileId: 'c3' })
+assert.strictEqual(JSON.parse(res.body).activeProfileId, 'c3', 'the behaviour tests run on a custom profile')
 
 // 15. AFK auto answer while armed
 await request('POST', '/api/dsh-shutdown-guard/arm', 'http://127.0.0.1:43129')
@@ -374,8 +387,7 @@ calls.push('afk-recover-ok')
 // 17. "有会话报错就跳过" off + AFK on: once the wrap-up turn ends, the errored
 // batch no longer blocks the shutdown.
 await request('POST', '/api/dsh-shutdown-guard/config', 'http://127.0.0.1:43129', {
-  profileId: 'default',
-  patch: { onlyOnSuccess: false },
+  updateProfile: { id: 'c3', patch: { onlyOnSuccess: false } },
 })
 await request('POST', '/api/dsh-shutdown-guard/disarm', 'http://127.0.0.1:43129')
 await request('POST', '/api/dsh-shutdown-guard/arm', 'http://127.0.0.1:43129')
@@ -402,8 +414,7 @@ calls.push('afk-wrap-shutdown-ok')
 
 // 18. Quota errors park the plugin: no nudge, and the shutdown never arms.
 await request('POST', '/api/dsh-shutdown-guard/config', 'http://127.0.0.1:43129', {
-  profileId: 'c3',
-  patch: { onlyOnSuccess: false },
+  updateProfile: { id: 'c3', patch: { onlyOnSuccess: false } },
 })
 await request('POST', '/api/dsh-shutdown-guard/disarm', 'http://127.0.0.1:43129')
 await request('POST', '/api/dsh-shutdown-guard/arm', 'http://127.0.0.1:43129')
@@ -425,6 +436,8 @@ await request('POST', '/api/dsh-shutdown-guard/disarm', 'http://127.0.0.1:43129'
 res = await request('GET', '/api/dsh-shutdown-guard/state')
 assert.strictEqual(JSON.parse(res.body).blocked, null, 'disarming clears the block')
 calls.push('quota-block-ok')
+// Back to the shipped baseline so the remaining assertions see the locked gates.
+await request('POST', '/api/dsh-shutdown-guard/config', 'http://127.0.0.1:43129', { customEnabled: false, activeProfileId: 'default' })
 // 19. A cancelled turn is not a failure: no nudge, no errored entry.
 await request('POST', '/api/dsh-shutdown-guard/disarm', 'http://127.0.0.1:43129')
 await request('POST', '/api/dsh-shutdown-guard/arm', 'http://127.0.0.1:43129')
@@ -560,25 +573,25 @@ calls.push('window-page-ok')
 // silently replaced, and the choice survives a restart through data/ui.json.
 const NOTIFY_ALL = { countdown: true, fired: true, blocked: true, recovered: true }
 res = await request('GET', '/api/dsh-shutdown-guard/state')
-assert.deepStrictEqual(JSON.parse(res.body).ui, { variant: 'A', theme: 'auto', lang: 'auto', compact: true, notify: NOTIFY_ALL }, 'UI defaults are A / auto / auto with compact and every notify kind on')
+assert.deepStrictEqual(JSON.parse(res.body).ui, { variant: 'A', theme: 'auto', lang: 'auto', compact: true }, 'UI defaults are A / auto / auto with compact and every notify kind on')
 
 res = await request('POST', '/api/dsh-shutdown-guard/ui', 'http://127.0.0.1:43129', { variant: 'B', theme: 'light', lang: 'ru' })
 assert.strictEqual(res.status, 200, 'a valid UI update is accepted')
-assert.deepStrictEqual(JSON.parse(res.body).ui, { variant: 'B', theme: 'light', lang: 'ru', compact: true, notify: NOTIFY_ALL }, 'the POST response already carries the new UI')
+assert.deepStrictEqual(JSON.parse(res.body).ui, { variant: 'B', theme: 'light', lang: 'ru', compact: true }, 'the POST response already carries the new UI')
 
 res = await request('GET', '/api/dsh-shutdown-guard/state')
-assert.deepStrictEqual(JSON.parse(res.body).ui, { variant: 'B', theme: 'light', lang: 'ru', compact: true, notify: NOTIFY_ALL }, '/state reports the stored UI')
+assert.deepStrictEqual(JSON.parse(res.body).ui, { variant: 'B', theme: 'light', lang: 'ru', compact: true }, '/state reports the stored UI')
 
 res = await request('POST', '/api/dsh-shutdown-guard/ui', 'http://127.0.0.1:43129', { theme: 'dark' })
 assert.strictEqual(res.status, 200, 'an omitted field is not required')
-assert.deepStrictEqual(JSON.parse(res.body).ui, { variant: 'B', theme: 'dark', lang: 'ru', compact: true, notify: NOTIFY_ALL }, 'omitted fields keep their value')
+assert.deepStrictEqual(JSON.parse(res.body).ui, { variant: 'B', theme: 'dark', lang: 'ru', compact: true }, 'omitted fields keep their value')
 
 for (const bad of [{ variant: 'D' }, { theme: 'sepia' }, { lang: 'fr' }]) {
   res = await request('POST', '/api/dsh-shutdown-guard/ui', 'http://127.0.0.1:43129', bad)
   assert.strictEqual(res.status, 400, `unknown value ${JSON.stringify(bad)} is rejected, not silently replaced`)
 }
 res = await request('GET', '/api/dsh-shutdown-guard/state')
-assert.deepStrictEqual(JSON.parse(res.body).ui, { variant: 'B', theme: 'dark', lang: 'ru', compact: true, notify: NOTIFY_ALL }, 'a rejected update leaves the stored UI untouched')
+assert.deepStrictEqual(JSON.parse(res.body).ui, { variant: 'B', theme: 'dark', lang: 'ru', compact: true }, 'a rejected update leaves the stored UI untouched')
 
 {
   const fs = await import('node:fs')
@@ -587,8 +600,8 @@ assert.deepStrictEqual(JSON.parse(res.body).ui, { variant: 'B', theme: 'dark', l
   const here = pathMod.dirname(fileURLToPath(import.meta.url))
   const saved = JSON.parse(fs.readFileSync(pathMod.join(here, '..', 'data', 'ui.json'), 'utf8'))
   assert.deepStrictEqual(
-    { variant: saved.variant, theme: saved.theme, lang: saved.lang, compact: saved.compact, notify: saved.notify },
-    { variant: 'B', theme: 'dark', lang: 'ru', compact: true, notify: NOTIFY_ALL },
+    { variant: saved.variant, theme: saved.theme, lang: saved.lang, compact: saved.compact },
+    { variant: 'B', theme: 'dark', lang: 'ru', compact: true },
     'the UI choice is persisted for the next start',
   )
 }
@@ -621,68 +634,126 @@ res = await request('POST', '/api/dsh-shutdown-guard/ui', 'http://127.0.0.1:4312
 assert.strictEqual(JSON.parse(res.body).ui.compact, true, 'compact can be turned back on')
 calls.push('ui-compact-ok')
 
-// 28. Notify is the same kind of setting but split per transition: the user
-// decides which state changes are worth a system notification. The host stores
-// one object, always complete, and rejects a per-key value of the wrong type
-// instead of guessing which half of a boolean it meant.
+// 28. A profile is a behaviour snapshot: the timer, the three gates, AFK
+// auto-answer, the four notification kinds and the retry policy all travel
+// together, and the settings page manages them through /config.
 res = await request('GET', '/api/dsh-shutdown-guard/state')
-assert.deepStrictEqual(JSON.parse(res.body).ui.notify, NOTIFY_ALL, 'notify ships with every kind on')
+{
+  const dflt = JSON.parse(res.body).profiles.find((p) => p.id === 'default')
+  assert.strictEqual(dflt.afkAutoAnswer, true, 'profiles carry AFK auto-answer')
+  assert.deepStrictEqual(dflt.notify, NOTIFY_ALL, 'profiles carry the four notification kinds')
+  assert.strictEqual(JSON.parse(res.body).notify.countdown, true, 'the active profile mirrors its notify kinds on /state')
+}
+assert.strictEqual(JSON.parse(res.body).ui.notify, undefined, 'notify is no longer part of the UI store')
 
-res = await request('POST', '/api/dsh-shutdown-guard/ui', 'http://127.0.0.1:43129', { notify: { blocked: false } })
-assert.strictEqual(res.status, 200, 'one notify kind can be turned off')
-assert.deepStrictEqual(JSON.parse(res.body).ui.notify, { countdown: true, fired: true, blocked: false, recovered: true }, 'only the named kind changes')
-assert.strictEqual(JSON.parse(res.body).ui.compact, true, 'turning a notify kind off leaves compact alone')
-res = await request('GET', '/api/dsh-shutdown-guard/state')
-assert.deepStrictEqual(JSON.parse(res.body).ui.notify, { countdown: true, fired: true, blocked: false, recovered: true }, '/state reports the per-kind object')
+// /ui must not accept it any more: the setting moved, and the client has to hear
+// about that instead of writing a field nobody reads.
+res = await request('POST', '/api/dsh-shutdown-guard/ui', 'http://127.0.0.1:43129', { notify: true })
+assert.strictEqual(res.status, 400, 'a notify write through /ui is rejected')
+assert.match(String(JSON.parse(res.body).error || ''), /profile/, 'the rejection points at the profile store')
 
-res = await request('POST', '/api/dsh-shutdown-guard/ui', 'http://127.0.0.1:43129', { notify: { blocked: 'yes' } })
+// A whitelisted patch merges per kind and ignores unknown fields on purpose.
+res = await request('POST', '/api/dsh-shutdown-guard/config', 'http://127.0.0.1:43129', {
+  updateProfile: { id: 'c3', patch: { notify: { blocked: false }, afkAutoAnswer: false, nonsense: 1 } },
+})
+assert.strictEqual(res.status, 200, 'a whitelisted profile patch is accepted')
+{
+  const c3 = JSON.parse(res.body).profiles.find((p) => p.id === 'c3')
+  assert.deepStrictEqual(c3.notify, { countdown: true, fired: true, blocked: false, recovered: true }, 'only the named notify kind changes')
+  assert.strictEqual(c3.afkAutoAnswer, false, 'AFK auto-answer is per profile')
+}
+
+res = await request('POST', '/api/dsh-shutdown-guard/config', 'http://127.0.0.1:43129', {
+  updateProfile: { id: 'c3', patch: { notify: { blocked: 'yes' } } },
+})
 assert.strictEqual(res.status, 400, 'a non-boolean notify kind is rejected')
 assert.match(String(JSON.parse(res.body).error || ''), /notify\.blocked/, 'the rejection names the offending kind')
-res = await request('GET', '/api/dsh-shutdown-guard/state')
-assert.deepStrictEqual(JSON.parse(res.body).ui.notify, { countdown: true, fired: true, blocked: false, recovered: true }, 'the rejection does not change the stored value')
 
-res = await request('POST', '/api/dsh-shutdown-guard/ui', 'http://127.0.0.1:43129', { notify: false })
-assert.strictEqual(res.status, 200, 'a bare boolean still flips every kind at once')
-assert.deepStrictEqual(JSON.parse(res.body).ui.notify, { countdown: false, fired: false, blocked: false, recovered: false }, 'false turns every kind off')
-res = await request('POST', '/api/dsh-shutdown-guard/ui', 'http://127.0.0.1:43129', { notify: { fired: true } })
-assert.deepStrictEqual(JSON.parse(res.body).ui.notify, { countdown: false, fired: true, blocked: false, recovered: false }, 'a later per-kind update merges into the all-off state')
+res = await request('POST', '/api/dsh-shutdown-guard/config', 'http://127.0.0.1:43129', {
+  updateProfile: { id: 'default', patch: { afkAutoAnswer: false } },
+})
+assert.strictEqual(res.status, 400, 'the default profile keeps AFK on')
+assert.match(String(JSON.parse(res.body).error || ''), /afkAutoAnswer/, 'the rejection names the locked gate')
+
+// create / rename / setDefault / delete round trip.
+await request('POST', '/api/dsh-shutdown-guard/config', 'http://127.0.0.1:43129', { customEnabled: true })
+res = await request('POST', '/api/dsh-shutdown-guard/config', 'http://127.0.0.1:43129', {
+  createProfile: { label: '夜里跑批', from: 'c3' },
+})
+assert.strictEqual(res.status, 200, 'a profile can be created')
+let created = JSON.parse(res.body).profiles.find((p) => p.label === '夜里跑批')
+assert.ok(created, 'the created profile is listed')
+assert.strictEqual(created.notify.blocked, false, 'create copies the source profile behaviour')
+const createdId = created.id
+
+res = await request('POST', '/api/dsh-shutdown-guard/config', 'http://127.0.0.1:43129', {
+  renameProfile: { id: createdId, label: '夜里跑批 v2' },
+})
+assert.strictEqual(JSON.parse(res.body).profiles.find((p) => p.id === createdId).label, '夜里跑批 v2', 'rename sticks')
+
+res = await request('POST', '/api/dsh-shutdown-guard/config', 'http://127.0.0.1:43129', { setDefault: createdId })
+assert.strictEqual(res.status, 200, 'setDefault switches the active profile')
+assert.strictEqual(JSON.parse(res.body).activeProfileId, createdId, 'the active profile follows setDefault')
+
+res = await request('POST', '/api/dsh-shutdown-guard/config', 'http://127.0.0.1:43129', { deleteProfile: createdId })
+assert.strictEqual(res.status, 200, 'a profile can be deleted')
+assert.ok(!JSON.parse(res.body).profiles.find((p) => p.label === '夜里跑批 v2'), 'the deleted profile is gone')
+assert.strictEqual(JSON.parse(res.body).activeProfileId, 'default', 'deleting the active profile falls back to the baseline')
+
+res = await request('POST', '/api/dsh-shutdown-guard/config', 'http://127.0.0.1:43129', { deleteProfile: 'default' })
+assert.strictEqual(res.status, 400, 'the default profile cannot be deleted')
 
 {
   const fs = await import('node:fs')
   const pathMod = await import('node:path')
   const { fileURLToPath } = await import('node:url')
   const here = pathMod.dirname(fileURLToPath(import.meta.url))
-  const saved = JSON.parse(fs.readFileSync(pathMod.join(here, '..', 'data', 'ui.json'), 'utf8'))
-  assert.deepStrictEqual(saved.notify, { countdown: false, fired: true, blocked: false, recovered: false }, 'the per-kind choice is persisted for the next start')
+  const saved = JSON.parse(fs.readFileSync(pathMod.join(here, '..', 'data', 'config.json'), 'utf8'))
+  assert.strictEqual(saved.version, 2, 'the profile store is written as v2')
+  assert.strictEqual(saved.afkAutoAnswer, undefined, 'no global AFK flag is left behind')
+  assert.strictEqual(saved.profiles.find((p) => p.id === 'c3').notify.blocked, false, 'per-profile notify survives a restart')
 }
+calls.push('profile-v2-ok')
 
-res = await request('POST', '/api/dsh-shutdown-guard/ui', 'http://127.0.0.1:43129', { notify: true })
-assert.deepStrictEqual(JSON.parse(res.body).ui.notify, NOTIFY_ALL, 'true turns every kind back on')
-calls.push('ui-notify-ok')
 dispose()
 assert.strictEqual(routes.size, 0, 'disposer removes HTTP routes')
 
-// 29. Data written by the previous release kept notify as one boolean. Reading
-// it must not lose the user's choice: true means every kind, false means none.
+// 29. Upgrade paths. A 1.5.2 install kept `notify` in ui.json and `afkAutoAnswer`
+// at the top level of config.json; both have to land in the profile store.
 {
   const fs = await import('node:fs')
   const pathMod = await import('node:path')
   const { fileURLToPath } = await import('node:url')
-  const uiFile = pathMod.join(pathMod.dirname(fileURLToPath(import.meta.url)), '..', 'data', 'ui.json')
+  const here = pathMod.dirname(fileURLToPath(import.meta.url))
+  const uiFile = pathMod.join(here, '..', 'data', 'ui.json')
+  const cfgFile = pathMod.join(here, '..', 'data', 'config.json')
   fs.mkdirSync(pathMod.dirname(uiFile), { recursive: true })
-  fs.writeFileSync(uiFile, JSON.stringify({ version: 1, notify: true }) + '\n', 'utf8')
+  try { fs.unlinkSync(cfgFile) } catch { /* fresh start */ }
+  fs.writeFileSync(uiFile, JSON.stringify({ version: 1, variant: 'B', notify: false }) + '\n', 'utf8')
   const dispose2 = apply(ctx, { countdownSec: 10, marginSec: 5, onlyOnSuccess: true, language: 'zh' })
   res = await request('GET', '/api/dsh-shutdown-guard/state')
-  assert.deepStrictEqual(JSON.parse(res.body).ui.notify, NOTIFY_ALL, 'a legacy boolean true is read as every kind on')
+  {
+    const dflt = JSON.parse(res.body).profiles.find((p) => p.id === 'default')
+    assert.deepStrictEqual(dflt.notify, { countdown: false, fired: false, blocked: false, recovered: false }, 'a legacy ui.json notify:false seeds every kind off')
+    assert.strictEqual(JSON.parse(res.body).ui.variant, 'B', 'the rest of the UI store is untouched')
+    assert.strictEqual(JSON.parse(res.body).ui.notify, undefined, 'ui.notify is gone from /state')
+  }
+  {
+    const rawUi = JSON.parse(fs.readFileSync(uiFile, 'utf8'))
+    assert.strictEqual(rawUi.notify, undefined, 'ui.json is rewritten without notify')
+    assert.strictEqual(rawUi.variant, 'B', 'the rewrite keeps the other UI fields')
+  }
   dispose2()
 
-  fs.writeFileSync(uiFile, JSON.stringify({ version: 1, notify: false }) + '\n', 'utf8')
+  // Same for a top-level afkAutoAnswer in config.json.
+  fs.writeFileSync(cfgFile, JSON.stringify({ version: 1, afkAutoAnswer: false, customEnabled: true, activeProfileId: 'c2' }) + '\n', 'utf8')
   const dispose3 = apply(ctx, { countdownSec: 10, marginSec: 5, onlyOnSuccess: true, language: 'zh' })
   res = await request('GET', '/api/dsh-shutdown-guard/state')
-  assert.deepStrictEqual(JSON.parse(res.body).ui.notify, { countdown: false, fired: false, blocked: false, recovered: false }, 'a legacy boolean false is read as every kind off')
-
+  assert.strictEqual(JSON.parse(res.body).profiles.find((p) => p.id === 'c2').afkAutoAnswer, false, 'a legacy top-level afkAutoAnswer reaches the profiles')
+  assert.strictEqual(JSON.parse(res.body).profiles.find((p) => p.id === 'default').afkAutoAnswer, true, 'the locked baseline keeps AFK on')
+  assert.strictEqual(JSON.parse(res.body).activeProfileId, 'c2', 'the legacy active profile id is kept')
   dispose3()
-  calls.push('ui-notify-legacy-ok')
+  calls.push('profile-legacy-ok')
 }
 
 console.log('PASS: ' + calls.join(', '))
