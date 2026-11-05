@@ -8,7 +8,7 @@
 [![DSH](https://img.shields.io/badge/DSH-%E2%89%A50.1.5--rc.1-4a90d9)](https://github.com/deepseek-ai)
 [![platform](https://img.shields.io/badge/platform-Windows-0078d4)](#constraints)
 [![license](https://img.shields.io/badge/license-MIT-blue)](LICENSE)
-[![dshbase install-tested](https://dshbase.com/badges/dsh-shutdown-guard.svg)](https://dshbase.com/plugins/dsh-shutdown-guard/)
+[![dshbase install-tested](https://dshbase.com/badges/dsh-shutdown-guard.svg)](https://dshbase.com/plugins/dsh-shutdown-guard/) [![awesome-dsh-plugin listed](https://awesome-dsh-plugin.com/badge.svg)](https://awesome-dsh-plugin.com/p/ltayshark0637/dsh-Shutdown-Guard/)
 
 Adds a "shut down automatically when all tasks finish" card to the DeepSeek Harness sidebar, with a more varied and polished visual treatment, decision logic, and customization. It sits below Skill Center and above the session list, and updates in real time with task state.
 

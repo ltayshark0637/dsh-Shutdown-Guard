@@ -8,7 +8,7 @@
 [![DSH](https://img.shields.io/badge/DSH-%E2%89%A50.1.5--rc.1-4a90d9)](https://github.com/deepseek-ai)
 [![platform](https://img.shields.io/badge/platform-Windows-0078d4)](#ограничения)
 [![license](https://img.shields.io/badge/license-MIT-blue)](LICENSE)
-[![dshbase: проверено установкой](https://dshbase.com/badges/dsh-shutdown-guard.svg)](https://dshbase.com/plugins/dsh-shutdown-guard/)
+[![dshbase: проверено установкой](https://dshbase.com/badges/dsh-shutdown-guard.svg)](https://dshbase.com/plugins/dsh-shutdown-guard/) [![awesome-dsh-plugin: в каталоге](https://awesome-dsh-plugin.com/badge.svg)](https://awesome-dsh-plugin.com/p/ltayshark0637/dsh-Shutdown-Guard/)
 
 Добавляет в боковую панель DeepSeek Harness карточку «выключить компьютер после завершения всех задач» — с более разнообразным и качественным оформлением, логикой принятия решения и настройкой под себя. Карточка расположена под «Центром навыков» и над списком сессий и обновляется в реальном времени вместе с состоянием задач.
 
