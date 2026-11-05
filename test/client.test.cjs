@@ -62,7 +62,7 @@ function flat(node, out) {
 const element = slots['settings.section'].render({})
 const rendered = typeof element.type === 'function' ? element.type({}) : element
 const text = flat(rendered, []).join(' | ')
-const missing = ['外观', '何时关机', 'AFK 自动回答', '自定义配置', '选择配置', '会话都停下来', '后台任务跑完', '倒计时时长', '状态', '上次为什么没关机', '事件日志']
+const missing = ['外观', '判定与关机', 'AFK 自动回答', '自定义配置', '选择配置', '会话都停下来', '后台任务跑完', '倒计时时长', '状态', '上次为什么没关机', '事件日志']
   .filter((n) => !text.includes(n))
 assert.deepStrictEqual(missing, [], 'missing settings labels; got: ' + text.slice(0, 300))
 assert.ok(!text.includes('终端里的 6 个小块'), 'LED legend hidden while variant != C')
