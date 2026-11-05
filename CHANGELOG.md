@@ -30,7 +30,7 @@
 - 修复：冷启动后语言丢失。语言偏好改由宿主 `data/ui.json` 持有，`localStorage` 只作首帧兜底，不再依赖某个存储分区。
 - 测试：宿主断言 28 → 41 项，新增 `events-i18n-ok`、`events-since-ok`、`events-nested-i18n-ok`、`window-page-ok`、`ui-state-ok`、`ui-compact-ok`、`profile-v2-ok`、`profile-legacy-ok`（后两项覆盖 v1 → v2 读取与旧全局字段迁移）、`agent-total-ok`、`agent-total-fallback-ok`（后两项覆盖子 Agent 计数与宿主不提供成员列表时的回落）；发版前又补了 4 条配置用例——空槽按需创建、从没动过的空槽在升级时清理、记住上次用的配置、那份配置被删后回落到默认。客户端从 1 条 bundle smoke 扩到 6 项：新增 5 条雷达断言，分别盯「点数取运行中 agent 总数」「不退回主会话数」「上限 12 个与 `+N`」「读屏描述」「宿主不提供该字段时回落」。
 - 文档：新增面向下载者的 `RELEASE-1.5.2.md`；三份 README 的安装、配置与截图按本版更新，并加上 awesome-dsh-plugin 的收录徽章（贴在 dshbase 那枚旁边）。dsh-plugin.org 与 dpharness 的页面还没上线或还没更新，暂不贴。
-- ⚠️ 升级注意：`data/config.json` 无需手动迁移，读取时自动兼容、保存时写成 `version: 2`；默认配置现在拒绝改动，想自定义就新建一个配置；旧版全局的 AFK 与通知开关会并入升级时生效的那个配置。**包变大了，这是预期内的**：设置页那 18 张缩略图以内联 base64 的形式进了 `lib/client.js`（约 76KB），该文件从约 143KB 涨到 237KB；本版 npm 包 tarball 约 187kB、解压约 499kB，不是装错了。
+- ⚠️ 升级注意：`data/config.json` 无需手动迁移，读取时自动兼容、保存时写成 `version: 2`；默认配置现在拒绝改动，想自定义就新建一个配置；旧版全局的 AFK 与通知开关会并入升级时生效的那个配置。**包变大了，这是预期内的**：设置页那 18 张缩略图以内联 base64 的形式进了 `lib/client.js`（约 76KB），该文件从约 143KB 涨到 237KB；本版 npm 包约 190 kB（未压缩解包约 500 kB），仍是 11 个文件，不是装错了。
 
 ## v1.5.1 — 2026-11-04
 
