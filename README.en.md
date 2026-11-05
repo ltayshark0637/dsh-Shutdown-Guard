@@ -118,13 +118,12 @@ The card is pinned to this sidebar slot by default; the button on the card heade
 |:---------------------------------------------------------------------------------------------:|:----------------------------------------------------------------------------------------------:|
 | <img src="https://cdn.jsdelivr.net/gh/ltayshark0637/dsh-Shutdown-Guard@main/docs/screenshots/12-settings-dark.png" width="380"> | <img src="https://cdn.jsdelivr.net/gh/ltayshark0637/dsh-Shutdown-Guard@main/docs/screenshots/13-settings-light.png" width="380"> |
 
-Four tabs: **Appearance** (profiles included) / **Vigil** (when to shut down + watch behaviour) / **Notifications** / **Status**. It opens on Appearance, and every switch takes effect immediately.
+Four tabs: **Appearance** / **Vigil** / **Notifications** / **Status**. It opens on Appearance, and every switch takes effect immediately.
 
-- **Appearance**: three thumbnail cards at the top — Minimal (large title plus one line), Radar (radar plus a status line), Terminal (three terminal lines); the picture follows the UI language and the lightness of the surface. Below them: theme (follow / dark / light / Claude), collapse by default, compact floating window, UI language.
-- **Profiles** (further down the same tab): one default profile plus any number of custom profiles. The default is locked at 60 seconds and acts as the floor; a custom profile starts as a copy of the current one and can then be tuned.
-- **Vigil**: the top half is when to shut down — "All sessions idle" is the floor condition, always on and not switchable; "Background jobs finished" blocks background jobs, "skip this round if any session errored" blocks erroring batches; the countdown length is only editable in a custom profile. The bottom half is watch behaviour — "AFK auto-answer" controls whether questions are answered for you while armed; the description states "replies never select an option for you; turn this off and questions come to you as usual."
-- **Notifications**: one master switch plus four per-kind switches (countdown started / shutting down / first block / block recovered). Arming, disarming and cancelling by hand stay silent.
-- **Status**: current block, why it did not shut down last time, recent events.
+- **Appearance**: five rows, no group header — the three thumbnail cards (Minimal / Radar / Terminal, the picture following the UI language and the lightness of the surface), theme (follow / dark / light / Claude), collapse by default, compact floating window, UI language.
+- **Vigil**: the "custom profiles" switch sits alone at the top, outside any group; turning it on reveals the **Profiles** group, which lists the default profile and every custom one with switch, make-default, rename and delete, plus **+ New** at the end. Below it, the **Watch behaviour** group puts the four gate rows ahead of AFK: "All sessions idle" is the floor condition, always on and not switchable; "Background jobs finished" blocks background jobs; "skip this round if any session errored" blocks erroring batches; the countdown length is only editable in a custom profile. "AFK auto-answer" comes last and states "replies never select an option for you; turn this off and questions come to you as usual."
+- **Notifications**: one group — a master switch plus four per-kind switches (countdown started / shutting down / first block / block recovered). Arming, disarming and cancelling by hand stay silent.
+- **Status**: one group — current block, why it did not shut down last time, recent events.
 
 ## Light and third-party themes
 

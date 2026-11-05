@@ -330,8 +330,10 @@ const eventsFor = () => [
 const evlog = () => `<div class="dsp-evlog">${eventsFor().map(([t, k, s]) => `<div class="dsp-ev dsp-ev-${k}">
   <span class="dsp-ev-time">${t}</span><span class="dsp-ev-text">${esc(s)}</span></div>`).join('')}</div>`
 
-// 设置页现在是四个标签页：外观（含配置）/ 守夜（判定与关机 + 守夜行为）/ 通知 / 状态。
+// 设置页是四个标签页：外观 / 守夜 / 通知 / 状态。
 // 与 lib/client.js 的 SETTINGS_TABS = ['look','watch','notify','status'] 一致。
+// 2026-11-06（commit 29e8004）后：外观页无组标题（卡片 + 四行）；守夜页是「自定义配置」
+// 独立行 → 配置组 → 守夜行为组（四行判定闸并入，排在 AFK 前）；通知、状态各一个无标题组。
 const SETTINGS_TABS = ['look', 'watch', 'notify', 'status']
 
 // 外观选择是三张带缩略图的卡片（极简 / 雷达 / 终端），缩略图随语言与背景深浅换图；
@@ -364,14 +366,16 @@ function settingsPanel(opts = {}) {
   const thumbTheme = opts.thumbTheme ?? 'dark'
   const panes = {
     look: `<div class="dsp-sgroup-box">
-        ${group('look', tr('set.look'))}
         ${row(tr('set.variant'), '', variantCards(variant, LANG === 'en' || LANG === 'ru' ? LANG : 'zh', thumbTheme), 'dsp-srow-stack')}
         ${variant === 'c' ? row(tr('set.led'), tr('set.led.desc'), '', 'dsp-srow-stack') : ''}
         ${row(tr('set.theme'), '', seg([tr('theme.auto'), tr('theme.dark'), tr('theme.light'), tr('theme.claude')], opts.theme ?? 0))}
         ${row(tr('set.fold'), '', sw(false))}
         ${row(tr('set.compact'), '', sw(true))}
         ${row(tr('set.lang'), '', seg([tr('lang.auto'), tr('lang.zh'), tr('lang.en'), tr('lang.ru')], opts.lang ?? 0))}
-      </div>
+      </div>`,
+    watch: `<div class="dsp-srow dsp-srow-standalone"><div class="dsp-srow-text">
+        <span class="dsp-stitle">${esc(tr('set.custom'))}</span>
+        </div>${sw(true)}</div>
       <div class="dsp-sgroup-box">
         ${group('prof', tr('set.prof.group'))}
         ${row(tr('set.pick'), tr('set.prof.current', { label: D('profName', { n: 3 }), sec: 120 }), '', 'dsp-srow-plain')}
@@ -380,21 +384,16 @@ function settingsPanel(opts = {}) {
         ${profileRow(D('profName', { n: 2 }), 120)}
         ${profileRow(D('profName', { n: 3 }), 120, { active: true })}
         <div class="dsp-srow dsp-srow-new"><div class="dsp-srow-text"></div><button class="dsp-sbtn">${esc(tr('set.prof.new'))}</button></div>
-      </div>`,
-    watch: `<div class="dsp-sgroup-box">
-        ${group('rule', tr('set.when'))}
-        ${row(tr('set.custom'), '', sw(true))}
+      </div>
+      <div class="dsp-sgroup-box">
+        ${group('watch', tr('set.watch'))}
         ${row(tr('set.bottom'), tr('set.bottom.desc'), val(tr('set.always')), 'dsp-srow-ro')}
         ${row(tr('set.jobs'), tr('set.jobs.desc'), sw(true))}
         ${row(tr('set.err'), tr('set.err.desc'), sw(false))}
         ${row(tr('set.cd'), tr('set.cd.desc'), seg([tr('cd.30'), tr('cd.60'), tr('cd.120'), tr('cd.300')], 2))}
-      </div>
-      <div class="dsp-sgroup-box">
-        ${group('watch', tr('set.watch'))}
         ${row(tr('set.afk'), tr('set.afk.desc'), sw(true))}
       </div>`,
     notify: `<div class="dsp-sgroup-box">
-        ${group('notify', tr('set.notify.group'))}
         ${row(tr('set.notify'), tr('set.notify.desc'), sw(true))}
         ${row(tr('set.notify.countdown'), '', sw(true), 'dsp-srow-sub')}
         ${row(tr('set.notify.fired'), '', sw(true), 'dsp-srow-sub')}
@@ -402,7 +401,6 @@ function settingsPanel(opts = {}) {
         ${row(tr('set.notify.recovered'), '', sw(false), 'dsp-srow-sub')}
       </div>`,
     status: `<div class="dsp-sgroup-box">
-        ${group('status', tr('set.status'))}
         ${row(tr('set.blocked'), tr('set.blocked.waiting'), val(tr('hud.state.retrying') + ' · ' + tr('hud.retry', { n: 1 }), 'color:#6f8f7a'), 'dsp-srow-stack')}
         ${row(tr('set.skip'), '', val(D('skipLine')), 'dsp-srow-stack')}
         ${row(tr('set.events'), tr('set.events.desc', { n: 4 }), evlog(), 'dsp-srow-stack')}
