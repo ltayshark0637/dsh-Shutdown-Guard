@@ -1,6 +1,6 @@
 import assert from 'node:assert'
 import { apply } from '../lib/index.mjs'
-import { LANGS, MESSAGES, catalogCoverage } from '../lib/i18n.mjs'
+import { LANGS, MESSAGES, catalogCoverage, t } from '../lib/i18n.mjs'
 
 const spawns = []
 const timers = new Map()
@@ -291,6 +291,33 @@ body = JSON.parse(res.body)
 assert.ok(Array.isArray(body.events) && body.events.length > 0, 'events are served')
 assert.ok(body.events.every((e) => typeof e.text === 'string' && typeof e.at === 'number'))
 calls.push('events-ok')
+
+// 13b. Event text is re-rendered from key/params in the active language; the
+// text recorded at write time is not frozen. Regression: recentEvents(lang,
+// since) lost its lang argument, so every event silently fell back to English.
+res = await request('GET', '/api/dsh-shutdown-guard/state')
+body = JSON.parse(res.body)
+const oldestEvent = body.events[0]
+assert.ok(oldestEvent && typeof oldestEvent.key === 'string' && oldestEvent.key.length > 0, 'the oldest event keeps its key')
+assert.strictEqual(oldestEvent.text, t('zh', oldestEvent.key, oldestEvent.params), 'event text matches the active zh catalog')
+assert.match(oldestEvent.text, /[\u4e00-\u9fa5]/, 'the event text is not the English fallback')
+await request('POST', '/api/dsh-shutdown-guard/config', 'http://127.0.0.1:43129', { language: 'ru' })
+res = await request('GET', '/api/dsh-shutdown-guard/state')
+body = JSON.parse(res.body)
+assert.notStrictEqual(body.events[0].text, oldestEvent.text, 'switching language re-renders stored events')
+assert.match(body.events[0].text, /[\u0400-\u04FF]/, 'the re-rendered event is Russian')
+await request('POST', '/api/dsh-shutdown-guard/config', 'http://127.0.0.1:43129', { language: 'zh' })
+calls.push('events-i18n-ok')
+
+// 13c. ?since= is an incremental cursor; a swapped argument order would return
+// the whole buffer on every poll and break the client's lastEventAt logic.
+const allEvents = JSON.parse((await request('GET', '/api/dsh-shutdown-guard/events?limit=100')).body).events
+assert.ok(allEvents.length > 0, 'events are available')
+const eventCursor = allEvents[allEvents.length - 1].at
+const newerEvents = JSON.parse((await request('GET', `/api/dsh-shutdown-guard/events?since=${eventCursor}`)).body).events
+assert.ok(newerEvents.length < allEvents.length, 'since returns only the events after the cursor')
+assert.ok(newerEvents.every((e) => e.at > eventCursor), 'every returned event is newer than the cursor')
+calls.push('events-since-ok')
 
 await request('POST', '/api/dsh-shutdown-guard/config', 'http://127.0.0.1:43129', { customEnabled: false, activeProfileId: 'default' })
 
