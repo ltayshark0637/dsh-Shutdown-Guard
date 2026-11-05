@@ -256,12 +256,21 @@ res = await request('POST', '/api/dsh-shutdown-guard/disarm', 'http://127.0.0.1:
 assert.strictEqual(JSON.parse(res.body).armed, false)
 calls.push('disarm-ok')
 
-// 12. profiles: default + 8 custom slots, config persists to data/config.json
+// 12. profiles: a fresh store ships only the default one; custom slots are
+// created on demand, and the config persists to data/config.json
 body = JSON.parse((await request('GET', '/api/dsh-shutdown-guard/state')).body)
-assert.strictEqual(body.profiles.length, 9, 'one default plus eight custom slots')
+assert.strictEqual(body.profiles.length, 1, 'a new install ships only the default profile')
 assert.strictEqual(body.activeProfileId, 'default')
 assert.strictEqual(body.customEnabled, false)
 calls.push('profiles-listed-ok')
+
+// The behaviour tests below run on c3, so materialise c1..c3 first.
+for (let i = 1; i <= 3; i += 1) {
+  res = await request('POST', '/api/dsh-shutdown-guard/config', 'http://127.0.0.1:43129', { createProfile: {} })
+  assert.strictEqual(res.status, 200, 'createProfile succeeds')
+}
+body = JSON.parse((await request('GET', '/api/dsh-shutdown-guard/state')).body)
+assert.deepStrictEqual(body.profiles.map((p) => p.id), ['default', 'c1', 'c2', 'c3'], 'ids are assigned in order')
 
 res = await request('POST', '/api/dsh-shutdown-guard/config', 'http://127.0.0.1:43129', { profileId: 'c3', patch: { countdownSec: 120, onlyOnSuccess: false } })
 body = JSON.parse(res.body)
@@ -828,6 +837,108 @@ assert.strictEqual(routes.size, 0, 'disposer removes HTTP routes')
   assert.strictEqual(JSON.parse(res.body).activeProfileId, 'c2', 'the legacy active profile id is kept')
   dispose3()
   calls.push('profile-legacy-ok')
+}
+
+// 32. Custom slots are created on demand: a fresh store ships only the default
+// profile instead of eight pre-seeded empties.
+{
+  const fs = await import('node:fs')
+  const pathMod = await import('node:path')
+  const { fileURLToPath } = await import('node:url')
+  const here = pathMod.dirname(fileURLToPath(import.meta.url))
+  const cfgFile = pathMod.join(here, '..', 'data', 'config.json')
+  try { fs.unlinkSync(cfgFile) } catch { /* fresh start */ }
+  const dispose4 = apply(ctx, { countdownSec: 10, marginSec: 5, onlyOnSuccess: true, language: 'zh' })
+  res = await request('GET', '/api/dsh-shutdown-guard/state')
+  body = JSON.parse(res.body)
+  assert.strictEqual(body.profiles.length, 1, 'a fresh store has no pre-seeded custom slots')
+  assert.strictEqual(body.profiles[0].id, 'default', 'the only profile is the baseline')
+  dispose4()
+  calls.push('profile-no-preseed-ok')
+}
+
+// 33. Turning custom profiles off and on again lands back on the profile the
+// user was using, not on the baseline.
+{
+  const fs = await import('node:fs')
+  const pathMod = await import('node:path')
+  const { fileURLToPath } = await import('node:url')
+  const here = pathMod.dirname(fileURLToPath(import.meta.url))
+  const cfgFile = pathMod.join(here, '..', 'data', 'config.json')
+  try { fs.unlinkSync(cfgFile) } catch { /* fresh start */ }
+  const dispose5 = apply(ctx, { countdownSec: 10, marginSec: 5, onlyOnSuccess: true, language: 'zh' })
+  await request('POST', '/api/dsh-shutdown-guard/config', 'http://127.0.0.1:43129', { createProfile: {} })
+  res = await request('POST', '/api/dsh-shutdown-guard/config', 'http://127.0.0.1:43129', { customEnabled: true, activeProfileId: 'c1' })
+  assert.strictEqual(JSON.parse(res.body).activeProfileId, 'c1', 'the custom profile is active')
+
+  res = await request('POST', '/api/dsh-shutdown-guard/config', 'http://127.0.0.1:43129', { customEnabled: false })
+  body = JSON.parse(res.body)
+  assert.strictEqual(body.activeProfileId, 'default', 'switching custom profiles off falls back to the baseline')
+  assert.strictEqual(body.lastCustomProfileId, 'c1', 'the custom selection is remembered')
+
+  res = await request('POST', '/api/dsh-shutdown-guard/config', 'http://127.0.0.1:43129', { customEnabled: true })
+  assert.strictEqual(JSON.parse(res.body).activeProfileId, 'c1', 'switching custom profiles back on restores the remembered one')
+  calls.push('profile-remember-ok')
+
+  // Deleting the remembered profile must not leave a dangling pointer behind.
+  res = await request('POST', '/api/dsh-shutdown-guard/config', 'http://127.0.0.1:43129', { deleteProfile: 'c1' })
+  body = JSON.parse(res.body)
+  assert.strictEqual(body.activeProfileId, 'default', 'deleting the active profile falls back to the baseline')
+  assert.strictEqual(body.lastCustomProfileId, null, 'the remembered id is cleared with the profile')
+  await request('POST', '/api/dsh-shutdown-guard/config', 'http://127.0.0.1:43129', { customEnabled: false })
+  res = await request('POST', '/api/dsh-shutdown-guard/config', 'http://127.0.0.1:43129', { customEnabled: true })
+  body = JSON.parse(res.body)
+  assert.strictEqual(body.activeProfileId, 'default', 'a deleted profile is never restored')
+  assert.strictEqual(body.lastCustomProfileId, null, 'nothing is remembered after the delete')
+  dispose5()
+  calls.push('profile-remember-gone-ok')
+}
+
+// 34. A store written by an older build pre-created eight slots. Loading it
+// drops the ones nobody ever configured and keeps everything the user touched.
+{
+  const fs = await import('node:fs')
+  const pathMod = await import('node:path')
+  const { fileURLToPath } = await import('node:url')
+  const here = pathMod.dirname(fileURLToPath(import.meta.url))
+  const cfgFile = pathMod.join(here, '..', 'data', 'config.json')
+  const pristine = (id, label, labelAuto) => ({
+    id,
+    label,
+    labelAuto,
+    countdownSec: 60,
+    marginSec: 5,
+    onlyOnSuccess: true,
+    blockOnJobs: true,
+    afkAutoAnswer: true,
+    notify: { ...NOTIFY_ALL },
+    retrySec: 30,
+    retryPolicies: null,
+    retryAssign: null,
+  })
+  fs.writeFileSync(cfgFile, JSON.stringify({
+    version: 2,
+    customEnabled: true,
+    activeProfileId: 'default',
+    profiles: [
+      pristine('default', '默认配置', true),
+      Object.assign(pristine('c1', '批量', false), { countdownSec: 120 }),
+      pristine('c2', '配置 2', true),
+      pristine('c3', '夜里跑批', false),
+    ],
+  }) + '\n', 'utf8')
+  const dispose6 = apply(ctx, { countdownSec: 10, marginSec: 5, onlyOnSuccess: true, language: 'zh' })
+  res = await request('GET', '/api/dsh-shutdown-guard/state')
+  body = JSON.parse(res.body)
+  assert.deepStrictEqual(body.profiles.map((p) => p.id), ['default', 'c1', 'c3'], 'the untouched slot is pruned on load')
+  assert.strictEqual(body.profiles.find((p) => p.id === 'c1').countdownSec, 120, 'a touched field keeps the profile')
+  assert.strictEqual(body.profiles.find((p) => p.id === 'c3').label, '夜里跑批', 'a renamed label keeps the profile')
+
+  res = await request('POST', '/api/dsh-shutdown-guard/config', 'http://127.0.0.1:43129', { createProfile: {} })
+  body = JSON.parse(res.body)
+  assert.deepStrictEqual(body.profiles.map((p) => p.id), ['default', 'c1', 'c3', 'c2'], 'a new profile reuses the freed id')
+  dispose6()
+  calls.push('profile-prune-ok')
 }
 
 console.log('PASS: ' + calls.join(', '))
