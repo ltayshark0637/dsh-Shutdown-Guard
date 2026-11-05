@@ -79,7 +79,7 @@ const DEMO = {
     navNew: '新会话', navBoard: '工作台', navPlugins: '插件', navSkills: '技能中心',
     sess1: '重构关机插件', sess2: '周报数据整理',
     time1: '1 分钟', time2: '14 小时',
-    slotDefault: '默认', slotCustom: '自定义 {n}',
+    profName: '自定义 {n}',
     haltedBig: '已暂停', haltedMeta: '账户额度不足，需充值后解除', haltedBtn: '解除并重试',
     waitingBig: '等待恢复', waitingMeta: '请求过于频繁，30 秒后自动重试（第 1 次）',
     skipLine: '还有 2 个后台任务在运行，暂不关机（模式保持开启）',
@@ -92,7 +92,7 @@ const DEMO = {
     navNew: 'New chat', navBoard: 'Workspace', navPlugins: 'Plugins', navSkills: 'Skills',
     sess1: 'Refactor the shutdown guard', sess2: 'Weekly report cleanup',
     time1: '1 min', time2: '14 hr',
-    slotDefault: 'Default', slotCustom: 'Custom {n}',
+    profName: 'Custom {n}',
     haltedBig: 'Paused', haltedMeta: 'Account quota exhausted — top up to resume', haltedBtn: 'Resume and retry',
     waitingBig: 'Waiting to recover', waitingMeta: 'Too many requests — retrying in 30 s (attempt 1)',
     skipLine: '2 background tasks are still running, so no shutdown (mode stays armed)',
@@ -105,7 +105,7 @@ const DEMO = {
     navNew: 'Новый чат', navBoard: 'Рабочий стол', navPlugins: 'Плагины', navSkills: 'Навыки',
     sess1: 'Переписать сторожа выключения', sess2: 'Разбор недельного отчёта',
     time1: '1 мин', time2: '14 ч',
-    slotDefault: 'По умолчанию', slotCustom: 'Своя {n}',
+    profName: 'Своя {n}',
     haltedBig: 'Пауза', haltedMeta: 'Квота аккаунта исчерпана — пополните счёт, чтобы снять паузу', haltedBtn: 'Снять паузу и повторить',
     waitingBig: 'Ждём восстановления', waitingMeta: 'Слишком много запросов — повтор через 30 с (попытка 1)',
     skipLine: 'Ещё 2 фоновые задачи в работе, выключения не будет (режим остаётся взведённым)',
@@ -281,17 +281,44 @@ function sidebar(cardHtml, opts = {}) {
 }
 
 // ---------------------------------------------------------------- settings
+// 分组图标：与 lib/client.js 的 GROUP_ICONS 同一组 path（15px、stroke 1.9）。
+const SICON = {
+  look: ['M12 3v2M12 19v2M3 12h2M19 12h2M5.6 5.6 7 7M17 17l1.4 1.4M18.4 5.6 17 7M7 17l-1.4 1.4', 'M12 8.5a3.5 3.5 0 1 1 0 7 3.5 3.5 0 0 1 0-7z'],
+  prof: ['M4 7h9M17 7h3M4 17h3M11 17h9', 'M15 5a2 2 0 1 1 0 4 2 2 0 0 1 0-4z', 'M9 15a2 2 0 1 1 0 4 2 2 0 0 1 0-4z'],
+  rule: ['M12 3.5 19 6.5v5.2c0 3.9-2.9 6.9-7 8.8-4.1-1.9-7-4.9-7-8.8V6.5z', 'M9 12l2.1 2.1L15.4 10'],
+  watch: ['M20 14.6A8.6 8.6 0 1 1 9.4 4a6.9 6.9 0 0 0 10.6 10.6z'],
+  notify: ['M18 15.5H6l1.4-2.1V9a4.6 4.6 0 0 1 9.2 0v4.4z', 'M10 18.5a2 2 0 0 0 4 0'],
+  status: ['M3 12h4l2 5 3-10 2 5h5'],
+}
+const sicon = (name) => {
+  const paths = SICON[name]
+  if (!paths) return ''
+  return `<svg class="dsp-sicon" width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">${paths.map((d) => `<path d="${d}"/>`).join('')}</svg>`
+}
+const group = (icon, title, note) => `<div class="dsp-sgroup" role="heading" aria-level="3">${sicon(icon)}<span class="dsp-sgroup-title">${esc(title)}</span>${note ? `<span class="dsp-sgroup-note">${esc(note)}</span>` : ''}</div>`
+
 function row(title, desc, control, extra = '') {
   return `<div class="dsp-srow${extra ? ' ' + extra : ''}"><div class="dsp-srow-text">
     <span class="dsp-stitle">${esc(title)}</span>${desc ? `<span class="dsp-sdesc">${esc(desc)}</span>` : ''}
     </div>${control || ''}</div>`
 }
-const seg = (items, on) => `<div class="dsp-seg">${items.map((t, i) => `<button class="dsp-segbtn${i === on ? ' on' : ''}">${t}</button>`).join('')}</div>`
+const seg = (items, on) => `<div class="dsp-seg">${items.map((t, i) => `<button class="dsp-segbtn${i === on ? ' on' : ''}">${esc(t)}</button>`).join('')}</div>`
 const sw = (on, off) => `<button class="dsp-switch${on ? ' on' : ''}"${off ? ' disabled' : ''}><i></i></button>`
-const slotbar = (active) => `<div class="dsp-slotbar">${Array.from({ length: 9 }, (_, i) => {
-  const label = i === 0 ? D('slotDefault') : String(i)
-  return `<button class="dsp-slotbtn${active === i ? ' on' : ''}${i > 0 && !active ? ' locked' : ''}">${label}</button>`
-}).join('')}</div>`
+const val = (text, style = '') => `<span class="dsp-sval"${style ? ` style="${style}"` : ''}>${esc(text)}</span>`
+
+// 一个配置行：默认配置只有秒数；自定义配置还有 设为默认 / 重命名 / 删除。
+function profileRow(name, sec, opts = {}) {
+  const isActive = !!opts.active
+  const actions = opts.default
+    ? val(tr('set.prof.sec', { n: sec }))
+    : `${val(tr('set.prof.sec', { n: sec }))}
+       <button class="dsp-sbtn">${esc(tr('set.prof.setDefault'))}</button>
+       <button class="dsp-sbtn">${esc(tr('set.prof.rename'))}</button>
+       <button class="dsp-sbtn">${esc(tr('set.prof.del'))}</button>`
+  return `<div class="dsp-srow dsp-srow-prof${isActive ? ' is-active' : ''}"><div class="dsp-srow-text">
+    <span class="dsp-stitle">${esc(name)}${isActive ? `<span class="dsp-badge">${esc(tr('set.prof.active'))}</span>` : ''}</span>
+    </div><div class="dsp-prof-actions">${actions}</div></div>`
+}
 
 // 事件流水是演示内容，三语各自成套（见 DEMO）。
 const eventsFor = () => [
@@ -303,29 +330,52 @@ const eventsFor = () => [
 const evlog = () => `<div class="dsp-evlog">${eventsFor().map(([t, k, s]) => `<div class="dsp-ev dsp-ev-${k}">
   <span class="dsp-ev-time">${t}</span><span class="dsp-ev-text">${esc(s)}</span></div>`).join('')}</div>`
 
+// 六组：外观 / 配置 / 判定与关机 / 守夜行为 / 通知 / 状态
 function settingsPanel(opts = {}) {
+  const variant = opts.variant ?? 0
   return `<div class="dsp-settings">
     <div class="dsp-sgroup-box">
-      <div class="dsp-sgroup">${esc(tr('set.look'))}</div>
-      ${row(tr('set.variant'), tr('set.variant.desc'), seg(['A', 'B', 'C'], opts.variant ?? 0))}
-      ${row(tr('set.theme'), tr('set.theme.desc'), seg([tr('theme.auto'), tr('theme.dark'), tr('theme.light'), tr('theme.claude')], opts.theme ?? 0))}
-      ${row(tr('set.fold'), tr('set.fold.desc'), sw(false))}
-      ${row(tr('set.lang'), tr('set.lang.desc'), seg([tr('lang.auto'), tr('lang.zh'), tr('lang.en'), tr('lang.ru')], opts.lang ?? 0))}
+      ${group('look', tr('set.look'))}
+      ${row(tr('set.variant'), '', seg(['A', 'B', 'C'], variant))}
+      ${variant === 2 ? row(tr('set.led'), tr('set.led.desc'), '', 'dsp-srow-stack') : ''}
+      ${row(tr('set.theme'), '', seg([tr('theme.auto'), tr('theme.dark'), tr('theme.light'), tr('theme.claude')], opts.theme ?? 0))}
+      ${row(tr('set.fold'), '', sw(false))}
+      ${row(tr('set.compact'), '', sw(true))}
+      ${row(tr('set.lang'), '', seg([tr('lang.auto'), tr('lang.zh'), tr('lang.en'), tr('lang.ru')], opts.lang ?? 0))}
     </div>
     <div class="dsp-sgroup-box">
-      <div class="dsp-sgroup">${esc(tr('set.when'))}</div>
-      ${row(tr('set.custom'), tr('set.custom.on'), sw(true))}
-      ${row(tr('set.pick'), tr('set.pick.cur', { label: D('slotCustom', { n: 3 }), sec: 120 }), slotbar(3))}
-      ${row(tr('set.bottom'), tr('set.bottom.desc'), `<span class="dsp-sval">${esc(tr('set.always'))}</span>`, 'dsp-srow-ro')}
+      ${group('prof', tr('set.prof.group'))}
+      ${row(tr('set.pick'), tr('set.prof.current', { label: D('profName', { n: 3 }), sec: 120 }), '', 'dsp-srow-plain')}
+      ${profileRow(tr('set.default'), 60, { default: true })}
+      ${profileRow(D('profName', { n: 1 }), 90)}
+      ${profileRow(D('profName', { n: 2 }), 120)}
+      ${profileRow(D('profName', { n: 3 }), 120, { active: true })}
+      <div class="dsp-srow dsp-srow-new"><div class="dsp-srow-text"></div><button class="dsp-sbtn">${esc(tr('set.prof.new'))}</button></div>
+    </div>
+    <div class="dsp-sgroup-box">
+      ${group('rule', tr('set.when'))}
+      ${row(tr('set.custom'), '', sw(true))}
+      ${row(tr('set.bottom'), tr('set.bottom.desc'), val(tr('set.always')), 'dsp-srow-ro')}
       ${row(tr('set.jobs'), tr('set.jobs.desc'), sw(true))}
       ${row(tr('set.err'), tr('set.err.desc'), sw(false))}
       ${row(tr('set.cd'), tr('set.cd.desc'), seg([tr('cd.30'), tr('cd.60'), tr('cd.120'), tr('cd.300')], 2))}
+    </div>
+    <div class="dsp-sgroup-box">
+      ${group('watch', tr('set.watch'))}
       ${row(tr('set.afk'), tr('set.afk.desc'), sw(true))}
     </div>
     <div class="dsp-sgroup-box">
-      <div class="dsp-sgroup">${esc(tr('set.status'))}</div>
-      ${row(tr('set.blocked'), tr('set.blocked.waiting'), `<span class="dsp-sval" style="color:#6f8f7a">${esc(tr('hud.state.retrying') + ' · ' + tr('hud.retry', { n: 1 }))}</span>`, 'dsp-srow-stack')}
-      ${row(tr('set.skip'), '', `<span class="dsp-sval">${esc(D('skipLine'))}</span>`, 'dsp-srow-stack')}
+      ${group('notify', tr('set.notify.group'))}
+      ${row(tr('set.notify'), tr('set.notify.desc'), sw(true))}
+      ${row(tr('set.notify.countdown'), '', sw(true), 'dsp-srow-sub')}
+      ${row(tr('set.notify.fired'), '', sw(true), 'dsp-srow-sub')}
+      ${row(tr('set.notify.blocked'), '', sw(true), 'dsp-srow-sub')}
+      ${row(tr('set.notify.recovered'), '', sw(false), 'dsp-srow-sub')}
+    </div>
+    <div class="dsp-sgroup-box">
+      ${group('status', tr('set.status'))}
+      ${row(tr('set.blocked'), tr('set.blocked.waiting'), val(tr('hud.state.retrying') + ' · ' + tr('hud.retry', { n: 1 }), 'color:#6f8f7a'), 'dsp-srow-stack')}
+      ${row(tr('set.skip'), '', val(D('skipLine')), 'dsp-srow-stack')}
       ${row(tr('set.events'), tr('set.events.desc', { n: 4 }), evlog(), 'dsp-srow-stack')}
     </div>
   </div>`

@@ -34,9 +34,15 @@ If any one is missing, it does not shut down and writes the reason on the card a
 
 ## Three looks
 
-| A · Hazard tape                                                             | B · Radar                                                        | C · Terminal                                                                             |
-|:----------------------------------------------------------------------:|:---------------------------------------------------------------:|:------------------------------------------------------------------------------------:|
-| <img src="https://cdn.jsdelivr.net/gh/ltayshark0637/dsh-Shutdown-Guard@main/docs/screenshots/02-armed.png" width="250"> | <img src="https://cdn.jsdelivr.net/gh/ltayshark0637/dsh-Shutdown-Guard@main/docs/screenshots/06-variant-b-radar.png" width="250"> | <img src="https://cdn.jsdelivr.net/gh/ltayshark0637/dsh-Shutdown-Guard@main/docs/screenshots/07-variant-c-terminal.png" width="250"> |
+The same look in light and dark; the trilingual captures live in `docs/screenshots/` as `<nn>-armed-<look>-<lang>-<theme>.png`.
+
+| A · Hazard tape (light)                                                             | B · Radar (light)                                                        | C · Terminal (light)                                                                             |
+|:------------------------------------------------------------------------------:|:-----------------------------------------------------------------------:|:--------------------------------------------------------------------------------------------:|
+| <img src="https://cdn.jsdelivr.net/gh/ltayshark0637/dsh-Shutdown-Guard@main/docs/screenshots/03-armed-a-en-light.png" width="250"> | <img src="https://cdn.jsdelivr.net/gh/ltayshark0637/dsh-Shutdown-Guard@main/docs/screenshots/09-armed-b-en-light.png" width="250"> | <img src="https://cdn.jsdelivr.net/gh/ltayshark0637/dsh-Shutdown-Guard@main/docs/screenshots/15-armed-c-en-light.png" width="250"> |
+
+| A · Hazard tape (dark)                                                             | B · Radar (dark)                                                        | C · Terminal (dark)                                                                             |
+|:------------------------------------------------------------------------------:|:-----------------------------------------------------------------------:|:--------------------------------------------------------------------------------------------:|
+| <img src="https://cdn.jsdelivr.net/gh/ltayshark0637/dsh-Shutdown-Guard@main/docs/screenshots/04-armed-a-en-dark.png" width="250"> | <img src="https://cdn.jsdelivr.net/gh/ltayshark0637/dsh-Shutdown-Guard@main/docs/screenshots/10-armed-b-en-dark.png" width="250"> | <img src="https://cdn.jsdelivr.net/gh/ltayshark0637/dsh-Shutdown-Guard@main/docs/screenshots/16-armed-c-en-dark.png" width="250"> |
 | Large status text + scrolling red-and-yellow stripes at the bottom                                          | Concentric rings + a scanning beam, sessions and background jobs shown as dots                      | Command-line summary + six indicator lights for the gate conditions                                                      |
 
 Dots in the radar are added and removed, never reordered: when the count changes, the dots you are looking at do not jump.
@@ -88,17 +94,19 @@ When nobody is at the desk, the plugin covers three things for you:
 |:-------------------------------------------------------------------------------------------:|:---------------------------------------------------------------------------------------:|
 | <img src="https://cdn.jsdelivr.net/gh/ltayshark0637/dsh-Shutdown-Guard@main/docs/screenshots/10-sidebar-hold.png" width="250"> | <img src="https://cdn.jsdelivr.net/gh/ltayshark0637/dsh-Shutdown-Guard@main/docs/screenshots/11-sidebar-fire.png" width="250"> |
 
-The card is currently pinned to this sidebar slot. A future version plans to make it available as a standalone widget (with a switch in settings); this section will be updated then.
+The card is pinned to this sidebar slot by default; the button on the card header opens it as a standalone floating window that stays in view when you switch sessions (see "Other details" below).
 
 ## Other details
 
-- **Floating window**: the button in the card's top-right corner opens the status panel in a window of its own, so it stays in view when you switch to another session.
+- **Floating window**: the button in the card's top-right corner opens the status panel in a window of its own, so it stays in view when you switch to another session. The "compact floating window" switch in settings is on by default and keeps only the status and countdown; turn it off for the full panel.
 
 - **Vertical collapse**: collapsed it keeps only the title and status; click the title to expand.
 
   <img src="https://cdn.jsdelivr.net/gh/ltayshark0637/dsh-Shutdown-Guard@main/docs/screenshots/16-folded.png" width="250" align="right" alt="Collapsed state">
 
-- **Theme adaptation**: the card carries its own `--dsp-*` palette and picks light or dark automatically from the host surface's brightness; you can also force dark / light / Claude Style.
+- **Theme adaptation**: the card carries its own `--dsp-*` palette and picks light or dark automatically from the host surface's brightness; you can also force dark / light / Claude Style. The settings page always follows the host theme.
+
+- **Language**: "follow system" by default — `LC_ALL` / `LC_MESSAGES` / `LANG`, then the `Intl` locale, finally `en`; you can also pin Chinese / English / Russian. The "follow" state for language and theme is held by the host, so it is not duplicated per device.
 
 - **Event log**: the settings page shows recent events and "why it did not shut down last time"; the full stream is in `data/events.log`.
 
@@ -110,12 +118,14 @@ The card is currently pinned to this sidebar slot. A future version plans to mak
 |:---------------------------------------------------------------------------------------------:|:----------------------------------------------------------------------------------------------:|
 | <img src="https://cdn.jsdelivr.net/gh/ltayshark0637/dsh-Shutdown-Guard@main/docs/screenshots/12-settings-dark.png" width="380"> | <img src="https://cdn.jsdelivr.net/gh/ltayshark0637/dsh-Shutdown-Guard@main/docs/screenshots/13-settings-light.png" width="380"> |
 
-Three groups: Appearance / When to shut down / Status. Every switch takes effect immediately.
+Six groups: Appearance / Profiles / When to shut down / Watch behaviour / Notifications / Status. Every switch takes effect immediately.
 
-- **Default profile** is locked at 60 seconds and cannot be changed; there are 8 custom slots you can tune freely.
-- "All sessions idle" is the floor condition, always on and not switchable.
-- "Background jobs finished" blocks background jobs; "skip this round if any session errored" blocks erroring batches.
-- "AFK auto-answer" controls whether questions are answered for you while armed; the description states "replies never select an option for you; turn this off and questions come to you as usual."
+- **Appearance**: card look A/B/C, theme (follow / dark / light / Claude), collapse by default, compact floating window, UI language.
+- **Profiles**: one default profile plus any number of custom profiles. The default is locked at 60 seconds and acts as the floor; a custom profile starts as a copy of the current one and can then be tuned.
+- **When to shut down**: "All sessions idle" is the floor condition, always on and not switchable; "Background jobs finished" blocks background jobs, "skip this round if any session errored" blocks erroring batches; the countdown length is only editable in a custom profile.
+- **Watch behaviour**: "AFK auto-answer" controls whether questions are answered for you while armed; the description states "replies never select an option for you; turn this off and questions come to you as usual."
+- **Notifications**: one master switch plus four per-kind switches (countdown started / shutting down / first block / block recovered). Arming, disarming and cancelling by hand stay silent.
+- **Status**: current block, why it did not shut down last time, recent events.
 
 ## Light and third-party themes
 
@@ -167,16 +177,51 @@ While AFK auto-pilot is on, the plugin answers the agent's questions and injects
 
 ## Configuration
 
-Written in `cordis.patch.yml` (the patch inside the plugin package), or changed at runtime via `POST /config`.
+Configuration has two layers: one **default profile** and any number of **custom profiles**. Each profile carries its own countdown length, both gate switches, AFK and the four notification switches.
+
+Three sources, lowest priority first:
+
+1. `cordis.patch.yml` (the shipped patch inside the plugin package)
+2. `data/config.json` (persisted at runtime; whatever the settings page changes lands here)
+3. `POST /config` (runtime change, also persisted)
+
+### Why the default profile is locked
+
+The default profile is **everyone's safe floor**: 60 seconds, wait for background jobs, skip erroring batches — all hard-wired, not editable. The reasoning is practical:
+
+- 60 seconds is the shortest window in which you can still see the card and hit cancel; at 10 seconds the cost of an accidental shutdown dwarfs the minute you saved.
+- Because the default cannot drift, you can always switch back to it without wondering whether your last tweak is still in effect.
+- Want something else? Fine — but you have to create a custom profile explicitly, and the edit lands there, never on the floor.
+
+### Creating a custom profile
+
+Settings → **Profiles** → `+ New`: it copies the current profile, you name it (≤24 characters) and save; it becomes the active profile.
+
+- Every custom profile can be made the default, renamed, or deleted.
+- Deleting the profile in use falls back to the default profile, with a confirmation first.
+- When the "custom profiles" master switch is off, no custom profile applies and the default is used.
+
+### Keys
+
+These live per profile:
 
 | Key              | Range   | Default   | Description                                      |
 | --------------- | ------ | ------ | ----------------------------------------- |
 | `countdownSec`  | 10–600 | 60     | Seconds of countdown before shutdown (fixed at 60 in the default profile, not editable) |
-| `marginSec`     | 0–60   | 5      | Extra margin passed to `shutdown /t`             |
 | `onlyOnSuccess` | bool   | `true` | Skip the shutdown when any session in this batch errored |
 | `blockOnJobs`   | bool   | `true` | Skip the shutdown while background jobs are running |
 | `afkAutoAnswer` | bool   | `true` | Answer questions and perform error recovery for the user while armed |
-| `language`      | enum   | `auto` | UI language; `auto` follows the system language, or pin it to `zh` / `en` / `ru` |
+| `notify`        | object | all `true` | The four notification switches: `countdown` / `fired` / `blocked` / `recovered` |
+
+Global (not tied to a profile):
+
+| Key        | Range   | Default   | Description |
+| ---------- | ------ | ------ | ---- |
+| `language` | enum   | `auto` | UI language; `auto` follows the system language (`LC_ALL` / `LC_MESSAGES` / `LANG` → `Intl` → `en`), or pin it to `zh` / `en` / `ru` |
+| `customEnabled` | bool | `false` | Whether custom profiles may be used |
+| `activeProfileId` | string | `default` | The profile currently in effect |
+
+`marginSec` (0–60, default 5) adds extra headroom to `shutdown /t`.
 
 ### Retry policies
 
@@ -202,7 +247,7 @@ retryPolicies:
 
 An unknown `code` falls back to `transient`; malformed policies are dropped and the defaults are kept. The currently effective assignments are available from `retryAssign` and `retryPolicies` in `/state`.
 
-UI preferences live in the browser's `localStorage`: `dsh-shutdown-guard.variant` / `.theme` / `.folded`.
+**Where preferences live**: card look, theme and collapse are pure UI preferences and live in the browser's `localStorage` (`dsh-shutdown-guard.variant` / `.theme` / `.folded`); the compact floating window and the four notification switches are owned by the host (`data/ui.json`); language and the profile keys land in `data/config.json`.
 
 ## HTTP API
 

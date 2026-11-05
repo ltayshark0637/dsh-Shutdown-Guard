@@ -34,10 +34,16 @@
 
 ## 三种外观
 
-| A · 警戒带                                                             | B · 雷达                                                        | C · 终端                                                                             |
-|:----------------------------------------------------------------------:|:---------------------------------------------------------------:|:------------------------------------------------------------------------------------:|
-| <img src="https://cdn.jsdelivr.net/gh/ltayshark0637/dsh-Shutdown-Guard@main/docs/screenshots/02-armed.png" width="250"> | <img src="https://cdn.jsdelivr.net/gh/ltayshark0637/dsh-Shutdown-Guard@main/docs/screenshots/06-variant-b-radar.png" width="250"> | <img src="https://cdn.jsdelivr.net/gh/ltayshark0637/dsh-Shutdown-Guard@main/docs/screenshots/07-variant-c-terminal.png" width="250"> |
-| 大字状态 + 底部滚动的红黄斜纹                                          | 同心圆 + 扫描光束，会话与后台任务以圆点呈现                      | 命令行摘要 + 六段判定条件指示灯                                                      |
+同一种外观，浅色与深色各一张；三语版本的截图在 `docs/screenshots/` 里按 `<序号>-armed-<外观>-<语言>-<主题>.png` 命名。
+
+| A · 警戒带（浅色）                                                             | B · 雷达（浅色）                                                        | C · 终端（浅色）                                                                             |
+|:------------------------------------------------------------------------------:|:-----------------------------------------------------------------------:|:--------------------------------------------------------------------------------------------:|
+| <img src="https://cdn.jsdelivr.net/gh/ltayshark0637/dsh-Shutdown-Guard@main/docs/screenshots/01-armed-a-zh-light.png" width="250"> | <img src="https://cdn.jsdelivr.net/gh/ltayshark0637/dsh-Shutdown-Guard@main/docs/screenshots/07-armed-b-zh-light.png" width="250"> | <img src="https://cdn.jsdelivr.net/gh/ltayshark0637/dsh-Shutdown-Guard@main/docs/screenshots/13-armed-c-zh-light.png" width="250"> |
+
+| A · 警戒带（深色）                                                             | B · 雷达（深色）                                                        | C · 终端（深色）                                                                             |
+|:------------------------------------------------------------------------------:|:-----------------------------------------------------------------------:|:--------------------------------------------------------------------------------------------:|
+| <img src="https://cdn.jsdelivr.net/gh/ltayshark0637/dsh-Shutdown-Guard@main/docs/screenshots/02-armed-a-zh-dark.png" width="250"> | <img src="https://cdn.jsdelivr.net/gh/ltayshark0637/dsh-Shutdown-Guard@main/docs/screenshots/08-armed-b-zh-dark.png" width="250"> | <img src="https://cdn.jsdelivr.net/gh/ltayshark0637/dsh-Shutdown-Guard@main/docs/screenshots/14-armed-c-zh-dark.png" width="250"> |
+| 大字状态 + 底部滚动的红黄斜纹                                                  | 同心圆 + 扫描光束，会话与后台任务以圆点呈现                            | 命令行摘要 + 六段判定条件指示灯                                                              |
 
 雷达里的圆点按数量增删、不重排：数量变化时，你正在看的那几个点不会跳位置。
 
@@ -88,17 +94,19 @@
 |:-------------------------------------------------------------------------------------------:|:---------------------------------------------------------------------------------------:|
 | <img src="https://cdn.jsdelivr.net/gh/ltayshark0637/dsh-Shutdown-Guard@main/docs/screenshots/10-sidebar-hold.png" width="250"> | <img src="https://cdn.jsdelivr.net/gh/ltayshark0637/dsh-Shutdown-Guard@main/docs/screenshots/11-sidebar-fire.png" width="250"> |
 
-卡片目前固定在侧边栏的这个位置。后续计划把它做成可以独立出现的形态（设置里给个开关），届时这里会补充说明。
+卡片默认固定在侧边栏的这个位置；点卡头右侧的按钮可拉成独立悬浮窗口，切到别的会话也看得见（见下方「其他」）。
 
 ## 其他
 
-- **悬浮窗口**：点卡片右上角按钮可把状态面板拉成独立悬浮窗口，切到别的会话也看得见。
+- **悬浮窗口**：点卡片右上角按钮可把状态面板拉成独立悬浮窗口，切到别的会话也看得见。设置里的「悬浮窗简洁模式」默认开启，只留状态与倒计时；关掉后显示完整面板。
 
 - **纵向折叠**：收起只留标题和状态，点标题展开。
 
   <img src="https://cdn.jsdelivr.net/gh/ltayshark0637/dsh-Shutdown-Guard@main/docs/screenshots/16-folded.png" width="250" align="right" alt="折叠态">
 
-- **主题自适应**：卡片自带 `--dsp-*` 调色板，按宿主表面亮度自动取深浅色；也可强制锁定深色 / 浅色 / Claude Style 配色。
+- **主题自适应**：卡片自带 `--dsp-*` 调色板，按宿主表面亮度自动取深浅色；也可强制锁定深色 / 浅色 / Claude Style 配色。设置页则始终跟宿主主题走。
+
+- **语言**：默认「跟随系统」，取 `LC_ALL` / `LC_MESSAGES` / `LANG`，再退到 `Intl` 区域设置，最后回落 `en`；也可固定为中文 / English / Русский。语言与主题的「跟随」状态由宿主持有，换设备不会各存一份。
 
 - **事件日志**：设置页里能看最近的事件与「上次为什么没关机」，完整流水在 `data/events.log`。
 
@@ -110,12 +118,14 @@
 |:---------------------------------------------------------------------------------------------:|:----------------------------------------------------------------------------------------------:|
 | <img src="https://cdn.jsdelivr.net/gh/ltayshark0637/dsh-Shutdown-Guard@main/docs/screenshots/12-settings-dark.png" width="380"> | <img src="https://cdn.jsdelivr.net/gh/ltayshark0637/dsh-Shutdown-Guard@main/docs/screenshots/13-settings-light.png" width="380"> |
 
-分三组：外观 / 何时关机 / 状态。所有开关立即生效。
+分六组：外观 / 配置 / 判定与关机 / 守夜行为 / 通知 / 状态。所有开关立即生效。
 
-- **默认配置**锁定 60 秒不可改；另有 8 个自定义档位可自由调。
-- 「会话都停下来」是底线条件，始终开启，不可关。
-- 「后台任务跑完」挡后台任务，「有会话报错就跳过这一轮」挡出错批次。
-- 「AFK 自动回答」控制武装期间是否替你回复提问；说明里写明「回复不会替你选中任何选项，关闭后提问照常弹给你」。
+- **外观**：卡片样式 A/B/C、主题（跟随 / 深色 / 浅色 / Claude）、默认折叠、悬浮窗简洁模式、界面语言。
+- **配置**：一份默认配置 + 任意多个自定义配置。默认配置锁定 60 秒不可改，设成底线；自定义配置从当前配置复制一份就能改。
+- **判定与关机**：「会话都停下来」是底线条件，始终开启，不可关；「后台任务跑完」挡后台任务，「有会话报错就跳过这一轮」挡出错批次；倒计时时长仅自定义配置可调。
+- **守夜行为**：「AFK 自动回答」控制武装期间是否替你回复提问；说明里写明「回复不会替你选中任何选项，关闭后提问照常弹给你」。
+- **通知**：状态变化通知总开关 + 四类分开关（进入倒计时 / 即将关机 / 首次阻断 / 阻断恢复）；手动武装、解除、取消不提醒。
+- **状态**：当前阻断、上次为什么没关机、最近事件。
 
 ## 浅色与第三方主题
 
@@ -167,16 +177,51 @@ AFK 自动接管开启时，插件会在武装期间替你回答 agent 的提问
 
 ## 配置
 
-写在 `cordis.patch.yml`（插件包内的 patch），或经 `POST /config` 在运行时修改。
+配置分两层：**默认配置**一份，**自定义配置**任意多份。每份配置各自带倒计时时长、两条判定开关、AFK 与四类通知开关。
+
+三处来源，优先级从低到高：
+
+1. `cordis.patch.yml`（插件包内的出厂 patch）
+2. `data/config.json`（运行时持久化，设置页改的东西落在这里）
+3. `POST /config`（运行时改，改动同样落盘）
+
+### 默认配置为什么锁定
+
+默认配置是**所有人的安全底线**：60 秒倒计时、等后台任务、出错跳过，这三条被写死在默认配置里，改不了。理由很实际——
+
+- 60 秒是「看到卡片还能点取消」的最短窗口；调到 10 秒，误关机的代价远大于省下的那一分钟。
+- 默认配置被锁死后，你随时可以把它切回来，不用担心自己上一次调过的参数还在生效。
+- 想改？可以，但必须显式新建一份自定义配置，改的也是那一份，不污染底线。
+
+### 怎么新建自定义配置
+
+设置页 → **配置** → `＋ 新建`：从当前配置复制一份，起个名字（≤24 字），保存即成为当前配置。
+
+- 每份自定义配置都能「设为默认」（之后新会话默认用它）、「重命名」、「删除」。
+- 删除当前正在用的一份会回落到默认配置，删除前会二次确认。
+- 「自定义配置」总开关关掉时，所有自定义配置不可用，运行时一律按默认配置走。
+
+### 配置项
+
+以下键在每份配置里各存一份：
 
 | 键              | 范围   | 默认   | 说明                                      |
 | --------------- | ------ | ------ | ----------------------------------------- |
-| `countdownSec`  | 10–600 | 60     | 关机前倒计时秒数（默认档固定 60，不可改） |
-| `marginSec`     | 0–60   | 5      | 传给 `shutdown /t` 的额外余量             |
+| `countdownSec`  | 10–600 | 60     | 关机前倒计时秒数（默认配置固定 60，不可改） |
 | `onlyOnSuccess` | bool   | `true` | 本批次有会话报错时跳过关机                |
 | `blockOnJobs`   | bool   | `true` | 有运行中的后台任务时跳过关机              |
 | `afkAutoAnswer` | bool   | `true` | 武装期间替用户回答提问、做错误恢复        |
-| `language`      | 枚举   | `auto` | 界面语言；`auto` 跟随系统语言，也可固定为 `zh` / `en` / `ru` |
+| `notify`        | 对象   | 全 `true` | 四类通知开关：`countdown` / `fired` / `blocked` / `recovered` |
+
+全局（不属于某份配置）：
+
+| 键        | 范围   | 默认   | 说明 |
+| --------- | ------ | ------ | ---- |
+| `language` | 枚举  | `auto` | 界面语言；`auto` 跟随系统语言（`LC_ALL` / `LC_MESSAGES` / `LANG` → `Intl` → `en`），也可固定为 `zh` / `en` / `ru` |
+| `customEnabled` | bool | `false` | 是否允许使用自定义配置 |
+| `activeProfileId` | string | `default` | 当前生效的配置 id |
+
+此外 `marginSec`（0–60，默认 5）用于给 `shutdown /t` 留额外余量。
 
 ### 重试策略
 
@@ -202,7 +247,7 @@ retryPolicies:
 
 未知 `code` 回落 `transient`；形状写错的策略会被丢弃并保留默认值。当前生效的分配可从 `/state` 的 `retryAssign`、`retryPolicies` 读到。
 
-UI 偏好存在浏览器 `localStorage`：`dsh-shutdown-guard.variant` / `.theme` / `.folded`。
+**偏好存在哪**：卡片样式 / 主题 / 折叠属于纯界面偏好，存在浏览器 `localStorage`（`dsh-shutdown-guard.variant` / `.theme` / `.folded`）；悬浮窗简洁模式与四类通知开关由宿主持有（`data/ui.json`）；语言与配置项落在 `data/config.json`。
 
 ## HTTP 接口
 

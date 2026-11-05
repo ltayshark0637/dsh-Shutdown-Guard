@@ -1,10 +1,12 @@
 # Renders every docs/screenshots/*.html into its own PNG using headless Edge.
 #
 #   powershell -NoProfile -ExecutionPolicy Bypass -File scripts/screenshot.ps1
-#   powershell ... -File scripts/screenshot.ps1 -Filter '02-armed.*.html'   # 只渲一批
+#   powershell ... -File scripts/screenshot.ps1 -Filter '02-armed.*.html'   # one batch only
 #
-# 语言由 gen-gallery.cjs 决定：`node scripts/gen-gallery.cjs --lang all` 会为
-# zh/en/ru 各写一套 <name>.<lang>.html，本脚本按文件名原样输出 <name>.<lang>.png。
+# Which language a page carries is decided by gen-gallery.cjs:
+#   node scripts/gen-gallery.cjs --lang all       -> <name>.<lang>.html for zh/en/ru
+#   node scripts/gen-gallery.cjs --matrix         -> 18 pages, <nn>-armed-<variant>-<lang>-<theme>
+# This script writes <same-name>.png next to each page.
 #
 # Two details make this reproducible:
 #  * each run gets a throwaway user-data-dir; reusing the default profile makes
@@ -23,8 +25,11 @@ $edge = 'C:\Program Files (x86)\Microsoft\Edge\Application\msedge.exe'
 if (-not (Test-Path $edge)) { throw "Edge not found at $edge" }
 
 # Oversized on purpose: Trim-Png cuts it down to the ink.
+# The settings page has six groups and a profile list that grows with the number
+# of custom profiles, so its window is tall; Trim only crops transparency and
+# will not add height back.
 function Get-Size($name) {
-  if ($name -like '*settings*') { return @(760, 1640) }
+  if ($name -like '*settings*') { return @(760, 2600) }
   if ($name -like '*sidebar*') { return @(420, 660) }
   return @(430, 380)
 }
