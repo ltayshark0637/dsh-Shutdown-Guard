@@ -938,6 +938,15 @@ assert.strictEqual(routes.size, 0, 'disposer removes HTTP routes')
   body = JSON.parse(res.body)
   assert.deepStrictEqual(body.profiles.map((p) => p.id), ['default', 'c1', 'c3', 'c2'], 'a new profile reuses the freed id')
   dispose6()
+
+  // The re-created profile still has every default value, yet it must survive a
+  // restart: labelAuto=false marks it as user-made rather than a leftover slot.
+  const dispose7 = apply(ctx, { countdownSec: 10, marginSec: 5, onlyOnSuccess: true, language: 'zh' })
+  res = await request('GET', '/api/dsh-shutdown-guard/state')
+  body = JSON.parse(res.body)
+  assert.deepStrictEqual(body.profiles.map((p) => p.id), ['default', 'c1', 'c3', 'c2'], 'a created profile survives a restart even at default values')
+  assert.strictEqual(body.profiles.find((p) => p.id === 'c2').labelAuto, false, 'a created profile is marked as user-made')
+  dispose7()
   calls.push('profile-prune-ok')
 }
 
