@@ -18,6 +18,10 @@
   var CHEV =
     '<svg class="dsp-chev" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><path d="M6 9l6 6 6-6"/></svg>'
 
+  // Same "open in a window" glyph the card uses (lib/client.js FLOAT_ICON).
+  var FLOAT_ICON =
+    '<svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="3" y="5" width="18" height="14" rx="2"/><path d="M3 9h18"/></svg>'
+
   var RINGS = (function () {
     var out = ''
     for (var k = 0; k < 9; k++) {
@@ -46,7 +50,7 @@
   function hudHtml(s) {
     var v = s.view
     var jobs = s.jobs || 0
-    var agent = s.agent || 0
+    var agent = runCount(s)
     if (v === 'blocked') {
       return '<b>' + (s.blocked === 'waiting' ? 'Retrying' : 'Paused') + '</b><span>' +
         T(s.blocked === 'waiting' ? 'card.hud.retry' : 'card.hud.manual') + '</span>'
@@ -62,7 +66,7 @@
   function aText(s) {
     var v = s.view
     var jobs = s.jobs || 0
-    var agent = s.agent || 0
+    var agent = runCount(s)
     if (v === 'blocked') {
       return [
         T('card.a.blocked.' + s.blocked + '.big'),
@@ -82,7 +86,7 @@
   }
 
   // Variant C: terminal lines, LEDs and the footer string.
-  function cL2(s) { return 'jobs ' + (s.jobs || 0) + ' · agent ' + (s.agent || 0) }
+  function cL2(s) { return 'jobs ' + (s.jobs || 0) + ' · agent ' + runCount(s) }
 
   function cL3(s) {
     var v = s.view
@@ -96,7 +100,7 @@
 
   function ledState(s) {
     var v = s.view
-    return [v !== 'off', true, (s.agent || 0) === 0, (s.jobs || 0) === 0, v !== 'blocked', v === 'fire']
+    return [v !== 'off', true, runCount(s) === 0, (s.jobs || 0) === 0, v !== 'blocked', v === 'fire']
   }
 
   function cCode(s) {
@@ -124,6 +128,17 @@
     return cache[i]
   }
 
+  // Radar dots follow lib/client.js: one run dot per *running* agent (a root
+  // session plus the sub-agents it spawned all count as agents), capped at
+  // DOT_CAP with a "+N" badge, and one dot per background job. `agentTotal` is
+  // the inventory behind the dots (running + spawned-and-idle) and only feeds
+  // the aria-label, exactly like `snap.agentTotal` does in the card.
+  var DOT_CAP = 12
+
+  function runCount(s) {
+    return Math.max(0, Number(s.agent) || 0)
+  }
+
   function dotMarkup(kind, n) {
     var out = ''
     for (var i = 0; i < n; i++) {
@@ -134,13 +149,19 @@
     return out
   }
 
+  function plusMarkup(s) {
+    var over = runCount(s) - DOT_CAP
+    return over > 0 ? '<span class="dsp-rplus" aria-hidden="true">+' + over + '</span>' : ''
+  }
+
   function dots(s) {
-    return dotMarkup('job', Math.min(s.jobs || 0, 9)) + dotMarkup('run', Math.min(s.agent || 0, 9))
+    return dotMarkup('job', Math.max(0, s.jobs || 0)) +
+      dotMarkup('run', Math.min(runCount(s), DOT_CAP)) + plusMarkup(s)
   }
 
   // Add or remove only the difference; the surviving nodes keep their identity.
   function syncDots(wrap, s) {
-    var wanted = { job: Math.min(s.jobs || 0, 9), run: Math.min(s.agent || 0, 9) }
+    var wanted = { job: Math.max(0, s.jobs || 0), run: Math.min(runCount(s), DOT_CAP) }
     Object.keys(wanted).forEach(function (kind) {
       var nodes = wrap.querySelectorAll('.dsp-rdot-' + kind)
       var n = wanted[kind]
@@ -156,6 +177,19 @@
         nodes[j].parentNode.removeChild(nodes[j])
       }
     })
+    var plus = wrap.querySelector('.dsp-rplus')
+    if (plus) plus.parentNode.removeChild(plus)
+    var over = runCount(s) - DOT_CAP
+    if (over > 0) {
+      var badge = document.createElement('span')
+      badge.className = 'dsp-rplus'
+      badge.setAttribute('aria-hidden', 'true')
+      badge.textContent = '+' + over
+      wrap.appendChild(badge)
+    }
+    var total = Math.max(runCount(s), Number(s.agentTotal) || 0)
+    wrap.setAttribute('role', 'img')
+    wrap.setAttribute('aria-label', T('radar.aria', { total: total, running: runCount(s) }))
   }
 
   function bodyHtml(s) {
@@ -237,8 +271,13 @@
     var v = s.view
     return '<div class="dsp-card" data-state="' + v + '" data-variant="' + (s.variant || 'A') +
       '" data-lum="dark" data-retry="' + ((v === 'blocked' && s.blocked === 'waiting') ? '1' : '0') + '">' +
-      '<div class="dsp-chead"><i class="dsp-live"></i><span class="dsp-ctitle">' + esc(T('card.title')) + '</span>' +
+      // Same split as lib/client.js: the float button sits beside the fold
+      // header, never inside it — the header is one click target.
+      '<div class="dsp-hrow">' +
+      '<div class="dsp-chead" role="button" tabindex="0"><i class="dsp-live"></i><span class="dsp-ctitle">' + esc(T('card.title')) + '</span>' +
       '<span class="dsp-tag">' + tagOf(s) + '</span>' + CHEV + '</div>' +
+      '<button type="button" class="dsp-float" data-act="float" title="' + esc(T('card.float')) + '" aria-label="' + esc(T('card.float')) + '">' + FLOAT_ICON + '</button>' +
+      '</div>' +
       bodyHtml(s) +
       '<div class="dsp-cbtns">' + buttonOf(s) + '</div>' +
       '<div class="dsp-hazard"></div></div>'
@@ -269,7 +308,7 @@
   var TICK_MS = 1100      // how fast jobs/sessions drain
   var BLOCK_ODDS = 0.06   // per tick, only while detecting
 
-  var state = { variant: 'A', view: 'off', blocked: null, jobs: 0, agent: 0, sec: 0, phase: 'idle', btnHint: false }
+  var state = { variant: 'A', view: 'off', blocked: null, jobs: 0, agent: 0, agentTotal: 0, sec: 0, phase: 'idle', btnHint: false }
   var showVariant = 'A'
   var ticker = null
   var counter = null
@@ -388,8 +427,19 @@
   // ---------------------------------------------------------------- steps
   function randomize() {
     stopAll()
-    state.jobs = 2 + rnd(7)          // 2..8 background jobs
-    state.agent = 1 + rnd(6)         // 1..6 running sessions
+    // One in ten rolls is a "team" scene: more agents than the radar can draw,
+    // so the +N badge shows up instead of a field of overlapping dots.
+    if (Math.random() < 0.1) {
+      state.jobs = 1 + rnd(3)
+      state.agent = DOT_CAP + 1 + rnd(3)
+      state.agentTotal = state.agent + 2
+    } else {
+      state.jobs = 2 + rnd(7)          // 2..8 background jobs
+      state.agent = 1 + rnd(6)         // 1..6 running agents
+      // A root session plus the sub-agents it spawned: `agentTotal` is the
+      // inventory behind the dots and only feeds the aria-label.
+      state.agentTotal = state.agent + (Math.random() < 0.35 ? 1 + rnd(2) : 0)
+    }
     state.view = 'off'
     state.blocked = null
     state.sec = 0
@@ -569,6 +619,7 @@
       else arm()
     } else if (act === 'cancel') cancelCountdown()
     else if (act === 'retry') retryHalted()
+    else if (act === 'float') log('log.float', null, 'armed')
     else if (act === 'disarm') disarm()
   }
 
@@ -578,7 +629,7 @@
   var SHOW_STATES = ['off', 'armed', 'hold', 'fire', 'fired', 'blocked']
 
   function showcaseSpec(view) {
-    if (view === 'hold') return { view: 'hold', jobs: 2, agent: 3 }
+    if (view === 'hold') return { view: 'hold', jobs: 2, agent: 3, agentTotal: 4 }
     if (view === 'fire') return { view: 'fire', sec: 42 }
     if (view === 'blocked') return { view: 'blocked', blocked: 'halted' }
     return { view: view }
@@ -588,9 +639,9 @@
     var host = document.getElementById('show-variants')
     if (!host) return
     host.innerHTML = ['A', 'B', 'C'].map(function (v) {
-      var s = v === 'A' ? { view: 'hold', jobs: 2, agent: 3 }
+      var s = v === 'A' ? { view: 'hold', jobs: 2, agent: 3, agentTotal: 4 }
         : v === 'B' ? { view: 'armed' }
-          : { view: 'armed', jobs: 2, agent: 3 }
+          : { view: 'armed', jobs: 2, agent: 3, agentTotal: 3 }
       s.variant = v
       return '<div class="cell">' + card(s) + '<span class="cell-cap"><b>' + v + ' · ' +
         esc(T('var.' + v + '.name')) + '</b>' +
@@ -603,8 +654,8 @@
   // (not screenshots) so the sidebar chrome and the card follow the language.
   function fillSidebars() {
     ;[
-      ['card-slot-hold', { view: 'hold', jobs: 2, agent: 3 }],
-      ['card-slot-fire', { view: 'fire', sec: 42, jobs: 0, agent: 0 }],
+      ['card-slot-hold', { view: 'hold', jobs: 2, agent: 3, agentTotal: 4 }],
+      ['card-slot-fire', { view: 'fire', sec: 42, jobs: 0, agent: 0, agentTotal: 0 }],
     ].forEach(function (pair) {
       var host = document.getElementById(pair[0])
       if (!host) return
@@ -722,14 +773,57 @@
         renderStates()
         renderLog()
         fillSidebars()
+        syncThumbs()
+      })
+    }
+
+    // The settings mock is static, but its thumbnails are per-language files:
+    // variant-<v>-<lang>-dark.png, the same 18 renders the panel inlines.
+    function syncThumbs() {
+      var imgs = document.querySelectorAll('img[data-thumb]')
+      for (var i = 0; i < imgs.length; i++) {
+        imgs[i].src = '../assets/variant-' + imgs[i].getAttribute('data-thumb') + '-' + LANG + '-dark.png'
+      }
+    }
+
+    function wireSettingsTabs() {
+      var bar = document.getElementById('demo-tabs')
+      if (!bar) return
+      // The product measures the pill with getBoundingClientRect(); the four tabs
+      // here are equal-width, so a calc() keeps the pill under the active one.
+      function movePill(index) {
+        var w = 'calc((100% - 4px) / 4)'
+        bar.style.setProperty('--tab-w', w)
+        bar.style.setProperty('--tab-h', '32px')
+        bar.style.setProperty('--tab-y', '2px')
+        bar.style.setProperty('--tab-x', index === 0 ? '2px' : 'calc(2px + ' + index + ' * (' + w + ' + 2px))')
+      }
+      movePill(0)
+      bar.addEventListener('click', function (e) {
+        var btn = e.target.closest('.dsp-tab')
+        if (!btn || !bar.contains(btn)) return
+        var id = btn.getAttribute('data-tab')
+        var tabs = bar.querySelectorAll('.dsp-tab')
+        for (var i = 0; i < tabs.length; i++) {
+          var on = tabs[i] === btn
+          tabs[i].classList.toggle('on', on)
+          tabs[i].setAttribute('aria-selected', on ? 'true' : 'false')
+          if (on) movePill(i)
+        }
+        var panes = document.querySelectorAll('.dsp-tabpanel[data-pane]')
+        for (var j = 0; j < panes.length; j++) {
+          panes[j].hidden = panes[j].getAttribute('data-pane') !== id
+        }
       })
     }
 
     renderVariants()
     renderStates()
     fillSidebars()
+    syncThumbs()
+    wireSettingsTabs()
 
-    state = { variant: 'A', view: 'off', blocked: null, jobs: 0, agent: 0, sec: 0, phase: 'idle', btnHint: false }
+    state = { variant: 'A', view: 'off', blocked: null, jobs: 0, agent: 0, agentTotal: 0, sec: 0, phase: 'idle', btnHint: false }
     paint()
     log('log.boot', null, 'armed')
 

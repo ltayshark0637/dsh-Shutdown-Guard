@@ -1,6 +1,6 @@
-/* Interactive demo page — same visual language as the README banner:
+﻿/* Interactive demo page 鈥?same visual language as the README banner:
    one continuous wash, faint grid, film grain, amber eyebrow, hazard rule.
-   Two panes share the hero: 了解 (what the plugin does) and 试一试 (playground). */
+   Two panes share the hero: 浜嗚В (what the plugin does) and 璇曚竴璇?(playground). */
 
 * { box-sizing: border-box }
 
@@ -473,7 +473,7 @@ h1 em { font-style: normal; color: #f0a83a }
   82% { transform: translateY(0) }
 }
 
-/* primary action — the one thing we want people to click */
+/* primary action 鈥?the one thing we want people to click */
 .roll {
   appearance: none;
   display: block;
@@ -518,7 +518,7 @@ h1 em { font-style: normal; color: #f0a83a }
 .now.tone-fire b { color: #ef5350 }
 .now.tone-armed b { color: #f0a83a }
 
-/* log — a fixed-height window that scrolls; newest lines land at the bottom */
+/* log 鈥?a fixed-height window that scrolls; newest lines land at the bottom */
 .log {
   margin: 0;
   padding: 0;
@@ -684,7 +684,7 @@ h1 em { font-style: normal; color: #f0a83a }
 }
 
 /* ---------------------------------------------------------------- showcase */
-/* 了解 pane renders real cards here, so the states read as the product rather
+/* 浜嗚В pane renders real cards here, so the states read as the product rather
    than as screenshots of it. */
 .strip .cell { min-width: 0 }
 .strip .cell .dsp-card { width: 100% }
@@ -740,7 +740,7 @@ h1 em { font-style: normal; color: #f0a83a }
   color: #f0a83a;
 }
 
-/* the arrow that points at the card until 武装 is clicked */
+/* the arrow that points at the card until 姝﹁ is clicked */
 .armhint {
   display: flex;
   align-items: center;
@@ -778,7 +778,7 @@ h1 em { font-style: normal; color: #f0a83a }
 
 .stop:hover { color: #faf9f5; border-color: rgba(255, 255, 255, .22) }
 
-/* the 武装 button pulses while the demo waits for that click */
+/* the 姝﹁ button pulses while the demo waits for that click */
 .dsp-btn-hint {
   animation: arm-pulse 1.9s ease-in-out infinite;
 }
@@ -799,7 +799,7 @@ h1 em { font-style: normal; color: #f0a83a }
 
 .stop:disabled:hover { color: #7d7b72; border-color: rgba(255, 255, 255, .08) }
 /* ---------------------------------------------------------------- cta */
-/* One loud button at the end of the 了解 pane, pointing at the playground. */
+/* One loud button at the end of the 浜嗚В pane, pointing at the playground. */
 .cta {
   display: flex;
   align-items: center;
@@ -909,3 +909,41 @@ h1 em { font-style: normal; color: #f0a83a }
   .repo-link span { display: none }
   .repo-link svg { width: 15px }
 }
+/* ---- 08 settings mock ------------------------------------------------- */
+/* The panel is the product's own markup, so it only needs the alias tokens the
+   sidebar normally supplies plus a phone-width frame to sit in. */
+.setWrap {
+  width: 432px;
+  max-width: 100%;
+  margin: 18px auto 0;
+  padding: 16px 14px 20px;
+  border-radius: 16px;
+  border: .5px solid rgba(232, 230, 227, .16);
+  background: #1a1a19;
+  color: #e8e6e3;
+  --dsw-alias-bg-layer-1: #1a1a19;
+  --dsw-alias-bg-overlay: #242422;
+  --dsw-alias-label-primary: #f4f4f5;
+  --dsw-alias-label-secondary: #b0aea5;
+  --dsw-alias-label-tertiary: #8f8d84;
+  --dsw-alias-border-l2: rgba(232, 230, 227, .18);
+  --dsw-alias-brand-primary: #d97757;
+  --dsw-specific-selector: rgba(232, 230, 227, .10);
+  --dsw-alias-button-primary-fill: #f5a623;
+}
+.setWrap .dsp-tabs::before {
+  --tab-x: 2px;
+  --tab-y: 2px;
+  --tab-w: calc((100% - 4px) / 4);
+  --tab-h: 32px;
+  opacity: 1;
+  background: var(--dsw-alias-bg-overlay);
+}
+.setWrap .dsp-tabpanel { margin-top: 10px }
+.setWrap .dsp-thumb { height: auto; padding: 0 }
+.setWrap .dsp-thumb-img { display: block; width: 100%; height: auto }
+.setWrap .dsp-sval { color: var(--dsw-alias-label-tertiary); font-size: 12px; line-height: 18px }
+.setWrap .dsp-sacts { display: flex; gap: 10px; margin-left: 2px }
+.setWrap .dsp-slink { display: inline-block; width: auto; height: auto; padding: 0 6px; color: var(--dsw-alias-label-secondary); font-size: 12px; line-height: 18px }
+.setWrap .dsp-srow-new { justify-content: flex-end; color: var(--dsw-alias-label-secondary); font-size: 12px }
+.setWrap .dsp-sgroup-box + .dsp-sgroup-box { margin-top: 6px }

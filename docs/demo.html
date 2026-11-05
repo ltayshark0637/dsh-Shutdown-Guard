@@ -4,9 +4,9 @@
 <title data-i18n="meta.title">Shutdown Guard · 任务完成后自动关机</title>
 <meta name="description" content="任务完成后自动关机 —— 侧边栏守夜卡片。三种外观、六种状态，可在这里直接试。" data-i18n-content="meta.desc">
 <style>
-/* Interactive demo page — same visual language as the README banner:
+﻿/* Interactive demo page 鈥?same visual language as the README banner:
    one continuous wash, faint grid, film grain, amber eyebrow, hazard rule.
-   Two panes share the hero: 了解 (what the plugin does) and 试一试 (playground). */
+   Two panes share the hero: 浜嗚В (what the plugin does) and 璇曚竴璇?(playground). */
 
 * { box-sizing: border-box }
 
@@ -479,7 +479,7 @@ h1 em { font-style: normal; color: #f0a83a }
   82% { transform: translateY(0) }
 }
 
-/* primary action — the one thing we want people to click */
+/* primary action 鈥?the one thing we want people to click */
 .roll {
   appearance: none;
   display: block;
@@ -524,7 +524,7 @@ h1 em { font-style: normal; color: #f0a83a }
 .now.tone-fire b { color: #ef5350 }
 .now.tone-armed b { color: #f0a83a }
 
-/* log — a fixed-height window that scrolls; newest lines land at the bottom */
+/* log 鈥?a fixed-height window that scrolls; newest lines land at the bottom */
 .log {
   margin: 0;
   padding: 0;
@@ -690,7 +690,7 @@ h1 em { font-style: normal; color: #f0a83a }
 }
 
 /* ---------------------------------------------------------------- showcase */
-/* 了解 pane renders real cards here, so the states read as the product rather
+/* 浜嗚В pane renders real cards here, so the states read as the product rather
    than as screenshots of it. */
 .strip .cell { min-width: 0 }
 .strip .cell .dsp-card { width: 100% }
@@ -746,7 +746,7 @@ h1 em { font-style: normal; color: #f0a83a }
   color: #f0a83a;
 }
 
-/* the arrow that points at the card until 武装 is clicked */
+/* the arrow that points at the card until 姝﹁ is clicked */
 .armhint {
   display: flex;
   align-items: center;
@@ -784,7 +784,7 @@ h1 em { font-style: normal; color: #f0a83a }
 
 .stop:hover { color: #faf9f5; border-color: rgba(255, 255, 255, .22) }
 
-/* the 武装 button pulses while the demo waits for that click */
+/* the 姝﹁ button pulses while the demo waits for that click */
 .dsp-btn-hint {
   animation: arm-pulse 1.9s ease-in-out infinite;
 }
@@ -805,7 +805,7 @@ h1 em { font-style: normal; color: #f0a83a }
 
 .stop:disabled:hover { color: #7d7b72; border-color: rgba(255, 255, 255, .08) }
 /* ---------------------------------------------------------------- cta */
-/* One loud button at the end of the 了解 pane, pointing at the playground. */
+/* One loud button at the end of the 浜嗚В pane, pointing at the playground. */
 .cta {
   display: flex;
   align-items: center;
@@ -915,6 +915,45 @@ h1 em { font-style: normal; color: #f0a83a }
   .repo-link span { display: none }
   .repo-link svg { width: 15px }
 }
+/* ---- 08 settings mock ------------------------------------------------- */
+/* The panel is the product's own markup, so it only needs the alias tokens the
+   sidebar normally supplies plus a phone-width frame to sit in. */
+.setWrap {
+  width: 432px;
+  max-width: 100%;
+  margin: 18px auto 0;
+  padding: 16px 14px 20px;
+  border-radius: 16px;
+  border: .5px solid rgba(232, 230, 227, .16);
+  background: #1a1a19;
+  color: #e8e6e3;
+  --dsw-alias-bg-layer-1: #1a1a19;
+  --dsw-alias-bg-overlay: #242422;
+  --dsw-alias-label-primary: #f4f4f5;
+  --dsw-alias-label-secondary: #b0aea5;
+  --dsw-alias-label-tertiary: #8f8d84;
+  --dsw-alias-border-l2: rgba(232, 230, 227, .18);
+  --dsw-alias-brand-primary: #d97757;
+  --dsw-specific-selector: rgba(232, 230, 227, .10);
+  --dsw-alias-button-primary-fill: #f5a623;
+}
+.setWrap .dsp-tabs::before {
+  --tab-x: 2px;
+  --tab-y: 2px;
+  --tab-w: calc((100% - 4px) / 4);
+  --tab-h: 32px;
+  opacity: 1;
+  background: var(--dsw-alias-bg-overlay);
+}
+.setWrap .dsp-tabpanel { margin-top: 10px }
+.setWrap .dsp-thumb { height: auto; padding: 0 }
+.setWrap .dsp-thumb-img { display: block; width: 100%; height: auto }
+.setWrap .dsp-sval { color: var(--dsw-alias-label-tertiary); font-size: 12px; line-height: 18px }
+.setWrap .dsp-sacts { display: flex; gap: 10px; margin-left: 2px }
+.setWrap .dsp-slink { display: inline-block; width: auto; height: auto; padding: 0 6px; color: var(--dsw-alias-label-secondary); font-size: 12px; line-height: 18px }
+.setWrap .dsp-srow-new { justify-content: flex-end; color: var(--dsw-alias-label-secondary); font-size: 12px }
+.setWrap .dsp-sgroup-box + .dsp-sgroup-box { margin-top: 6px }
+
 </style>
 <style>
 
@@ -1311,6 +1350,94 @@ transition:transform .24s cubic-bezier(.22,.61,.36,1),width .24s cubic-bezier(.2
     <p data-i18n="a7.p2">悬浮窗默认开启简洁模式：去掉页面边框与统计行，只留卡片。外观、主题、语言跟随设置，切换后约一秒内自动重绘；折叠状态不跟随——悬浮窗始终展开。</p>
   </div>
 
+  <div class="sect full">
+  <h2 data-i18n="a8.title">08 设置页</h2>
+  <p data-i18n="a8.p">设置页分成四个标签：外观、守夜、通知、状态。外观页一屏五行、没有组标题；守夜页把「自定义配置」单独摆一行，往下才是配置组与守夜行为组。</p>
+  <div class="setWrap">
+    <div class="dsp-shead">
+      <span class="dsp-shead-title" data-i18n="card.title">任务完成后关机</span>
+      <span class="dsp-shead-links"><span class="dsp-slink" data-i18n="s.head.gh">GitHub</span><span class="dsp-slink" data-i18n="s.head.npm">npm</span></span>
+    </div>
+    <div class="dsp-tabs" id="demo-tabs" role="tablist" data-ready>
+      <button class="dsp-tab on" type="button" role="tab" aria-selected="true" data-tab="look" data-i18n="s.tab.look">外观</button>
+      <button class="dsp-tab" type="button" role="tab" aria-selected="false" data-tab="watch" data-i18n="s.tab.watch">守夜</button>
+      <button class="dsp-tab" type="button" role="tab" aria-selected="false" data-tab="notify" data-i18n="s.tab.notify">通知</button>
+      <button class="dsp-tab" type="button" role="tab" aria-selected="false" data-tab="status" data-i18n="s.tab.status">状态</button>
+    </div>
+
+    <div class="dsp-tabpanel" data-pane="look">
+      <div class="dsp-cards"><button class="dsp-vcard on" type="button" data-vcard="a">
+    <span class="dsp-thumb"><img class="dsp-thumb-img" data-thumb="a" src="../assets/variant-a-zh-dark.png" alt="" decoding="async"></span>
+    <span class="dsp-vcard-label" data-i18n="s.look.a">极简</span></button><button class="dsp-vcard" type="button" data-vcard="b">
+    <span class="dsp-thumb"><img class="dsp-thumb-img" data-thumb="b" src="../assets/variant-b-zh-dark.png" alt="" decoding="async"></span>
+    <span class="dsp-vcard-label" data-i18n="s.look.b">雷达</span></button><button class="dsp-vcard" type="button" data-vcard="c">
+    <span class="dsp-thumb"><img class="dsp-thumb-img" data-thumb="c" src="../assets/variant-c-zh-dark.png" alt="" decoding="async"></span>
+    <span class="dsp-vcard-label" data-i18n="s.look.c">终端</span></button></div>
+      <div class="dsp-srow">
+  <div class="dsp-srow-text"><span class="dsp-stitle" data-i18n="s.look.theme">主题</span></div><span class="dsp-seg"><button class="dsp-segbtn on" type="button" data-i18n="s.theme.auto">跟随</button><button class="dsp-segbtn" type="button" data-i18n="s.theme.dark">深色</button><button class="dsp-segbtn" type="button" data-i18n="s.theme.light">浅色</button><button class="dsp-segbtn" type="button" data-i18n="s.theme.claude">Claude</button></span></div>
+      <div class="dsp-srow">
+  <div class="dsp-srow-text"><span class="dsp-stitle" data-i18n="s.look.fold">默认折叠</span><span class="dsp-sdesc" data-i18n="s.look.foldDesc">折叠后只保留标题和状态。</span></div><span class="dsp-switch" aria-hidden="true"><i></i></span></div>
+      <div class="dsp-srow">
+  <div class="dsp-srow-text"><span class="dsp-stitle" data-i18n="s.look.compact">悬浮窗简洁模式</span><span class="dsp-sdesc" data-i18n="s.look.compactDesc">悬浮窗里隐去底部统计与事件，只留卡片。</span></div><span class="dsp-switch on" aria-hidden="true"><i></i></span></div>
+      <div class="dsp-srow">
+  <div class="dsp-srow-text"><span class="dsp-stitle" data-i18n="s.look.lang">语言</span></div><span class="dsp-seg"><button class="dsp-segbtn on" type="button" data-i18n="s.lang.auto">跟随系统</button><button class="dsp-segbtn" type="button" data-i18n="s.lang.zh">中文</button><button class="dsp-segbtn" type="button" data-i18n="s.lang.en">English</button><button class="dsp-segbtn" type="button" data-i18n="s.lang.ru">Русский</button></span></div>
+    </div>
+
+    <div class="dsp-tabpanel" data-pane="watch" hidden>
+      <div class="dsp-srow dsp-srow-standalone">
+        <div class="dsp-srow-text"><span class="dsp-stitle" data-i18n="s.watch.custom">自定义配置</span>
+          <span class="dsp-sdesc" data-i18n="s.watch.customDesc">正在使用自定义配置，默认配置暂时挂起。</span></div><span class="dsp-switch on" aria-hidden="true"><i></i></span>
+      </div>
+      <div class="dsp-sgroup-box"><div class="dsp-sgroup"><span class="dsp-sgroup-title" data-i18n="s.prof.group">配置</span></div>
+        <div class="dsp-srow">
+  <div class="dsp-srow-text"><span class="dsp-stitle" data-i18n="s.prof.pick">选择配置</span></div><span class="dsp-sval" data-i18n="s.prof.cur">自定义 3（120 秒）</span></div>
+        <div class="dsp-srow">
+  <div class="dsp-srow-text"><span class="dsp-stitle" data-i18n="s.prof.default">默认</span></div><span class="dsp-sval" data-i18n="s.cd.60">60 秒</span></div>
+        <div class="dsp-srow">
+  <div class="dsp-srow-text"><span class="dsp-stitle" data-i18n="s.prof.c1">自定义 1</span></div><span class="dsp-sval" data-i18n="s.cd.90">90 秒</span><span class="dsp-sacts"><span class="dsp-slink" data-i18n="s.prof.setDefault">设为默认</span><span class="dsp-slink" data-i18n="s.prof.rename">重命名</span><span class="dsp-slink" data-i18n="s.prof.del">删除</span></span></div>
+        <div class="dsp-srow dsp-srow-new" data-new><span class="dsp-stitle" data-i18n="s.prof.new">＋ 新建</span></div>
+      </div>
+      <div class="dsp-sgroup-box"><div class="dsp-sgroup"><span class="dsp-sgroup-title" data-i18n="s.watch.group">守夜行为</span></div>
+        <div class="dsp-srow">
+  <div class="dsp-srow-text"><span class="dsp-stitle" data-i18n="s.row.sessions">会话都停下来</span><span class="dsp-sdesc" data-i18n="s.row.sessionsDesc">底线条件，始终开启。</span></div><span class="dsp-sval" data-i18n="s.always">总是开启</span></div>
+        <div class="dsp-srow">
+  <div class="dsp-srow-text"><span class="dsp-stitle" data-i18n="s.row.jobs">后台任务跑完</span><span class="dsp-sdesc" data-i18n="s.row.jobsDesc">有后台任务在跑时，先不下发关机指令。</span></div><span class="dsp-switch on" aria-hidden="true"><i></i></span></div>
+        <div class="dsp-srow">
+  <div class="dsp-srow-text"><span class="dsp-stitle" data-i18n="s.row.errors">有会话报错就跳过这一轮</span><span class="dsp-sdesc" data-i18n="s.row.errorsDesc">只认成功的任务，出过错的批次不关机。</span></div><span class="dsp-switch" aria-hidden="true"><i></i></span></div>
+        <div class="dsp-srow">
+  <div class="dsp-srow-text"><span class="dsp-stitle" data-i18n="s.row.cd">倒计时时长</span><span class="dsp-sdesc" data-i18n="s.row.cdDesc">关机前留出的取消时间，10–600 秒。</span></div><span class="dsp-seg"><button class="dsp-segbtn" type="button" data-i18n="s.cd.30">30 秒</button><button class="dsp-segbtn" type="button" data-i18n="s.cd.60">60 秒</button><button class="dsp-segbtn on" type="button" data-i18n="s.cd.120">2 分钟</button><button class="dsp-segbtn" type="button" data-i18n="s.cd.300">5 分钟</button></span></div>
+      </div>
+    </div>
+
+    <div class="dsp-tabpanel" data-pane="notify" hidden>
+      <div class="dsp-sgroup-box"><div class="dsp-sgroup"><span class="dsp-sgroup-title" data-i18n="s.notify.group">通知</span></div>
+        <div class="dsp-srow">
+  <div class="dsp-srow-text"><span class="dsp-stitle" data-i18n="s.notify.master">状态变化通知</span><span class="dsp-sdesc" data-i18n="s.notify.masterDesc">进入倒计时、即将关机、首次阻断、阻断恢复时各一条。</span></div><span class="dsp-switch on" aria-hidden="true"><i></i></span></div>
+        <div class="dsp-srow">
+  <div class="dsp-srow-text"><span class="dsp-stitle" data-i18n="s.notify.countdown">进入倒计时</span></div><span class="dsp-switch on" aria-hidden="true"><i></i></span></div>
+        <div class="dsp-srow">
+  <div class="dsp-srow-text"><span class="dsp-stitle" data-i18n="s.notify.fired">即将关机</span></div><span class="dsp-switch on" aria-hidden="true"><i></i></span></div>
+        <div class="dsp-srow">
+  <div class="dsp-srow-text"><span class="dsp-stitle" data-i18n="s.notify.blocked">首次阻断</span></div><span class="dsp-switch on" aria-hidden="true"><i></i></span></div>
+        <div class="dsp-srow">
+  <div class="dsp-srow-text"><span class="dsp-stitle" data-i18n="s.notify.recovered">阻断恢复</span></div><span class="dsp-switch" aria-hidden="true"><i></i></span></div>
+      </div>
+    </div>
+
+    <div class="dsp-tabpanel" data-pane="status" hidden>
+      <div class="dsp-sgroup-box"><div class="dsp-sgroup"><span class="dsp-sgroup-title" data-i18n="s.status.group">状态</span></div>
+        <div class="dsp-srow">
+  <div class="dsp-srow-text"><span class="dsp-stitle" data-i18n="s.status.blocked">当前阻断</span></div><span class="dsp-sval" data-i18n="s.status.blockedV">外部服务暂不可用，插件会自动重试。</span></div>
+        <div class="dsp-srow">
+  <div class="dsp-srow-text"><span class="dsp-stitle" data-i18n="s.status.last">上次为什么没关机</span></div><span class="dsp-sval" data-i18n="s.status.lastV">还有 2 个后台任务在运行，暂不关机。</span></div>
+        <div class="dsp-srow">
+  <div class="dsp-srow-text"><span class="dsp-stitle" data-i18n="s.status.log">事件日志</span></div><span class="dsp-sval" data-i18n="s.status.logV">最近 4 条，完整记录在插件 data/events.log。</span></div>
+      </div>
+    </div>
+  </div>
+  <p data-i18n="a8.p2">新装只有一份「默认配置」，想要第二份时点「＋ 新建」。关掉「自定义配置」再打开，会回到上次用的那份；那份已被删除就停在默认配置。升级时从未动过的空槽会被清掉，改过名或动过任一开关的都会保留。</p>
+</div>
+
   <div class="install full">
     <span data-i18n="install.text">设置 → 插件 → 添加，填<b>插件目录的绝对路径</b> → 安装 → 重启 DSH。客户端的 bundle 只在启动时编入模块图，改完代码必须重启，刷新页面无效。</span>
     <span class="go"><a href="https://github.com/ltayshark0637/dsh-Shutdown-Guard" data-i18n="install.link">完整说明在 GitHub →</a></span>
@@ -1558,6 +1685,8 @@ transition:transform .24s cubic-bezier(.22,.61,.36,1),width .24s cubic-bezier(.2
       'colophon.note': '演示页 · 数据全部本地随机，不联网',
 
       'card.title': '任务完成后关机',
+      'card.float': '悬浮窗口',
+      'radar.aria': '{total} 个 agent，其中 {running} 个在运行',
       'card.arm': '武装',
       'card.cancel': '取消关机',
       'card.retry': '解除并重试',
@@ -1615,6 +1744,7 @@ transition:transform .24s cubic-bezier(.22,.61,.36,1),width .24s cubic-bezier(.2
       'log.rolled': '随机成功：{jobs} 个后台任务、{agent} 个会话在跑',
       'log.hintArm': '点卡片上的「武装」开始检测',
       'log.armFirst': '先点「随机一个场景」',
+      'log.float': '真实插件里，这个按钮会把状态面板拉成独立悬浮窗口；演示页不弹新窗口。',
       'log.armed': '已武装，开始检测：等所有任务结束再关机',
       'log.jobDone': '一个后台任务结束，还剩 {n} 个',
       'log.agentDone': '一个会话结束，还剩 {n} 个',
@@ -1628,6 +1758,73 @@ transition:transform .24s cubic-bezier(.22,.61,.36,1),width .24s cubic-bezier(.2
       'log.disarmed': '已解除，停止检测',
       'log.retryResumed': '已解除阻断，继续检测',
       'log.variant': '切换外观：{v}',
+
+      'a8.title': '08 设置页',
+      'a8.p': '设置页分成四个标签：外观、守夜、通知、状态。外观页一屏五行、没有组标题；守夜页把「自定义配置」单独摆一行，往下才是配置组与守夜行为组。',
+      'a8.p2': '新装只有一份「默认配置」，想要第二份时点「＋ 新建」。关掉「自定义配置」再打开，会回到上次用的那份；那份已被删除就停在默认配置。升级时从未动过的空槽会被清掉，改过名或动过任一开关的都会保留。',
+      's.head.gh': 'GitHub',
+      's.head.npm': 'npm',
+      's.tab.look': '外观',
+      's.tab.watch': '守夜',
+      's.tab.notify': '通知',
+      's.tab.status': '状态',
+      's.look.a': '极简',
+      's.look.b': '雷达',
+      's.look.c': '终端',
+      's.look.theme': '主题',
+      's.theme.auto': '跟随',
+      's.theme.dark': '深色',
+      's.theme.light': '浅色',
+      's.theme.claude': 'Claude',
+      's.look.fold': '默认折叠',
+      's.look.foldDesc': '折叠后只保留标题和状态。',
+      's.look.compact': '悬浮窗简洁模式',
+      's.look.compactDesc': '悬浮窗里隐去底部统计与事件，只留卡片。',
+      's.look.lang': '语言',
+      's.lang.auto': '跟随系统',
+      's.lang.zh': '中文',
+      's.lang.en': 'English',
+      's.lang.ru': 'Русский',
+      's.watch.custom': '自定义配置',
+      's.watch.customDesc': '正在使用自定义配置，默认配置暂时挂起。',
+      's.prof.group': '配置',
+      's.prof.pick': '选择配置',
+      's.prof.cur': '自定义 3（120 秒）',
+      's.prof.default': '默认',
+      's.prof.c1': '自定义 1',
+      's.prof.setDefault': '设为默认',
+      's.prof.rename': '重命名',
+      's.prof.del': '删除',
+      's.prof.new': '＋ 新建',
+      's.watch.group': '守夜行为',
+      's.row.sessions': '会话都停下来',
+      's.row.sessionsDesc': '底线条件，始终开启。',
+      's.always': '总是开启',
+      's.row.jobs': '后台任务跑完',
+      's.row.jobsDesc': '有后台任务在跑时，先不下发关机指令。',
+      's.row.errors': '有会话报错就跳过这一轮',
+      's.row.errorsDesc': '只认成功的任务，出过错的批次不关机。',
+      's.row.cd': '倒计时时长',
+      's.row.cdDesc': '关机前留出的取消时间，10–600 秒。',
+      's.cd.30': '30 秒',
+      's.cd.60': '60 秒',
+      's.cd.90': '90 秒',
+      's.cd.120': '2 分钟',
+      's.cd.300': '5 分钟',
+      's.notify.group': '通知',
+      's.notify.master': '状态变化通知',
+      's.notify.masterDesc': '进入倒计时、即将关机、首次阻断、阻断恢复时各一条。',
+      's.notify.countdown': '进入倒计时',
+      's.notify.fired': '即将关机',
+      's.notify.blocked': '首次阻断',
+      's.notify.recovered': '阻断恢复',
+      's.status.group': '状态',
+      's.status.blocked': '当前阻断',
+      's.status.blockedV': '外部服务暂不可用，插件会自动重试。',
+      's.status.last': '上次为什么没关机',
+      's.status.lastV': '还有 2 个后台任务在运行，暂不关机。',
+      's.status.log': '事件日志',
+      's.status.logV': '最近 4 条，完整记录在插件 data/events.log。',
     },
 
     en: {
@@ -1737,6 +1934,8 @@ transition:transform .24s cubic-bezier(.22,.61,.36,1),width .24s cubic-bezier(.2
       'colophon.note': 'Demo page · all data is local and random, no network',
 
       'card.title': 'Shut down when done',
+      'card.float': 'Floating window',
+      'radar.aria': '{total} agents, {running} of them running',
       'card.arm': 'Arm',
       'card.cancel': 'Cancel shutdown',
       'card.retry': 'Clear and retry',
@@ -1794,6 +1993,7 @@ transition:transform .24s cubic-bezier(.22,.61,.36,1),width .24s cubic-bezier(.2
       'log.rolled': 'Rolled: {jobs} background jobs, {agent} sessions running',
       'log.hintArm': 'Click “Arm” on the card to start checking',
       'log.armFirst': 'Roll a scenario first',
+      'log.float': 'In the real plugin this button detaches the status panel into a floating window; this demo does not open one.',
       'log.armed': 'Armed, checking: shut down when every task is done',
       'log.jobDone': 'A background job finished — {n} left',
       'log.agentDone': 'A session finished — {n} left',
@@ -1807,6 +2007,73 @@ transition:transform .24s cubic-bezier(.22,.61,.36,1),width .24s cubic-bezier(.2
       'log.disarmed': 'Cleared — checking stopped',
       'log.retryResumed': 'Block cleared — checking again',
       'log.variant': 'Look changed: {v}',
+
+      'a8.title': '08 Settings',
+      'a8.p': 'Settings splits into four tabs: Appearance, Watch, Notifications, Status. Appearance is five rows on one screen with no group headings; Watch puts the custom-profile switch on its own row, then the profiles and the watch rules below it.',
+      'a8.p2': 'A fresh install has one profile, Default; press “＋ New” for a second one. Turning the custom-profile switch off and back on returns to the profile you used last — if that one was deleted, you stay on Default. Upgrading prunes slots you never touched; anything you renamed or flipped a switch on is kept.',
+      's.head.gh': 'GitHub',
+      's.head.npm': 'npm',
+      's.tab.look': 'Appearance',
+      's.tab.watch': 'Watch',
+      's.tab.notify': 'Alerts',
+      's.tab.status': 'Status',
+      's.look.a': 'Minimal',
+      's.look.b': 'Radar',
+      's.look.c': 'Terminal',
+      's.look.theme': 'Theme',
+      's.theme.auto': 'Auto',
+      's.theme.dark': 'Dark',
+      's.theme.light': 'Light',
+      's.theme.claude': 'Claude',
+      's.look.fold': 'Collapsed by default',
+      's.look.foldDesc': 'Keeps just the title and the state.',
+      's.look.compact': 'Compact floating window',
+      's.look.compactDesc': 'Hides the stats and the event log, leaving the card alone.',
+      's.look.lang': 'Language',
+      's.lang.auto': 'Auto',
+      's.lang.zh': '中文',
+      's.lang.en': 'English',
+      's.lang.ru': 'Русский',
+      's.watch.custom': 'Custom profile',
+      's.watch.customDesc': 'A custom profile is in use; Default is on hold.',
+      's.prof.group': 'Profiles',
+      's.prof.pick': 'Active profile',
+      's.prof.cur': 'Custom 3 (120 s)',
+      's.prof.default': 'Default',
+      's.prof.c1': 'Custom 1',
+      's.prof.setDefault': 'Make default',
+      's.prof.rename': 'Rename',
+      's.prof.del': 'Delete',
+      's.prof.new': '＋ New',
+      's.watch.group': 'Watch rules',
+      's.row.sessions': 'All sessions stopped',
+      's.row.sessionsDesc': 'The floor condition; always on.',
+      's.always': 'Always on',
+      's.row.jobs': 'Background jobs finished',
+      's.row.jobsDesc': 'While a job is running, no shutdown command goes out.',
+      's.row.errors': 'Skip a round with errors',
+      's.row.errorsDesc': 'Only clean batches count; a batch that errored never shuts down.',
+      's.row.cd': 'Countdown',
+      's.row.cdDesc': 'Time to cancel before shutdown, 10–600 s.',
+      's.cd.30': '30 s',
+      's.cd.60': '60 s',
+      's.cd.90': '90 s',
+      's.cd.120': '2 min',
+      's.cd.300': '5 min',
+      's.notify.group': 'Alerts',
+      's.notify.master': 'Tell me when the state changes',
+      's.notify.masterDesc': 'One notice each for the countdown, the last call, the first block and the recovery.',
+      's.notify.countdown': 'Countdown starts',
+      's.notify.fired': 'About to shut down',
+      's.notify.blocked': 'First block',
+      's.notify.recovered': 'Block cleared',
+      's.status.group': 'Status',
+      's.status.blocked': 'Blocked right now',
+      's.status.blockedV': 'The external service is down; the plugin retries on its own.',
+      's.status.last': 'Why it did not shut down',
+      's.status.lastV': 'Two background jobs were still running, so it held off.',
+      's.status.log': 'Event log',
+      's.status.logV': 'The last four lines; the full log is in the plugin’s data/events.log.',
     },
 
     ru: {
@@ -1916,6 +2183,8 @@ transition:transform .24s cubic-bezier(.22,.61,.36,1),width .24s cubic-bezier(.2
       'colophon.note': 'Демо-страница · все данные локальны и случайны, без сети',
 
       'card.title': 'Выключить после задач',
+      'card.float': 'Плавающее окно',
+      'radar.aria': 'агентов: {total}, из них работают: {running}',
       'card.arm': 'Включить',
       'card.cancel': 'Отменить выключение',
       'card.retry': 'Снять и повторить',
@@ -1973,6 +2242,7 @@ transition:transform .24s cubic-bezier(.22,.61,.36,1),width .24s cubic-bezier(.2
       'log.rolled': 'Сценарий: фоновых задач {jobs}, сессий {agent}',
       'log.hintArm': 'Нажмите «Включить» на карточке, чтобы начать проверку',
       'log.armFirst': 'Сначала выберите сценарий',
+      'log.float': 'В настоящем плагине эта кнопка выносит панель состояния в плавающее окно; демо новое окно не открывает.',
       'log.armed': 'Режим включён, проверяем: выключение после завершения всех задач',
       'log.jobDone': 'Фоновая задача завершена, осталось: {n}',
       'log.agentDone': 'Сессия завершена, осталось: {n}',
@@ -1986,6 +2256,73 @@ transition:transform .24s cubic-bezier(.22,.61,.36,1),width .24s cubic-bezier(.2
       'log.disarmed': 'Режим снят, проверка остановлена',
       'log.retryResumed': 'Блокировка снята, продолжаем проверку',
       'log.variant': 'Вид изменён: {v}',
+
+      'a8.title': '08 Настройки',
+      'a8.p': 'Настройки разложены по четырём вкладкам: Внешний вид, Дежурство, Уведомления, Состояние. На вкладке вида пять строк на один экран и нет заголовков групп; на вкладке дежурства переключатель своей конфигурации стоит отдельной строкой, ниже идут конфигурации и правила дежурства.',
+      'a8.p2': 'После установки есть одна конфигурация — «По умолчанию», вторая появляется по «＋ Создать». Если выключить свою конфигурацию и включить снова, вернётся та, которой пользовались в прошлый раз; если её удалили — останется конфигурация по умолчанию. При обновлении пустые, ни разу не тронутые слоты вычищаются, а переименованные или с изменёнными переключателями остаются.',
+      's.head.gh': 'GitHub',
+      's.head.npm': 'npm',
+      's.tab.look': 'Вид',
+      's.tab.watch': 'Дежурство',
+      's.tab.notify': 'Уведомления',
+      's.tab.status': 'Состояние',
+      's.look.a': 'Минимал',
+      's.look.b': 'Радар',
+      's.look.c': 'Терминал',
+      's.look.theme': 'Тема',
+      's.theme.auto': 'Как в системе',
+      's.theme.dark': 'Тёмная',
+      's.theme.light': 'Светлая',
+      's.theme.claude': 'Claude',
+      's.look.fold': 'Свёрнуто по умолчанию',
+      's.look.foldDesc': 'Остаются только заголовок и состояние.',
+      's.look.compact': 'Компактное плавающее окно',
+      's.look.compactDesc': 'Прячет статистику и журнал событий, оставляя карточку.',
+      's.look.lang': 'Язык',
+      's.lang.auto': 'Как в системе',
+      's.lang.zh': '中文',
+      's.lang.en': 'English',
+      's.lang.ru': 'Русский',
+      's.watch.custom': 'Своя конфигурация',
+      's.watch.customDesc': 'Сейчас работает своя конфигурация, конфигурация по умолчанию отложена.',
+      's.prof.group': 'Конфигурации',
+      's.prof.pick': 'Активная конфигурация',
+      's.prof.cur': 'Своя 3 (120 с)',
+      's.prof.default': 'По умолчанию',
+      's.prof.c1': 'Своя 1',
+      's.prof.setDefault': 'Сделать основной',
+      's.prof.rename': 'Переименовать',
+      's.prof.del': 'Удалить',
+      's.prof.new': '＋ Создать',
+      's.watch.group': 'Правила дежурства',
+      's.row.sessions': 'Все сессии остановились',
+      's.row.sessionsDesc': 'Базовое условие, включено всегда.',
+      's.always': 'Всегда включено',
+      's.row.jobs': 'Фоновые задачи завершились',
+      's.row.jobsDesc': 'Пока задача идёт, команда на выключение не отправляется.',
+      's.row.errors': 'Пропустить раунд с ошибкой',
+      's.row.errorsDesc': 'Считаются только чистые партии; партия с ошибкой не выключает.',
+      's.row.cd': 'Длительность отсчёта',
+      's.row.cdDesc': 'Время на отмену перед выключением, 10–600 с.',
+      's.cd.30': '30 с',
+      's.cd.60': '60 с',
+      's.cd.90': '90 с',
+      's.cd.120': '2 мин',
+      's.cd.300': '5 мин',
+      's.notify.group': 'Уведомления',
+      's.notify.master': 'Сообщать об изменении состояния',
+      's.notify.masterDesc': 'По одному сообщению на старт отсчёта, последний вызов, первую блокировку и восстановление.',
+      's.notify.countdown': 'Начался отсчёт',
+      's.notify.fired': 'Скоро выключение',
+      's.notify.blocked': 'Первая блокировка',
+      's.notify.recovered': 'Блокировка снята',
+      's.status.group': 'Состояние',
+      's.status.blocked': 'Блокировка сейчас',
+      's.status.blockedV': 'Внешний сервис недоступен, плагин повторяет попытки сам.',
+      's.status.last': 'Почему не выключилось',
+      's.status.lastV': 'Ещё работали две фоновые задачи, поэтому выключение отложено.',
+      's.status.log': 'Журнал событий',
+      's.status.logV': 'Последние четыре строки; полный журнал — в data/events.log плагина.',
     },
   }
 
@@ -2156,6 +2493,10 @@ transition:transform .24s cubic-bezier(.22,.61,.36,1),width .24s cubic-bezier(.2
   var CHEV =
     '<svg class="dsp-chev" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><path d="M6 9l6 6 6-6"/></svg>'
 
+  // Same "open in a window" glyph the card uses (lib/client.js FLOAT_ICON).
+  var FLOAT_ICON =
+    '<svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="3" y="5" width="18" height="14" rx="2"/><path d="M3 9h18"/></svg>'
+
   var RINGS = (function () {
     var out = ''
     for (var k = 0; k < 9; k++) {
@@ -2184,7 +2525,7 @@ transition:transform .24s cubic-bezier(.22,.61,.36,1),width .24s cubic-bezier(.2
   function hudHtml(s) {
     var v = s.view
     var jobs = s.jobs || 0
-    var agent = s.agent || 0
+    var agent = runCount(s)
     if (v === 'blocked') {
       return '<b>' + (s.blocked === 'waiting' ? 'Retrying' : 'Paused') + '</b><span>' +
         T(s.blocked === 'waiting' ? 'card.hud.retry' : 'card.hud.manual') + '</span>'
@@ -2200,7 +2541,7 @@ transition:transform .24s cubic-bezier(.22,.61,.36,1),width .24s cubic-bezier(.2
   function aText(s) {
     var v = s.view
     var jobs = s.jobs || 0
-    var agent = s.agent || 0
+    var agent = runCount(s)
     if (v === 'blocked') {
       return [
         T('card.a.blocked.' + s.blocked + '.big'),
@@ -2220,7 +2561,7 @@ transition:transform .24s cubic-bezier(.22,.61,.36,1),width .24s cubic-bezier(.2
   }
 
   // Variant C: terminal lines, LEDs and the footer string.
-  function cL2(s) { return 'jobs ' + (s.jobs || 0) + ' · agent ' + (s.agent || 0) }
+  function cL2(s) { return 'jobs ' + (s.jobs || 0) + ' · agent ' + runCount(s) }
 
   function cL3(s) {
     var v = s.view
@@ -2234,7 +2575,7 @@ transition:transform .24s cubic-bezier(.22,.61,.36,1),width .24s cubic-bezier(.2
 
   function ledState(s) {
     var v = s.view
-    return [v !== 'off', true, (s.agent || 0) === 0, (s.jobs || 0) === 0, v !== 'blocked', v === 'fire']
+    return [v !== 'off', true, runCount(s) === 0, (s.jobs || 0) === 0, v !== 'blocked', v === 'fire']
   }
 
   function cCode(s) {
@@ -2262,6 +2603,17 @@ transition:transform .24s cubic-bezier(.22,.61,.36,1),width .24s cubic-bezier(.2
     return cache[i]
   }
 
+  // Radar dots follow lib/client.js: one run dot per *running* agent (a root
+  // session plus the sub-agents it spawned all count as agents), capped at
+  // DOT_CAP with a "+N" badge, and one dot per background job. `agentTotal` is
+  // the inventory behind the dots (running + spawned-and-idle) and only feeds
+  // the aria-label, exactly like `snap.agentTotal` does in the card.
+  var DOT_CAP = 12
+
+  function runCount(s) {
+    return Math.max(0, Number(s.agent) || 0)
+  }
+
   function dotMarkup(kind, n) {
     var out = ''
     for (var i = 0; i < n; i++) {
@@ -2272,13 +2624,19 @@ transition:transform .24s cubic-bezier(.22,.61,.36,1),width .24s cubic-bezier(.2
     return out
   }
 
+  function plusMarkup(s) {
+    var over = runCount(s) - DOT_CAP
+    return over > 0 ? '<span class="dsp-rplus" aria-hidden="true">+' + over + '</span>' : ''
+  }
+
   function dots(s) {
-    return dotMarkup('job', Math.min(s.jobs || 0, 9)) + dotMarkup('run', Math.min(s.agent || 0, 9))
+    return dotMarkup('job', Math.max(0, s.jobs || 0)) +
+      dotMarkup('run', Math.min(runCount(s), DOT_CAP)) + plusMarkup(s)
   }
 
   // Add or remove only the difference; the surviving nodes keep their identity.
   function syncDots(wrap, s) {
-    var wanted = { job: Math.min(s.jobs || 0, 9), run: Math.min(s.agent || 0, 9) }
+    var wanted = { job: Math.max(0, s.jobs || 0), run: Math.min(runCount(s), DOT_CAP) }
     Object.keys(wanted).forEach(function (kind) {
       var nodes = wrap.querySelectorAll('.dsp-rdot-' + kind)
       var n = wanted[kind]
@@ -2294,6 +2652,19 @@ transition:transform .24s cubic-bezier(.22,.61,.36,1),width .24s cubic-bezier(.2
         nodes[j].parentNode.removeChild(nodes[j])
       }
     })
+    var plus = wrap.querySelector('.dsp-rplus')
+    if (plus) plus.parentNode.removeChild(plus)
+    var over = runCount(s) - DOT_CAP
+    if (over > 0) {
+      var badge = document.createElement('span')
+      badge.className = 'dsp-rplus'
+      badge.setAttribute('aria-hidden', 'true')
+      badge.textContent = '+' + over
+      wrap.appendChild(badge)
+    }
+    var total = Math.max(runCount(s), Number(s.agentTotal) || 0)
+    wrap.setAttribute('role', 'img')
+    wrap.setAttribute('aria-label', T('radar.aria', { total: total, running: runCount(s) }))
   }
 
   function bodyHtml(s) {
@@ -2375,8 +2746,13 @@ transition:transform .24s cubic-bezier(.22,.61,.36,1),width .24s cubic-bezier(.2
     var v = s.view
     return '<div class="dsp-card" data-state="' + v + '" data-variant="' + (s.variant || 'A') +
       '" data-lum="dark" data-retry="' + ((v === 'blocked' && s.blocked === 'waiting') ? '1' : '0') + '">' +
-      '<div class="dsp-chead"><i class="dsp-live"></i><span class="dsp-ctitle">' + esc(T('card.title')) + '</span>' +
+      // Same split as lib/client.js: the float button sits beside the fold
+      // header, never inside it — the header is one click target.
+      '<div class="dsp-hrow">' +
+      '<div class="dsp-chead" role="button" tabindex="0"><i class="dsp-live"></i><span class="dsp-ctitle">' + esc(T('card.title')) + '</span>' +
       '<span class="dsp-tag">' + tagOf(s) + '</span>' + CHEV + '</div>' +
+      '<button type="button" class="dsp-float" data-act="float" title="' + esc(T('card.float')) + '" aria-label="' + esc(T('card.float')) + '">' + FLOAT_ICON + '</button>' +
+      '</div>' +
       bodyHtml(s) +
       '<div class="dsp-cbtns">' + buttonOf(s) + '</div>' +
       '<div class="dsp-hazard"></div></div>'
@@ -2407,7 +2783,7 @@ transition:transform .24s cubic-bezier(.22,.61,.36,1),width .24s cubic-bezier(.2
   var TICK_MS = 1100      // how fast jobs/sessions drain
   var BLOCK_ODDS = 0.06   // per tick, only while detecting
 
-  var state = { variant: 'A', view: 'off', blocked: null, jobs: 0, agent: 0, sec: 0, phase: 'idle', btnHint: false }
+  var state = { variant: 'A', view: 'off', blocked: null, jobs: 0, agent: 0, agentTotal: 0, sec: 0, phase: 'idle', btnHint: false }
   var showVariant = 'A'
   var ticker = null
   var counter = null
@@ -2526,8 +2902,19 @@ transition:transform .24s cubic-bezier(.22,.61,.36,1),width .24s cubic-bezier(.2
   // ---------------------------------------------------------------- steps
   function randomize() {
     stopAll()
-    state.jobs = 2 + rnd(7)          // 2..8 background jobs
-    state.agent = 1 + rnd(6)         // 1..6 running sessions
+    // One in ten rolls is a "team" scene: more agents than the radar can draw,
+    // so the +N badge shows up instead of a field of overlapping dots.
+    if (Math.random() < 0.1) {
+      state.jobs = 1 + rnd(3)
+      state.agent = DOT_CAP + 1 + rnd(3)
+      state.agentTotal = state.agent + 2
+    } else {
+      state.jobs = 2 + rnd(7)          // 2..8 background jobs
+      state.agent = 1 + rnd(6)         // 1..6 running agents
+      // A root session plus the sub-agents it spawned: `agentTotal` is the
+      // inventory behind the dots and only feeds the aria-label.
+      state.agentTotal = state.agent + (Math.random() < 0.35 ? 1 + rnd(2) : 0)
+    }
     state.view = 'off'
     state.blocked = null
     state.sec = 0
@@ -2707,6 +3094,7 @@ transition:transform .24s cubic-bezier(.22,.61,.36,1),width .24s cubic-bezier(.2
       else arm()
     } else if (act === 'cancel') cancelCountdown()
     else if (act === 'retry') retryHalted()
+    else if (act === 'float') log('log.float', null, 'armed')
     else if (act === 'disarm') disarm()
   }
 
@@ -2716,7 +3104,7 @@ transition:transform .24s cubic-bezier(.22,.61,.36,1),width .24s cubic-bezier(.2
   var SHOW_STATES = ['off', 'armed', 'hold', 'fire', 'fired', 'blocked']
 
   function showcaseSpec(view) {
-    if (view === 'hold') return { view: 'hold', jobs: 2, agent: 3 }
+    if (view === 'hold') return { view: 'hold', jobs: 2, agent: 3, agentTotal: 4 }
     if (view === 'fire') return { view: 'fire', sec: 42 }
     if (view === 'blocked') return { view: 'blocked', blocked: 'halted' }
     return { view: view }
@@ -2726,9 +3114,9 @@ transition:transform .24s cubic-bezier(.22,.61,.36,1),width .24s cubic-bezier(.2
     var host = document.getElementById('show-variants')
     if (!host) return
     host.innerHTML = ['A', 'B', 'C'].map(function (v) {
-      var s = v === 'A' ? { view: 'hold', jobs: 2, agent: 3 }
+      var s = v === 'A' ? { view: 'hold', jobs: 2, agent: 3, agentTotal: 4 }
         : v === 'B' ? { view: 'armed' }
-          : { view: 'armed', jobs: 2, agent: 3 }
+          : { view: 'armed', jobs: 2, agent: 3, agentTotal: 3 }
       s.variant = v
       return '<div class="cell">' + card(s) + '<span class="cell-cap"><b>' + v + ' · ' +
         esc(T('var.' + v + '.name')) + '</b>' +
@@ -2741,8 +3129,8 @@ transition:transform .24s cubic-bezier(.22,.61,.36,1),width .24s cubic-bezier(.2
   // (not screenshots) so the sidebar chrome and the card follow the language.
   function fillSidebars() {
     ;[
-      ['card-slot-hold', { view: 'hold', jobs: 2, agent: 3 }],
-      ['card-slot-fire', { view: 'fire', sec: 42, jobs: 0, agent: 0 }],
+      ['card-slot-hold', { view: 'hold', jobs: 2, agent: 3, agentTotal: 4 }],
+      ['card-slot-fire', { view: 'fire', sec: 42, jobs: 0, agent: 0, agentTotal: 0 }],
     ].forEach(function (pair) {
       var host = document.getElementById(pair[0])
       if (!host) return
@@ -2860,14 +3248,57 @@ transition:transform .24s cubic-bezier(.22,.61,.36,1),width .24s cubic-bezier(.2
         renderStates()
         renderLog()
         fillSidebars()
+        syncThumbs()
+      })
+    }
+
+    // The settings mock is static, but its thumbnails are per-language files:
+    // variant-<v>-<lang>-dark.png, the same 18 renders the panel inlines.
+    function syncThumbs() {
+      var imgs = document.querySelectorAll('img[data-thumb]')
+      for (var i = 0; i < imgs.length; i++) {
+        imgs[i].src = '../assets/variant-' + imgs[i].getAttribute('data-thumb') + '-' + LANG + '-dark.png'
+      }
+    }
+
+    function wireSettingsTabs() {
+      var bar = document.getElementById('demo-tabs')
+      if (!bar) return
+      // The product measures the pill with getBoundingClientRect(); the four tabs
+      // here are equal-width, so a calc() keeps the pill under the active one.
+      function movePill(index) {
+        var w = 'calc((100% - 4px) / 4)'
+        bar.style.setProperty('--tab-w', w)
+        bar.style.setProperty('--tab-h', '32px')
+        bar.style.setProperty('--tab-y', '2px')
+        bar.style.setProperty('--tab-x', index === 0 ? '2px' : 'calc(2px + ' + index + ' * (' + w + ' + 2px))')
+      }
+      movePill(0)
+      bar.addEventListener('click', function (e) {
+        var btn = e.target.closest('.dsp-tab')
+        if (!btn || !bar.contains(btn)) return
+        var id = btn.getAttribute('data-tab')
+        var tabs = bar.querySelectorAll('.dsp-tab')
+        for (var i = 0; i < tabs.length; i++) {
+          var on = tabs[i] === btn
+          tabs[i].classList.toggle('on', on)
+          tabs[i].setAttribute('aria-selected', on ? 'true' : 'false')
+          if (on) movePill(i)
+        }
+        var panes = document.querySelectorAll('.dsp-tabpanel[data-pane]')
+        for (var j = 0; j < panes.length; j++) {
+          panes[j].hidden = panes[j].getAttribute('data-pane') !== id
+        }
       })
     }
 
     renderVariants()
     renderStates()
     fillSidebars()
+    syncThumbs()
+    wireSettingsTabs()
 
-    state = { variant: 'A', view: 'off', blocked: null, jobs: 0, agent: 0, sec: 0, phase: 'idle', btnHint: false }
+    state = { variant: 'A', view: 'off', blocked: null, jobs: 0, agent: 0, agentTotal: 0, sec: 0, phase: 'idle', btnHint: false }
     paint()
     log('log.boot', null, 'armed')
 

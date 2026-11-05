@@ -67,6 +67,87 @@ const langButtons = I18N.DEMO_LANGS.map((lang) =>
   `<button class="tab lang-tab${lang === 'zh' ? ' on' : ''}" type="button" data-lang-btn="${lang}" aria-pressed="${lang === 'zh'}">${I18N.DEMO_LABELS[lang]}</button>`
 ).join('\n      ')
 
+// ---------------------------------------------------------------- settings demo
+// A static copy of the four-tab settings panel. It reuses the product's own
+// classes (.dsp-tabs/.dsp-srow/.dsp-vcard/...), so running gen-gallery keeps the
+// look in sync; only the markup lives here. Nothing in it writes state — the
+// panel in the real sidebar is the one that does.
+const sRow = (titleKey, ctl, descKey) => `<div class="dsp-srow">
+  <div class="dsp-srow-text"><span class="dsp-stitle" data-i18n="${titleKey}">${t(titleKey)}</span>${
+    descKey ? `<span class="dsp-sdesc" data-i18n="${descKey}">${t(descKey)}</span>` : ''
+  }</div>${ctl}</div>`
+
+const sSwitch = (on) => `<span class="dsp-switch${on ? ' on' : ''}" aria-hidden="true"><i></i></span>`
+const sSeg = (keys, onIndex) => `<span class="dsp-seg">${keys.map((k, i) =>
+  `<button class="dsp-segbtn${i === onIndex ? ' on' : ''}" type="button" data-i18n="${k}">${t(k)}</button>`).join('')}</span>`
+const sLink = (key) => `<span class="dsp-slink" data-i18n="${key}">${t(key)}</span>`
+const sVCard = (v, labelKey) => `<button class="dsp-vcard${v === 'a' ? ' on' : ''}" type="button" data-vcard="${v}">
+    <span class="dsp-thumb"><img class="dsp-thumb-img" data-thumb="${v}" src="../assets/variant-${v}-zh-dark.png" alt="" decoding="async"></span>
+    <span class="dsp-vcard-label" data-i18n="${labelKey}">${t(labelKey)}</span></button>`
+
+const settingsDemo = `<div class="sect full">
+  <h2 data-i18n="a8.title">${t('a8.title')}</h2>
+  <p data-i18n="a8.p">${t('a8.p')}</p>
+  <div class="setWrap">
+    <div class="dsp-shead">
+      <span class="dsp-shead-title" data-i18n="card.title">${t('card.title')}</span>
+      <span class="dsp-shead-links"><span class="dsp-slink" data-i18n="s.head.gh">${t('s.head.gh')}</span><span class="dsp-slink" data-i18n="s.head.npm">${t('s.head.npm')}</span></span>
+    </div>
+    <div class="dsp-tabs" id="demo-tabs" role="tablist" data-ready>
+      <button class="dsp-tab on" type="button" role="tab" aria-selected="true" data-tab="look" data-i18n="s.tab.look">${t('s.tab.look')}</button>
+      <button class="dsp-tab" type="button" role="tab" aria-selected="false" data-tab="watch" data-i18n="s.tab.watch">${t('s.tab.watch')}</button>
+      <button class="dsp-tab" type="button" role="tab" aria-selected="false" data-tab="notify" data-i18n="s.tab.notify">${t('s.tab.notify')}</button>
+      <button class="dsp-tab" type="button" role="tab" aria-selected="false" data-tab="status" data-i18n="s.tab.status">${t('s.tab.status')}</button>
+    </div>
+
+    <div class="dsp-tabpanel" data-pane="look">
+      <div class="dsp-cards">${sVCard('a', 's.look.a')}${sVCard('b', 's.look.b')}${sVCard('c', 's.look.c')}</div>
+      ${sRow('s.look.theme', sSeg(['s.theme.auto', 's.theme.dark', 's.theme.light', 's.theme.claude'], 0))}
+      ${sRow('s.look.fold', sSwitch(false), 's.look.foldDesc')}
+      ${sRow('s.look.compact', sSwitch(true), 's.look.compactDesc')}
+      ${sRow('s.look.lang', sSeg(['s.lang.auto', 's.lang.zh', 's.lang.en', 's.lang.ru'], 0))}
+    </div>
+
+    <div class="dsp-tabpanel" data-pane="watch" hidden>
+      <div class="dsp-srow dsp-srow-standalone">
+        <div class="dsp-srow-text"><span class="dsp-stitle" data-i18n="s.watch.custom">${t('s.watch.custom')}</span>
+          <span class="dsp-sdesc" data-i18n="s.watch.customDesc">${t('s.watch.customDesc')}</span></div>${sSwitch(true)}
+      </div>
+      <div class="dsp-sgroup-box"><div class="dsp-sgroup"><span class="dsp-sgroup-title" data-i18n="s.prof.group">${t('s.prof.group')}</span></div>
+        ${sRow('s.prof.pick', `<span class="dsp-sval" data-i18n="s.prof.cur">${t('s.prof.cur')}</span>`)}
+        ${sRow('s.prof.default', `<span class="dsp-sval" data-i18n="s.cd.60">${t('s.cd.60')}</span>`)}
+        ${sRow('s.prof.c1', `<span class="dsp-sval" data-i18n="s.cd.90">${t('s.cd.90')}</span><span class="dsp-sacts">${sLink('s.prof.setDefault')}${sLink('s.prof.rename')}${sLink('s.prof.del')}</span>`)}
+        <div class="dsp-srow dsp-srow-new" data-new><span class="dsp-stitle" data-i18n="s.prof.new">${t('s.prof.new')}</span></div>
+      </div>
+      <div class="dsp-sgroup-box"><div class="dsp-sgroup"><span class="dsp-sgroup-title" data-i18n="s.watch.group">${t('s.watch.group')}</span></div>
+        ${sRow('s.row.sessions', `<span class="dsp-sval" data-i18n="s.always">${t('s.always')}</span>`, 's.row.sessionsDesc')}
+        ${sRow('s.row.jobs', sSwitch(true), 's.row.jobsDesc')}
+        ${sRow('s.row.errors', sSwitch(false), 's.row.errorsDesc')}
+        ${sRow('s.row.cd', sSeg(['s.cd.30', 's.cd.60', 's.cd.120', 's.cd.300'], 2), 's.row.cdDesc')}
+      </div>
+    </div>
+
+    <div class="dsp-tabpanel" data-pane="notify" hidden>
+      <div class="dsp-sgroup-box"><div class="dsp-sgroup"><span class="dsp-sgroup-title" data-i18n="s.notify.group">${t('s.notify.group')}</span></div>
+        ${sRow('s.notify.master', sSwitch(true), 's.notify.masterDesc')}
+        ${sRow('s.notify.countdown', sSwitch(true))}
+        ${sRow('s.notify.fired', sSwitch(true))}
+        ${sRow('s.notify.blocked', sSwitch(true))}
+        ${sRow('s.notify.recovered', sSwitch(false))}
+      </div>
+    </div>
+
+    <div class="dsp-tabpanel" data-pane="status" hidden>
+      <div class="dsp-sgroup-box"><div class="dsp-sgroup"><span class="dsp-sgroup-title" data-i18n="s.status.group">${t('s.status.group')}</span></div>
+        ${sRow('s.status.blocked', `<span class="dsp-sval" data-i18n="s.status.blockedV">${t('s.status.blockedV')}</span>`)}
+        ${sRow('s.status.last', `<span class="dsp-sval" data-i18n="s.status.lastV">${t('s.status.lastV')}</span>`)}
+        ${sRow('s.status.log', `<span class="dsp-sval" data-i18n="s.status.logV">${t('s.status.logV')}</span>`)}
+      </div>
+    </div>
+  </div>
+  <p data-i18n="a8.p2">${t('a8.p2')}</p>
+</div>`
+
 // ---------------------------------------------------------------- pane 1
 const aboutPane = `<div class="about">
 
@@ -142,6 +223,8 @@ const aboutPane = `<div class="about">
     <p data-i18n="a7.p">${t('a7.p')}</p>
     <p data-i18n="a7.p2">${t('a7.p2')}</p>
   </div>
+
+  ${settingsDemo}
 
   <div class="install full">
     <span data-i18n="install.text">${t('install.text')}</span>
