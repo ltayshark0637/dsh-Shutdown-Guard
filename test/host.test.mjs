@@ -763,6 +763,32 @@ assert.strictEqual(res.status, 400, 'the default profile cannot be deleted')
 }
 calls.push('profile-v2-ok')
 
+// 30. Agent totals are wider than the root-only counters: teammates and
+// subagents own their own sessions, so a Team lead can look idle while its
+// children are still running. rootsCount/runningCount keep the old meaning.
+rootAgent.status = 'idle'
+const childAgents = [
+  { id: 'child-1', status: 'running', sessionId: 'session-child-1' },
+  { id: 'child-2', status: 'running', sessionId: 'session-child-2' },
+]
+agents.list = () => [...rootsValue, ...childAgents]
+res = await request('GET', '/api/dsh-shutdown-guard/state')
+body = JSON.parse(res.body)
+assert.strictEqual(body.agentTotal, 3, 'agentTotal counts roots and children')
+assert.strictEqual(body.agentRunningTotal, 2, 'agentRunningTotal counts running children')
+assert.strictEqual(body.rootsCount, 1, 'rootsCount still counts roots only')
+assert.strictEqual(body.runningCount, 0, 'runningCount still counts running roots only')
+calls.push('agent-total-ok')
+
+// 31. A host without agents.list() keeps working: both totals fall back to the
+// root-only counters instead of dropping to zero.
+delete agents.list
+res = await request('GET', '/api/dsh-shutdown-guard/state')
+body = JSON.parse(res.body)
+assert.strictEqual(body.agentTotal, body.rootsCount, 'agentTotal falls back to the root count')
+assert.strictEqual(body.agentRunningTotal, body.runningCount, 'agentRunningTotal falls back to running roots')
+calls.push('agent-total-fallback-ok')
+
 dispose()
 assert.strictEqual(routes.size, 0, 'disposer removes HTTP routes')
 
