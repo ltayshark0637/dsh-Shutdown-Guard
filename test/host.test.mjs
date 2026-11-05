@@ -555,29 +555,30 @@ calls.push('window-page-ok')
 
 // 26. UI preferences live on the host, not in the window's localStorage: both
 // surfaces must agree even when they sit in different storage partitions.
-// Defaults are A / auto / auto plus compact and notify on; a POST replaces only
-// the given fields; an unknown value is rejected instead of silently replaced,
-// and the choice survives a restart through data/ui.json.
+// Defaults are A / auto / auto plus compact on and every notify kind on; a POST
+// replaces only the given fields; an unknown value is rejected instead of
+// silently replaced, and the choice survives a restart through data/ui.json.
+const NOTIFY_ALL = { countdown: true, fired: true, blocked: true, recovered: true }
 res = await request('GET', '/api/dsh-shutdown-guard/state')
-assert.deepStrictEqual(JSON.parse(res.body).ui, { variant: 'A', theme: 'auto', lang: 'auto', compact: true, notify: true }, 'UI defaults are A / auto / auto with compact and notify on')
+assert.deepStrictEqual(JSON.parse(res.body).ui, { variant: 'A', theme: 'auto', lang: 'auto', compact: true, notify: NOTIFY_ALL }, 'UI defaults are A / auto / auto with compact and every notify kind on')
 
 res = await request('POST', '/api/dsh-shutdown-guard/ui', 'http://127.0.0.1:43129', { variant: 'B', theme: 'light', lang: 'ru' })
 assert.strictEqual(res.status, 200, 'a valid UI update is accepted')
-assert.deepStrictEqual(JSON.parse(res.body).ui, { variant: 'B', theme: 'light', lang: 'ru', compact: true, notify: true }, 'the POST response already carries the new UI')
+assert.deepStrictEqual(JSON.parse(res.body).ui, { variant: 'B', theme: 'light', lang: 'ru', compact: true, notify: NOTIFY_ALL }, 'the POST response already carries the new UI')
 
 res = await request('GET', '/api/dsh-shutdown-guard/state')
-assert.deepStrictEqual(JSON.parse(res.body).ui, { variant: 'B', theme: 'light', lang: 'ru', compact: true, notify: true }, '/state reports the stored UI')
+assert.deepStrictEqual(JSON.parse(res.body).ui, { variant: 'B', theme: 'light', lang: 'ru', compact: true, notify: NOTIFY_ALL }, '/state reports the stored UI')
 
 res = await request('POST', '/api/dsh-shutdown-guard/ui', 'http://127.0.0.1:43129', { theme: 'dark' })
 assert.strictEqual(res.status, 200, 'an omitted field is not required')
-assert.deepStrictEqual(JSON.parse(res.body).ui, { variant: 'B', theme: 'dark', lang: 'ru', compact: true, notify: true }, 'omitted fields keep their value')
+assert.deepStrictEqual(JSON.parse(res.body).ui, { variant: 'B', theme: 'dark', lang: 'ru', compact: true, notify: NOTIFY_ALL }, 'omitted fields keep their value')
 
 for (const bad of [{ variant: 'D' }, { theme: 'sepia' }, { lang: 'fr' }]) {
   res = await request('POST', '/api/dsh-shutdown-guard/ui', 'http://127.0.0.1:43129', bad)
   assert.strictEqual(res.status, 400, `unknown value ${JSON.stringify(bad)} is rejected, not silently replaced`)
 }
 res = await request('GET', '/api/dsh-shutdown-guard/state')
-assert.deepStrictEqual(JSON.parse(res.body).ui, { variant: 'B', theme: 'dark', lang: 'ru', compact: true, notify: true }, 'a rejected update leaves the stored UI untouched')
+assert.deepStrictEqual(JSON.parse(res.body).ui, { variant: 'B', theme: 'dark', lang: 'ru', compact: true, notify: NOTIFY_ALL }, 'a rejected update leaves the stored UI untouched')
 
 {
   const fs = await import('node:fs')
@@ -587,7 +588,7 @@ assert.deepStrictEqual(JSON.parse(res.body).ui, { variant: 'B', theme: 'dark', l
   const saved = JSON.parse(fs.readFileSync(pathMod.join(here, '..', 'data', 'ui.json'), 'utf8'))
   assert.deepStrictEqual(
     { variant: saved.variant, theme: saved.theme, lang: saved.lang, compact: saved.compact, notify: saved.notify },
-    { variant: 'B', theme: 'dark', lang: 'ru', compact: true, notify: true },
+    { variant: 'B', theme: 'dark', lang: 'ru', compact: true, notify: NOTIFY_ALL },
     'the UI choice is persisted for the next start',
   )
 }
@@ -620,27 +621,68 @@ res = await request('POST', '/api/dsh-shutdown-guard/ui', 'http://127.0.0.1:4312
 assert.strictEqual(JSON.parse(res.body).ui.compact, true, 'compact can be turned back on')
 calls.push('ui-compact-ok')
 
-// 28. Notify is the same kind of setting: host-held, strict about its type, so
-// the settings row and the window cannot disagree about it.
+// 28. Notify is the same kind of setting but split per transition: the user
+// decides which state changes are worth a system notification. The host stores
+// one object, always complete, and rejects a per-key value of the wrong type
+// instead of guessing which half of a boolean it meant.
 res = await request('GET', '/api/dsh-shutdown-guard/state')
-assert.strictEqual(JSON.parse(res.body).ui.notify, true, 'notify ships on')
+assert.deepStrictEqual(JSON.parse(res.body).ui.notify, NOTIFY_ALL, 'notify ships with every kind on')
+
+res = await request('POST', '/api/dsh-shutdown-guard/ui', 'http://127.0.0.1:43129', { notify: { blocked: false } })
+assert.strictEqual(res.status, 200, 'one notify kind can be turned off')
+assert.deepStrictEqual(JSON.parse(res.body).ui.notify, { countdown: true, fired: true, blocked: false, recovered: true }, 'only the named kind changes')
+assert.strictEqual(JSON.parse(res.body).ui.compact, true, 'turning a notify kind off leaves compact alone')
+res = await request('GET', '/api/dsh-shutdown-guard/state')
+assert.deepStrictEqual(JSON.parse(res.body).ui.notify, { countdown: true, fired: true, blocked: false, recovered: true }, '/state reports the per-kind object')
+
+res = await request('POST', '/api/dsh-shutdown-guard/ui', 'http://127.0.0.1:43129', { notify: { blocked: 'yes' } })
+assert.strictEqual(res.status, 400, 'a non-boolean notify kind is rejected')
+assert.match(String(JSON.parse(res.body).error || ''), /notify\.blocked/, 'the rejection names the offending kind')
+res = await request('GET', '/api/dsh-shutdown-guard/state')
+assert.deepStrictEqual(JSON.parse(res.body).ui.notify, { countdown: true, fired: true, blocked: false, recovered: true }, 'the rejection does not change the stored value')
 
 res = await request('POST', '/api/dsh-shutdown-guard/ui', 'http://127.0.0.1:43129', { notify: false })
-assert.strictEqual(res.status, 200, 'notify can be turned off')
-assert.strictEqual(JSON.parse(res.body).ui.notify, false, 'the POST response carries it')
-assert.strictEqual(JSON.parse(res.body).ui.compact, true, 'turning notify off leaves compact alone')
-res = await request('GET', '/api/dsh-shutdown-guard/state')
-assert.strictEqual(JSON.parse(res.body).ui.notify, false, '/state reports notify')
+assert.strictEqual(res.status, 200, 'a bare boolean still flips every kind at once')
+assert.deepStrictEqual(JSON.parse(res.body).ui.notify, { countdown: false, fired: false, blocked: false, recovered: false }, 'false turns every kind off')
+res = await request('POST', '/api/dsh-shutdown-guard/ui', 'http://127.0.0.1:43129', { notify: { fired: true } })
+assert.deepStrictEqual(JSON.parse(res.body).ui.notify, { countdown: false, fired: true, blocked: false, recovered: false }, 'a later per-kind update merges into the all-off state')
 
-res = await request('POST', '/api/dsh-shutdown-guard/ui', 'http://127.0.0.1:43129', { notify: 'yes' })
-assert.strictEqual(res.status, 400, 'a non-boolean notify is rejected')
-res = await request('GET', '/api/dsh-shutdown-guard/state')
-assert.strictEqual(JSON.parse(res.body).ui.notify, false, 'the rejection does not change the stored value')
+{
+  const fs = await import('node:fs')
+  const pathMod = await import('node:path')
+  const { fileURLToPath } = await import('node:url')
+  const here = pathMod.dirname(fileURLToPath(import.meta.url))
+  const saved = JSON.parse(fs.readFileSync(pathMod.join(here, '..', 'data', 'ui.json'), 'utf8'))
+  assert.deepStrictEqual(saved.notify, { countdown: false, fired: true, blocked: false, recovered: false }, 'the per-kind choice is persisted for the next start')
+}
 
 res = await request('POST', '/api/dsh-shutdown-guard/ui', 'http://127.0.0.1:43129', { notify: true })
-assert.strictEqual(JSON.parse(res.body).ui.notify, true, 'notify can be turned back on')
+assert.deepStrictEqual(JSON.parse(res.body).ui.notify, NOTIFY_ALL, 'true turns every kind back on')
 calls.push('ui-notify-ok')
 dispose()
 assert.strictEqual(routes.size, 0, 'disposer removes HTTP routes')
+
+// 29. Data written by the previous release kept notify as one boolean. Reading
+// it must not lose the user's choice: true means every kind, false means none.
+{
+  const fs = await import('node:fs')
+  const pathMod = await import('node:path')
+  const { fileURLToPath } = await import('node:url')
+  const uiFile = pathMod.join(pathMod.dirname(fileURLToPath(import.meta.url)), '..', 'data', 'ui.json')
+  fs.mkdirSync(pathMod.dirname(uiFile), { recursive: true })
+  fs.writeFileSync(uiFile, JSON.stringify({ version: 1, notify: true }) + '\n', 'utf8')
+  const dispose2 = apply(ctx, { countdownSec: 10, marginSec: 5, onlyOnSuccess: true, language: 'zh' })
+  res = await request('GET', '/api/dsh-shutdown-guard/state')
+  assert.deepStrictEqual(JSON.parse(res.body).ui.notify, NOTIFY_ALL, 'a legacy boolean true is read as every kind on')
+  dispose2()
+
+  fs.writeFileSync(uiFile, JSON.stringify({ version: 1, notify: false }) + '\n', 'utf8')
+  const dispose3 = apply(ctx, { countdownSec: 10, marginSec: 5, onlyOnSuccess: true, language: 'zh' })
+  res = await request('GET', '/api/dsh-shutdown-guard/state')
+  assert.deepStrictEqual(JSON.parse(res.body).ui.notify, { countdown: false, fired: false, blocked: false, recovered: false }, 'a legacy boolean false is read as every kind off')
+
+  dispose3()
+  calls.push('ui-notify-legacy-ok')
+}
 
 console.log('PASS: ' + calls.join(', '))
