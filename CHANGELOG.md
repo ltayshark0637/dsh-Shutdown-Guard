@@ -6,7 +6,7 @@
 - 设置菜单标题跟随宿主语言即时切换：语言一变，设置里的标题立即跟着变，不需要重启 DSH。两条路径都覆盖了——`ctx.locale.register` 注册命名空间（宿主在 locale revision 变化时重读设置台账），以及切换语言后重新注册 `settings.section` 槽位（槽位版本变化时宿主才会重读标签）。语言偏好仍经 `POST /config` 的 `language` 字段写入，权威值落在 `data/config.json`。
 - 卡片文案全部走三语目录（100 键 × 3 语，键集齐平）。**中文界面刻意保留一批英文技术词**：状态方块（`OFF` / `ARMED` / `WAIT` / `FIRE` / `DONE` / `PAUSED`）、雷达 HUD 状态词（`Holding` / `Offline` / `Retrying` …）、终端风命令行（`T-minus` / `holding` / `halted` …）、`shutdown --when idle` 这类命令名；其余说明、计数、按钮、设置页全为中文。英文与俄文界面各自完整翻译，不受这条混排约定影响。
 - 文档：三份 README 补独立悬浮窗口的说明；`docs/screenshots/` 下 20 张截图与 3 段动画（共 23 个文件）按 v1.5.2 重新生成，截图文案改由 `scripts/gen-gallery.cjs` 直接从 `lib/client.js` 的 MSG 目录与内联 CSS 读取，不再手工同步（出图仍走 `scripts/screenshot.ps1`，不手工 P 图）。
-- 图标：新增 `scripts/gen-icon.cjs`，由脚本生成 `assets/` 下的 180px 站点图标与图标集；`package.json` 的 `icon` 字段指向 `assets/icon-shield-2-128.png`（琥珀盾牌 + 30% 透明内层做厚度 + 实心关机符号，36px 档单独绘制），插件列表里不再显示默认齿轮。
+- 图标：新增 `scripts/gen-icon.cjs`，由脚本生成 `assets/` 下的 180px 站点图标与图标集；`package.json` 的 `icon` 字段指向 `assets/icon-shield-2-128.png`（琥珀盾牌 + 30% 透明内层做厚度 + 实心关机符号，36px 档单独绘制），插件列表里不再显示默认齿轮。设置页左侧导航里我们那一行也换成了同一枚盾牌的单色版（`assets/icon-mono-transparent-64.png`，纯 alpha、无颜色），由客户端用 CSS `mask` + `currentColor` 绘制，因此深浅主题自动跟随；这是宿主暂不支持的 DOM 补丁，宿主将来若提供官方图标字段应改用官方字段。
 - 测试：新增 `window-page-ok` 断言 —— `/window` 返回 200、`text/html`、完整文档且含产品名；路由清单断言同步加入该路由，宿主断言共 28 项。
 - 修复：热重载后侧边栏偶发出现两个卡片（第二个是改动前的旧卡片，文案还是英文）。原因是新的模块实例只认自己内存里的 `host`，旧实例留在 DOM 里的节点和它的轮询定时器都没人管。现在用实例令牌 `window.__dshShutdownGuardOwner` 定主：新实例挂载即接管，旧实例下一拍发现主人不是自己就清掉自己的节点并停手；建 host 前先清掉 `regionArea` 里残留的同类节点；`<style>` 标签同样去重。
 - 修复：`recentEvents()` 的两个调用点漏传 `lang`（写成 `recentEvents(since)`），参数错位后语言落到英文兜底、`since` 也一起失效——表现是中文界面里「最近事件」全是英文，且客户端每轮都拿到全量事件。已修正调用（`lib/index.mjs:1264`、`:1438`），事件文本现在按当前语言在出口现渲染，切换语言后同一批历史事件也会跟着变；增量游标恢复生效。
