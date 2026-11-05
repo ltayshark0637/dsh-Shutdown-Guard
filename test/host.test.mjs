@@ -623,6 +623,19 @@ assert.ok(res.body.toLowerCase().includes('<!doctype html'), 'the window page is
 assert.ok(res.body.includes('dsh-shutdown-guard'), 'the window page names the plugin')
 calls.push('window-page-ok')
 
+// 25b. The window mirrors the card's counters. B's run dots and C's agent counter
+// read the live-agent total (roots + children), not the root-only runningCount, so
+// a Team of subagents cannot show 3 dots in the sidebar and 1 in the window.
+// Asserted on the served HTML because both numbers come from the runtime /state.
+assert.ok(res.body.includes('agentRunningTotal'), 'the window reads the live-agent total')
+assert.ok(res.body.includes('DOT_CAP'), 'the run dots are capped like the card')
+assert.match(res.body, /DOT_CAP\s*=\s*12/, 'the cap matches the card value')
+assert.ok(res.body.includes('dsp-rplus'), 'the overflow badge uses the card class')
+assert.ok(res.body.includes('radarAria'), 'the dots carry a translated aria label')
+assert.ok(res.body.includes("setAttribute('role', 'img')"), 'the dots container is an img role')
+assert.ok(!res.body.includes("Number(snap.runningCount) || 0, 'run'"), 'run dots no longer count roots only')
+calls.push('window-radar-parity-ok')
+
 // 26. UI preferences live on the host, not in the window's localStorage: both
 // surfaces must agree even when they sit in different storage partitions.
 // Defaults are A / auto / auto plus compact on and every notify kind on; a POST
