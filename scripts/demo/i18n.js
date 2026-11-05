@@ -25,6 +25,30 @@
   // sentences carry emphasis or a link. Text that must stay verbatim in every
   // language (Holding, Standby, `shutdown --when idle`, `jobs 3 · agent 2`) is
   // kept inside those strings untouched.
+  //
+  // SYNC CONTRACT — this table is a *copy* of product copy, not the source.
+  // The card-facing keys below must match lib/client.js's MSG, which is the
+  // single source of truth:
+  //
+  //   demo key                 ->  lib/client.js key
+  //   card.title               ->  app.title
+  //   card.arm/cancel/disarm   ->  btn.arm / btn.cancel / btn.disarm
+  //   card.retry               ->  hud.retry
+  //   card.a.*.big             ->  big.<state>          (off/armed/hold/fire/fired/…)
+  //   card.a.*.meta            ->  meta.<state>         + meta.jobs / meta.sessions
+  //   card.a.hold.jobs/agents  ->  meta.jobs / meta.sessions
+  //   card.a.blocked.*.meta    ->  set.blocked.halted / set.blocked.waiting
+  //   card.c.cond              ->  code.gates
+  //   card.c.waiting/halted    ->  code.waiting / code.halted
+  //   card.hud.retry/manual    ->  hud.retry / hud.manual
+  //   card.hud.fired           ->  hud.state.fired
+  //   var.A/B/C.name           ->  set.variant.a / b / c
+  //   now.*                    ->  meta.* / hud.state.*
+  //   log.*                    ->  data/events.log 的 view（宿主 i18n）
+  //
+  // Change any of those in lib/client.js and the same wording must land here,
+  // in all three languages. Page-only keys (hero, a1–a7, try, install, cta,
+  // sb.*) have no product counterpart and are free to change.
   var DEMO_MSG = {
     zh: {
       'meta.title': 'Shutdown Guard · 任务完成后自动关机',
@@ -64,7 +88,7 @@
       'a1.p2': '但「任务结束」不等于「可以关机」——后台任务还在跑、会话报错了、agent 在等你回答问题、你在半路手动终止了……这些情况下关机全是事故。这个插件把这些情况逐个挡下来，只有真的可以关的时候才关。',
 
       'a2.title': '<span>02</span>判定：什么时候才关',
-      'a2.p': '处于阻断态时直接不下发；其余五道闸门同时满足才下发 <code>shutdown /s</code>：',
+      'a2.p': '处于阻断态时直接不下发；其余五道闸门同时满足才下发 <code>shutdown /s</code>（C 形态那六格灯里，「只算成功」与「正在倒计时」是额外画出的两格，闸门还是五道）：',
       'a2.g1': '<b>已武装</b> —— 你手动点的',
       'a2.g2': '<b>没有倒计时在跑</b> —— 避免重复下发',
       'a2.g3': '<b>所有 root 会话都空闲</b> —— 没有任何 agent 还在干活',
@@ -72,10 +96,10 @@
       'a2.g5': '<b>本批次没有会话报错</b> —— <code>onlyOnSuccess</code>，默认开',
 
       'a3.title': '<span>03</span>三种外观',
-      'a3.cap1': '<b>A · 警戒带</b>大字状态 + 底部滚动的红黄斜纹',
+      'a3.cap1': '<b>A · 极简</b>大标题 + 一句话，底部警示带',
       'a3.cap2': '<b>B · 雷达</b>同心圆 + 扫描光束，任务以圆点呈现',
       'a3.cap3': '<b>C · 终端</b>命令行摘要 + 六段判定指示灯',
-      'a3.alt1': 'A · 警戒带：大字状态 + 底部滚动的红黄斜纹',
+      'a3.alt1': 'A · 极简：大标题 + 一句话，底部警示带',
       'a3.alt2': 'B · 雷达：同心圆 + 扫描光束，任务以圆点呈现',
       'a3.alt3': 'C · 终端：命令行摘要 + 六段判定指示灯',
       'a3.p1': '雷达里的圆点按数量增删、不重排：数量变化时，你正在看的那几个点不会跳位置。设置里切换，立即生效，无需重启。',
@@ -101,7 +125,8 @@
       'a7.cap2': '倒计时：同一位置，整条转红',
       'a7.alt1': '武装时：技能中心下方、会话列表上方',
       'a7.alt2': '倒计时：同一位置，整条转红',
-      'a7.p': '卡片目前固定在侧边栏的这个位置。后续计划把它做成可以独立出现的形态，届时这里会补充说明。',
+      'a7.p': '卡片固定在侧边栏这个位置；点卡片右上角的窗口按钮，可以把状态面板拉成独立窗口，切到别的会话也看得见。',
+      'a7.p2': '悬浮窗默认开启简洁模式：去掉页面边框与统计行，只留卡片。外观、主题、语言跟随设置，切换后约一秒内自动重绘；折叠状态不跟随——悬浮窗始终展开。',
 
       'install.text': '设置 → 插件 → 添加，填<b>插件目录的绝对路径</b> → 安装 → 重启 DSH。客户端的 bundle 只在启动时编入模块图，改完代码必须重启，刷新页面无效。',
       'install.link': '完整说明在 GitHub →',
@@ -111,7 +136,7 @@
 
       'try.appearance': '外观',
       'try.appearanceAria': '外观',
-      'try.vA': 'A · 警戒带',
+      'try.vA': 'A · 极简',
       'try.vB': 'B · 雷达',
       'try.vC': 'C · 终端',
       'try.scene': '场景',
@@ -123,7 +148,7 @@
       'try.log': '模拟日志',
       'try.logEmpty': '还没有记录',
       'try.tips': '怎么玩',
-      'try.tip1': '<b>左边是它真正待的地方</b>：技能中心下方、会话列表上方。目前卡片固定在这个位置；后续会支持让它独立出现，届时这里的交互会跟着变。<b>这页的卡片可以点</b>，武装、取消、解除都在左边操作。',
+      'try.tip1': '<b>左边是它真正待的地方</b>：技能中心下方、会话列表上方。点卡片右上角的窗口按钮，还能把它拉成独立窗口（默认简洁模式，只留卡片）。<b>这页的卡片可以点</b>，武装、取消、解除都在左边操作。',
       'try.tip2': '流程：<b>随机场景</b> → 点卡片上的<b>武装</b> → 开始检测 → 后台任务与会话逐个减少 → 全部结束后进入倒计时 → 下发。',
       'try.tip3': '检测途中会有小概率撞上阻断态：<code>halted</code> 要你点「解除并重试」，<code>waiting</code> 过几秒自己恢复。',
       'try.tip4': '倒计时期间你可以随时「取消关机」，模式仍保持武装；也可能撞上阻断。',
@@ -178,8 +203,8 @@
       'now.hold.agents': '会话 {n}',
       'now.countdown': '倒计时 {sec}',
 
-      'var.A.name': '警戒带',
-      'var.A.desc': '大字状态 + 底部红黄斜纹',
+      'var.A.name': '极简',
+      'var.A.desc': '大标题 + 一句话 + 底部警示带',
       'var.B.name': '雷达',
       'var.B.desc': '同心圆 + 扫描光束',
       'var.C.name': '终端',
@@ -242,7 +267,7 @@
       'a1.p2': 'But “the task is finished” is not the same as “it is safe to shut down” — background jobs may still be running, a session may have errored, the agent may be waiting for your answer, you may have stopped it halfway. Shutting down in any of those cases is an incident. This plugin blocks each case, one by one, and only shuts down when it is genuinely safe.',
 
       'a2.title': '<span>02</span>The check: when it actually shuts down',
-      'a2.p': 'In a blocked state nothing is sent. Otherwise all five gates must pass before <code>shutdown /s</code> is issued:',
+      'a2.p': 'In a blocked state nothing is sent. Otherwise all five gates must pass before <code>shutdown /s</code> is issued (the six blocks in look C also draw "success-only" and "counting down"; those are extra indicators, the gates stay five):',
       'a2.g1': '<b>Armed</b> — you clicked it yourself',
       'a2.g2': '<b>No countdown running</b> — avoids sending twice',
       'a2.g3': '<b>Every root session idle</b> — no agent is still working',
@@ -250,10 +275,10 @@
       'a2.g5': '<b>No session errored in this batch</b> — <code>onlyOnSuccess</code>, on by default',
 
       'a3.title': '<span>03</span>Three looks',
-      'a3.cap1': '<b>A · Hazard tape</b> A large status word plus a scrolling red-and-yellow strip',
-      'a3.cap2': '<b>B · Radar</b> Concentric rings and a sweep, each task shown as a dot',
-      'a3.cap3': '<b>C · Terminal</b> A command-line summary plus six decision LEDs',
-      'a3.alt1': 'A · Hazard tape: large status plus a scrolling red-and-yellow strip',
+      'a3.cap1': '<b>A · Minimal</b> A big status line, one sentence, hazard tape along the bottom',
+      'a3.cap2': '<b>B · Radar</b> Concentric rings and a sweep; work shows up as dots',
+      'a3.cap3': '<b>C · Terminal</b> A command-line summary plus six condition blocks',
+      'a3.alt1': 'A · Minimal: a big status line, one sentence, hazard tape along the bottom',
       'a3.alt2': 'B · Radar: concentric rings and a sweep, tasks shown as dots',
       'a3.alt3': 'C · Terminal: command-line summary plus six decision LEDs',
       'a3.p1': 'Dots in the radar are added and removed by count, never re-sorted: when the number changes, the dots you are looking at stay put. Switch in settings — it applies immediately, no restart.',
@@ -279,7 +304,8 @@
       'a7.cap2': 'Countdown: same spot, the whole strip turns red',
       'a7.alt1': 'When armed: below Skill Center, above the session list',
       'a7.alt2': 'Countdown: same spot, the whole strip turns red',
-      'a7.p': 'For now the card is fixed to this spot in the sidebar. The plan is to let it appear independently later; this page will be updated when that lands.',
+      'a7.p': 'The card lives here in the sidebar; the window button in its top-right corner detaches the status panel into a window of its own, so it stays visible when you switch sessions.',
+      'a7.p2': 'The floating window starts in compact mode: page chrome and the stats line are dropped, only the card remains. Look, theme and language follow the settings and repaint within about a second; the folded state does not — a floating window is always expanded.',
 
       'install.text': 'Settings → Plugins → Add, enter the <b>absolute path to the plugin directory</b> → Install → restart DSH. The client bundle is only wired into the module graph at startup, so code changes need a restart — reloading the page does nothing.',
       'install.link': 'Full instructions on GitHub →',
@@ -289,7 +315,7 @@
 
       'try.appearance': 'Look',
       'try.appearanceAria': 'Look',
-      'try.vA': 'A · Hazard tape',
+      'try.vA': 'A · Minimal',
       'try.vB': 'B · Radar',
       'try.vC': 'C · Terminal',
       'try.scene': 'Scenario',
@@ -301,7 +327,7 @@
       'try.log': 'Simulation log',
       'try.logEmpty': 'No entries yet',
       'try.tips': 'How to play',
-      'try.tip1': '<b>The left side is where it really lives</b>: below Skill Center, above the session list. The card is fixed there for now; later it will be able to appear on its own, and the interaction here will follow. <b>The card on this page is clickable</b> — arm, cancel and clear all happen on the left.',
+      'try.tip1': '<b>The left side is where it really lives</b>: below Skill Center, above the session list. The window button in the card\'s top-right corner also detaches it into a window of its own (compact by default, card only). <b>The card on this page is clickable</b> — arm, cancel and clear all happen on the left.',
       'try.tip2': 'Flow: <b>roll a scenario</b> → click <b>Arm</b> on the card → checking starts → background jobs and sessions drain one by one → when all are done a countdown begins → the command is issued.',
       'try.tip3': 'While checking there is a small chance of hitting a blocked state: <code>halted</code> waits for you to click “Clear and retry”, <code>waiting</code> recovers on its own after a few seconds.',
       'try.tip4': 'During the countdown you can “Cancel shutdown” at any time; the mode stays armed. A blocked state can happen here too.',
@@ -356,8 +382,8 @@
       'now.hold.agents': '{n} sessions',
       'now.countdown': 'Countdown {sec}',
 
-      'var.A.name': 'Hazard tape',
-      'var.A.desc': 'Large status + red/yellow strip',
+      'var.A.name': 'Minimal',
+      'var.A.desc': 'Big status line + one sentence + hazard tape',
       'var.B.name': 'Radar',
       'var.B.desc': 'Concentric rings + sweep',
       'var.C.name': 'Terminal',
@@ -420,7 +446,7 @@
       'a1.p2': 'Но «задачи завершены» не значит «можно выключать»: фоновые задачи ещё идут, сессия завершилась с ошибкой, агент ждёт вашего ответа, вы сами остановили его на полпути — в любом из этих случаев выключение становится аварией. Плагин отсекает каждый такой случай и выключает, только когда это действительно безопасно.',
 
       'a2.title': '<span>02</span>Проверка: когда выключение разрешено',
-      'a2.p': 'В состоянии блокировки команда не отправляется. Иначе должны пройти все пять проверок, и только потом отправляется <code>shutdown /s</code>:',
+      'a2.p': 'В состоянии блокировки команда не отправляется. Иначе должны пройти все пять проверок, и только потом отправляется <code>shutdown /s</code> (шесть блоков в виде C дополнительно показывают «только успешные» и «идёт отсчёт» — это индикаторы, а не проверки):',
       'a2.g1': '<b>Режим включён</b> — вы нажали сами',
       'a2.g2': '<b>Нет активного обратного отсчёта</b> — чтобы не отправить дважды',
       'a2.g3': '<b>Все корневые сессии свободны</b> — ни один агент не работает',
@@ -428,10 +454,10 @@
       'a2.g5': '<b>В этой партии не было ошибок сессий</b> — <code>onlyOnSuccess</code>, включено по умолчанию',
 
       'a3.title': '<span>03</span>Три вида',
-      'a3.cap1': '<b>A · Сигнальная лента</b> Крупный статус и бегущая красно-жёлтая полоса внизу',
+      'a3.cap1': '<b>A · Минимал</b> Крупный заголовок, одна строка, сигнальная лента внизу',
       'a3.cap2': '<b>B · Радар</b> Концентрические круги и луч сканирования, задачи показаны точками',
       'a3.cap3': '<b>C · Терминал</b> Сводка командной строки и шесть индикаторов проверок',
-      'a3.alt1': 'A · Сигнальная лента: крупный статус и бегущая красно-жёлтая полоса внизу',
+      'a3.alt1': 'A · Минимал: крупный заголовок, одна строка, сигнальная лента внизу',
       'a3.alt2': 'B · Радар: концентрические круги и луч сканирования, задачи точками',
       'a3.alt3': 'C · Терминал: сводка командной строки и шесть индикаторов проверок',
       'a3.p1': 'Точки на радаре добавляются и убираются по количеству, но не пересортировываются: когда число меняется, точки, на которые вы смотрите, остаются на местах. Вид переключается в настройках и применяется сразу, без перезапуска.',
@@ -457,7 +483,8 @@
       'a7.cap2': 'Обратный отсчёт: то же место, вся полоса краснеет',
       'a7.alt1': 'Режим включён: под центром навыков, над списком сессий',
       'a7.alt2': 'Обратный отсчёт: то же место, вся полоса краснеет',
-      'a7.p': 'Пока карточка закреплена за этим местом в боковой панели. В планах — дать ей отдельное появление; тогда здесь появится пояснение.',
+      'a7.p': 'Карточка живёт здесь, в боковой панели; кнопка с окном в её правом верхнем углу выносит панель состояния в отдельное окно — оно остаётся на виду, когда вы переключаетесь на другую сессию.',
+      'a7.p2': 'Плавающее окно открывается в компактном режиме: рамка страницы и строка статистики убираются, остаётся только карточка. Вид, тема и язык следуют настройкам и перерисовываются примерно за секунду; свёрнутость не переносится — плавающее окно всегда развёрнуто.',
 
       'install.text': 'Настройки → Плагины → Добавить, укажите <b>абсолютный путь к каталогу плагина</b> → Установить → перезапустите DSH. Клиентский bundle подключается к графу модулей только при старте, поэтому после правок кода нужен перезапуск — обновление страницы не помогает.',
       'install.link': 'Полная инструкция на GitHub →',
@@ -467,7 +494,7 @@
 
       'try.appearance': 'Вид',
       'try.appearanceAria': 'Вид',
-      'try.vA': 'A · Сигнальная лента',
+      'try.vA': 'A · Минимал',
       'try.vB': 'B · Радар',
       'try.vC': 'C · Терминал',
       'try.scene': 'Сценарий',
@@ -479,7 +506,7 @@
       'try.log': 'Журнал симуляции',
       'try.logEmpty': 'Записей пока нет',
       'try.tips': 'Как играть',
-      'try.tip1': '<b>Слева — её настоящее место</b>: под центром навыков, над списком сессий. Пока карточка закреплена здесь; позже её можно будет показывать отдельно, и взаимодействие здесь тоже изменится. <b>Карточка на этой странице кликабельна</b> — включение, отмена и снятие делаются слева.',
+      'try.tip1': '<b>Слева — её настоящее место</b>: под центром навыков, над списком сессий. Кнопка с окном в правом верхнем углу карточки выносит её в отдельное окно (по умолчанию компактное, только карточка). <b>Карточка на этой странице кликабельна</b> — включение, отмена и снятие делаются слева.',
       'try.tip2': 'Порядок: <b>случайный сценарий</b> → нажмите <b>Включить</b> на карточке → начнётся проверка → фоновые задачи и сессии будут убывать по одной → когда всё закончится, пойдёт отсчёт → команда уйдёт.',
       'try.tip3': 'Во время проверки с небольшой вероятностью срабатывает блокировка: <code>halted</code> ждёт нажатия «Снять и повторить», <code>waiting</code> сама восстанавливается через несколько секунд.',
       'try.tip4': 'Во время отсчёта можно в любой момент нажать «Отменить выключение» — режим останется включённым. Блокировка тоже может случиться.',
@@ -534,8 +561,8 @@
       'now.hold.agents': 'сессий {n}',
       'now.countdown': 'Отсчёт {sec}',
 
-      'var.A.name': 'Сигнальная лента',
-      'var.A.desc': 'Крупный статус + лента',
+      'var.A.name': 'Минимал',
+      'var.A.desc': 'Крупный заголовок + одна строка + сигнальная лента',
       'var.B.name': 'Радар',
       'var.B.desc': 'Круги + луч сканирования',
       'var.C.name': 'Терминал',

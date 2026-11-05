@@ -28,7 +28,10 @@
     return out
   })()
 
-  var TAG = { off: 'OFF', armed: 'ARMED', hold: 'WAIT', fire: 'FIRE', fired: 'FIRED' }
+  // Tags mirror lib/client.js's MSG (`tag.*`): `fired` reads DONE there, and a
+  // blocked card carries PAUSED in both of its sub-states — the Retrying /
+  // Paused split lives in the HUD line and the retry button, not in the tag.
+  var TAG = { off: 'OFF', armed: 'ARMED', hold: 'WAIT', fire: 'FIRE', fired: 'DONE' }
 
   function pad2(n) { return n < 10 ? '0' + n : String(n) }
   function clock(sec) { return pad2(Math.floor(sec / 60)) + ':' + pad2(sec % 60) }
@@ -243,7 +246,7 @@
 
   function tagOf(s) {
     var v = s.view
-    return v === 'blocked' ? (s.blocked === 'waiting' ? 'RETRY' : 'PAUSED') : TAG[v]
+    return v === 'blocked' ? 'PAUSED' : TAG[v]
   }
 
   function buttonOf(s) {

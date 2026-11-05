@@ -140,6 +140,7 @@ const aboutPane = `<div class="about">
       </div>
     </div>
     <p data-i18n="a7.p">${t('a7.p')}</p>
+    <p data-i18n="a7.p2">${t('a7.p2')}</p>
   </div>
 
   <div class="install full">

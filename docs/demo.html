@@ -939,7 +939,6 @@ h1 em { font-style: normal; color: #f0a83a }
 .dsp-card{--dsp-bg:#1c1e22;--dsp-fg:#f3f4f6;--dsp-muted:#a7abb4;--dsp-line:rgba(255,255,255,.14);
 --dsp-accent:#f0a83a;--dsp-danger:#ef5350;--dsp-track:rgba(255,255,255,.16);
 --dsp-tape-a:#f2b13c;--dsp-tape-b:#e8453c}
-.dsp-card.dsp-claude{--dsp-bg:#1f1d1a;--dsp-fg:#f5f1ea;--dsp-muted:#b3a99c;--dsp-line:rgba(255,255,255,.12);--dsp-accent:#d97757;--dsp-danger:#e5674f;--dsp-tape-a:#e08a5f;--dsp-tape-b:#b8483a}
 .dsp-card[data-lum="light"]{--dsp-bg:#ffffff;--dsp-fg:#1b2030;--dsp-muted:#5b6472;--dsp-line:rgba(0,0,0,.15);
 --dsp-accent:#e08f13;--dsp-danger:#d92d20;--dsp-track:rgba(0,0,0,.13);--dsp-tape-a:#f0b03a;--dsp-tape-b:#e0483c}
 .dsp-card{position:relative;display:flex;flex-direction:column;box-sizing:border-box;width:100%;height:178px;margin:0;padding:10px 12px 0;border-radius:12px;overflow:hidden;
@@ -948,7 +947,8 @@ font-family:var(--dsw-font-family, system-ui);overflow:hidden;transition:height 
 .dsp-card[data-state="off"]{background:color-mix(in srgb, var(--dsp-fg) 2.5%, var(--dsp-bg))}
 .dsp-card[data-state="fire"]{border-color:var(--dsp-danger)}
 .dsp-card.is-folded{height:auto;padding-bottom:8px}
-.dsp-chead{display:flex;align-items:center;gap:7px;height:22px;line-height:22px;cursor:pointer;user-select:none}
+.dsp-hrow{display:flex;align-items:center;gap:4px;height:22px;line-height:22px}
+.dsp-chead{display:flex;align-items:center;gap:7px;flex:1 1 auto;min-width:0;height:22px;line-height:22px;cursor:pointer;user-select:none}
 .dsp-live{width:6px;height:6px;margin-top:0;border-radius:50%;flex:0 0 6px;align-self:center;background:var(--dsp-muted)}
 .dsp-card[data-state="armed"] .dsp-live,.dsp-card[data-state="hold"] .dsp-live{background:var(--dsp-accent);box-shadow:0 0 8px var(--dsp-accent)}
 .dsp-card[data-state="fire"] .dsp-live,.dsp-card[data-state="fired"] .dsp-live{background:var(--dsp-danger);animation:dsp-pulse-red .9s infinite}
@@ -960,6 +960,10 @@ padding:1px 5px;border-radius:5px;border:1px solid color-mix(in srgb, var(--dsp-
 .dsp-card[data-state="fire"] .dsp-tag,.dsp-card[data-state="fired"] .dsp-tag{color:var(--dsp-danger);border-color:color-mix(in srgb, var(--dsp-danger) 50%, transparent)}
 .dsp-chev{flex:0 0 auto;display:block;color:var(--dsp-muted);transition:transform .18s}
 .dsp-chev.is-folded{transform:rotate(-90deg)}
+.dsp-float{flex:0 0 auto;display:flex;align-items:center;justify-content:center;width:18px;height:18px;padding:0;margin:0;border:0;border-radius:4px;background:transparent;color:var(--dsp-muted);cursor:pointer;opacity:.72;transition:opacity .15s,color .15s,background .15s}
+.dsp-float:hover,.dsp-float:focus-visible{opacity:1;color:var(--dsp-fg);background:color-mix(in srgb, var(--dsp-accent) 14%, transparent);outline:none}
+.dsp-float:active{background:color-mix(in srgb, var(--dsp-accent) 22%, transparent)}
+.dsp-navicon{width:16px;height:16px;flex:none;display:inline-block;align-self:center;vertical-align:middle;background-color:currentColor;-webkit-mask:url("data:image/png;base64,' + NAV_ICON_B64 + '") center/19px 19px no-repeat;mask:url("data:image/png;base64,' + NAV_ICON_B64 + '") center/19px 19px no-repeat}
 .dsp-cbody{position:relative;flex:1;min-height:0}
 .dsp-v-a{display:flex;flex-direction:column;justify-content:center;height:100%;padding:0}
 .dsp-big{font-family:ui-monospace, "Cascadia Mono", Consolas, "Microsoft YaHei", monospace;font-size:26px;line-height:1.15;font-weight:650;letter-spacing:-.2px}
@@ -969,7 +973,7 @@ padding:1px 5px;border-radius:5px;border:1px solid color-mix(in srgb, var(--dsp-
 .dsp-cbtns{display:flex;align-items:center;gap:6px;padding:8px 0 10px;flex:0 0 auto}
 .dsp-btn{flex:1 1 auto;min-width:0;height:30px;border-radius:8px;border:1px solid var(--dsp-line);background:transparent;color:inherit;font:inherit;font-size:12.5px;cursor:pointer}
 .dsp-btn:hover{background:color-mix(in srgb, var(--dsp-fg) 7%, transparent)}
-.dsp-btn-primary{border-color:transparent;background:var(--dsp-accent);color:#1a1200;font-weight:600}
+.dsp-btn-primary{border-color:transparent;background:var(--dsp-accent);color:var(--dsp-accent-ink, #1a1200);font-weight:600}
 .dsp-btn-danger{border-color:color-mix(in srgb, var(--dsp-danger) 45%, transparent);color:var(--dsp-danger);background:color-mix(in srgb, var(--dsp-danger) 6%, transparent)}
 .dsp-hazard{position:relative;height:10px;margin:0 -12px;overflow:hidden}
 .dsp-hazard::before{content:"";position:absolute;top:0;bottom:0;left:-48px;right:-48px;
@@ -1003,6 +1007,9 @@ animation:dsp-spin 3.2s linear infinite;
 .dsp-rdot{position:absolute;width:5px;height:5px;border-radius:50%;transform:translate(-50%,-50%);z-index:2}
 .dsp-rdot-run{background:var(--dsp-muted);box-shadow:0 0 6px color-mix(in srgb, var(--dsp-muted) 80%, transparent)}
 .dsp-rdot-job{background:var(--dsp-accent);box-shadow:0 0 8px color-mix(in srgb, var(--dsp-accent) 95%, transparent)}
+.dsp-rplus{position:absolute;right:8px;top:7px;z-index:3;font-family:ui-monospace, "Cascadia Mono", Consolas, monospace;
+font-size:9px;line-height:14px;letter-spacing:.08em;padding:0 4px;border-radius:7px;color:var(--dsp-fg);
+background:color-mix(in srgb, var(--dsp-accent) 20%, transparent);border:1px solid color-mix(in srgb, var(--dsp-accent) 42%, transparent)}
 .dsp-card[data-state="hold"] .dsp-rdot{animation:dsp-dotpulse 2.4s ease-in-out infinite}
 .dsp-card[data-state="fire"] .dsp-rdot{opacity:.3}
 .dsp-card[data-state="fired"] .dsp-rdot{opacity:.18}
@@ -1054,39 +1061,96 @@ box-shadow:0 0 7px color-mix(in srgb, var(--dsp-accent) 90%, transparent)}
 .dsp-card[data-state="blocked"] .dsp-led-seg.on{background:var(--dsp-blocked)}
 .dsp-card[data-state="blocked"] .dsp-code{color:var(--dsp-blocked)}
 .dsp-ev-blocked .dsp-ev-text{color:#7e8aa3}
-.dsp-settings{display:flex;flex-direction:column;padding:4px 0 0;font-size:13px;line-height:20px;color:var(--dsw-alias-label-primary, #f4f4f5)}
-.dsp-srow{display:flex;align-items:center;justify-content:space-between;gap:12px 8px;padding:14px 0;border-top:.5px solid var(--dsw-alias-border-l2, rgba(128,128,128,.22))}
-.dsp-srow:first-child{border-top:none}
-.dsp-srow-text{flex:1 1 140px;min-width:0;display:flex;flex-direction:column;gap:3px;padding-right:28px}
-.dsp-stitle{font-size:14px;line-height:22px}
-.dsp-sdesc{font-size:12px;line-height:18px;color:var(--dsw-alias-label-tertiary, #8f8d84)}
-.dsp-sgroup-box{display:flex;flex-direction:column;padding-top:16px;margin-top:16px;border-top:.5px solid var(--dsw-alias-border-l2, rgba(128,128,128,.22))}
-.dsp-sgroup-box:first-child{padding-top:0;margin-top:0;border-top:none}
-.dsp-sgroup{font-size:12px;font-weight:600;letter-spacing:.06em;color:var(--dsw-alias-label-secondary, #b0aea5);padding:0 0 2px}
+.dsp-settings{display:flex;flex-direction:column;box-sizing:border-box;width:100%;min-width:0;align-self:stretch;padding:16px 0 0;font-family:var(--dsw-font-family, inherit);font-size:13px;line-height:20px;color:var(--dsw-alias-label-primary, #f4f4f5)}
+.dsp-shead{display:flex;align-items:center;gap:12px;padding:0 0 6px;min-width:0}
+.dsp-shead-title{flex:1 1 auto;min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;font-size:15px;font-weight:600;line-height:22px;color:var(--dsw-alias-label-primary, #f4f4f5)}
+.dsp-shead-links{flex:none;display:flex;align-items:center;gap:2px}
+.dsp-slink{display:inline-flex;align-items:center;justify-content:center;flex:none;width:28px;height:28px;border-radius:7px;text-decoration:none;transition:color 120ms ease,background-color 120ms ease}
+.dsp-slink-npm{width:36px}
+.dsp-shead-links a.dsp-slink,.dsp-shead-links a.dsp-slink:visited{color:var(--dsw-alias-label-tertiary, #8f8d84)!important}
+.dsp-shead-links a.dsp-slink:hover{color:var(--dsw-alias-label-primary, #f4f4f5)!important;background:color-mix(in srgb, currentColor 10%, transparent)}
+.dsp-shead-links a{color:var(--dsw-alias-label-tertiary, #8f8d84)!important}
+.dsp-slink path,.dsp-slink-icon path{fill:currentColor}
+.dsp-slink-icon{display:block;flex:none}
+.dsp-tabs{position:relative;display:flex;align-items:center;gap:2px;margin:2px 0 0;padding:2px;border-radius:9px;background:var(--dsw-specific-selector, rgba(128,128,128,.10));overflow:hidden}
+.dsp-tabs::before{content:"";position:absolute;left:0;top:0;width:var(--tab-w,0);height:var(--tab-h,0);transform:translate(var(--tab-x,0),var(--tab-y,0));border-radius:7px;background:var(--dsw-alias-bg-layer-1, #ffffff);box-shadow:0 1px 2px rgba(0,0,0,.12);opacity:0;
+transition:transform .24s cubic-bezier(.22,.61,.36,1),width .24s cubic-bezier(.22,.61,.36,1),opacity .12s ease}
+.dsp-tabs[data-ready]::before{opacity:1}
+.dsp-tab{position:relative;z-index:1;flex:1 1 0;min-width:0;padding:7px 8px;border:none;border-radius:7px;background:transparent;font:inherit;font-size:13px;line-height:18px;color:var(--dsw-alias-label-secondary, #b0aea5);white-space:nowrap;overflow:hidden;text-overflow:ellipsis;cursor:pointer;transition:color .12s ease}
+.dsp-tab:hover{color:var(--dsw-alias-label-primary, #f4f4f5)}
+.dsp-tab.on{color:var(--dsw-alias-label-primary, #f4f4f5);font-weight:600}
+.dsp-tabpanel{display:flex;flex-direction:column;box-sizing:border-box;width:100%;min-width:0;margin-top:12px;padding-top:10px;border-top:.5px solid var(--dsw-alias-border-l2, rgba(128,128,128,.22))}
+.dsp-tabpanel[hidden]{display:none}
+.dsp-cards{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:10px;width:100%;padding:2px 0}
+.dsp-vcard{display:flex;flex-direction:column;gap:6px;min-width:0;padding:0;border:none;background:transparent;font:inherit;text-align:left;color:inherit;cursor:pointer}
+.dsp-thumb{display:block;overflow:hidden;border:1.5px solid var(--dsw-alias-border-l2, rgba(128,128,128,.22));border-radius:8px;background:var(--dsw-specific-selector, rgba(128,128,128,.10));transition:border-color .12s ease,transform .12s ease,box-shadow .12s ease}
+.dsp-vcard:hover .dsp-thumb{transform:translateY(-1px)}
+.dsp-vcard.on .dsp-thumb{border-color:var(--dsw-alias-brand-primary, #d97757);box-shadow:0 0 0 1px var(--dsw-alias-brand-primary, #d97757)}
+.dsp-thumb-img{display:block;width:100%;height:auto}
+.dsp-thumb-ph{display:flex;align-items:center;justify-content:center;aspect-ratio:240 / 154;font-size:18px;font-weight:600;color:var(--dsw-alias-label-tertiary, #8f8d84)}
+.dsp-vcard-label{font-size:12px;line-height:16px;color:var(--dsw-alias-label-secondary, #b0aea5);text-align:center}
+.dsp-vcard.on .dsp-vcard-label{color:var(--dsw-alias-label-primary, #f4f4f5)}
+.dsp-sgroup-box{display:flex;flex-direction:column;min-width:0}
+.dsp-sgroup{display:flex;align-items:center;gap:6px;padding:24px 0 4px;border-top:.5px solid var(--dsw-alias-border-l2, rgba(128,128,128,.22));font-size:12px;font-weight:600;line-height:18px;letter-spacing:.04em;color:var(--dsw-alias-label-secondary, #b0aea5)}
+.dsp-sgroup-box:first-child .dsp-sgroup{padding-top:0;border-top:none}
+.dsp-sgroup-box:first-child .dsp-srow:first-child{border-top:none;padding-top:0}
+.dsp-tabpanel > .dsp-srow-standalone:first-child{border-top:none;padding-top:0}
+.dsp-sicon{flex:none;width:15px;height:15px;display:block;color:inherit}
+.dsp-sgroup-title{flex:none;min-width:0;white-space:nowrap}
+.dsp-sgroup-note{flex:1 1 auto;min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;font-weight:400;letter-spacing:0;color:var(--dsw-alias-label-tertiary, #8f8d84)}
+.dsp-srow{display:flex;align-items:center;flex-wrap:wrap;gap:12px 8px;padding:16px 0;border-top:.5px solid var(--dsw-alias-border-l2, rgba(128,128,128,.22))}
 .dsp-sgroup + .dsp-srow{border-top:none}
-.dsp-srow{padding:12px 0}
-.dsp-srow-stack{align-items:flex-start;flex-direction:column;gap:6px}
-.dsp-srow-stack .dsp-srow-text{flex:0 0 auto;padding-right:0;width:100%}
+.dsp-srow-text{flex:1 1 140px;min-width:0;min-height:22px;display:flex;flex-direction:column;justify-content:center;gap:4px;padding-right:48px}
+.dsp-stitle{display:flex;align-items:center;min-width:0;font-size:14px;font-weight:400;line-height:22px;letter-spacing:normal;color:var(--dsw-alias-label-primary, #f4f4f5)}
+.dsp-sdesc{font-size:12px;line-height:18px;color:var(--dsw-alias-label-tertiary, #8f8d84)}
+.dsp-sdesc-strong{color:var(--dsw-alias-label-secondary, #b0aea5)}
+.dsp-sdesc-flat{display:block;padding:2px 0}
+.dsp-badge{margin-left:8px;padding:0 6px;border-radius:5px;font-size:11px;line-height:16px;font-weight:500;letter-spacing:0;color:var(--dsw-alias-brand-primary, #d97757);background:color-mix(in srgb, var(--dsw-alias-brand-primary, #d97757) 14%, transparent)}
+.dsp-srow-err{display:block;font-size:12px;line-height:18px;color:var(--dsw-alias-state-error-primary, #d0342c)}
+.dsp-srow-sub{padding-left:18px}
+.dsp-srow-sub .dsp-stitle{font-size:13px;line-height:20px;color:var(--dsw-alias-label-secondary, #b0aea5)}
+.dsp-srow-stack{align-items:flex-start;flex-direction:column;gap:8px}
+.dsp-srow-stack .dsp-srow-text{flex:0 0 auto;width:100%;padding-right:0}
 .dsp-srow-stack .dsp-sval{font-size:12px;line-height:18px;white-space:normal}
+.dsp-srow-ro{padding:12px 0}
 .dsp-srow-ro .dsp-sval{max-width:58%;text-align:right;white-space:normal}
+.dsp-srow-plain{padding:6px 0;border-top:none}
+.dsp-srow-plain .dsp-srow-text{padding-right:24px}
+.dsp-srow-new{padding:12px 0 2px;border-top:.5px solid var(--dsw-alias-border-l2, rgba(128,128,128,.22))}
+.dsp-srow-prof{gap:8px}
+.dsp-srow-prof .dsp-srow-text{padding-right:20px}
+.dsp-srow-prof.is-active .dsp-stitle{font-weight:500}
+.dsp-srow-prof.is-active{background:linear-gradient(90deg, color-mix(in srgb, var(--dsw-alias-brand-primary, #d97757) 5%, transparent), transparent 70%)}
+.dsp-sval{font-size:12px;line-height:18px;color:var(--dsw-alias-label-tertiary, #8f8d84);font-variant-numeric:tabular-nums}
 .dsp-sval-dim{opacity:.55}
-.dsp-shead{margin:16px 0 -2px;padding-top:14px;border-top:.5px solid var(--dsw-alias-border-l2, rgba(128,128,128,.22));font-size:12px;font-weight:600;letter-spacing:.03em;color:var(--dsw-alias-label-secondary, #b9b9b4)}
-.dsp-seg{display:flex;gap:4px;flex:none;flex-wrap:wrap;justify-content:flex-end}
-.dsp-segbtn{height:30px;padding:0 11px;border-radius:8px;border:1px solid var(--dsw-alias-border-l1, rgba(128,128,128,.25));background:transparent;color:var(--dsw-alias-label-secondary, #b9b9b4);font:inherit;font-size:13px;cursor:pointer}
-.dsp-segbtn:hover{background:var(--dsw-alias-interactive-bg-hover, rgba(255,255,255,.06))}
-.dsp-segbtn.on{background:var(--dsw-alias-button-primary-fill, #f5a623);border-color:transparent;color:var(--dsw-alias-label-inverse, #201500);font-weight:600}
-.dsp-switch{flex:none;width:36px;height:20px;border-radius:10px;border:0;background:var(--dsw-alias-interactive-bg-hover, rgba(128,128,128,.3));position:relative;cursor:pointer;padding:0}
-.dsp-switch i{position:absolute;left:2px;top:2px;width:16px;height:16px;border-radius:50%;background:var(--dsw-alias-bg-overlay, #fff);transition:.16s}
-.dsp-switch.on{background:var(--dsw-alias-brand-primary, #d97757)}
-.dsp-switch.on i{left:18px}
-.dsp-shint{font-size:12px;line-height:18px;color:var(--dsw-alias-label-tertiary, #8f8d84)}
-.dsp-sval{font-size:12px;color:var(--dsw-alias-label-tertiary, #8f8d84)}
-.dsp-sgroup-note{margin-left:6px;font-weight:400;letter-spacing:0;opacity:.7}
-.dsp-slotbar{display:flex;gap:4px;flex-wrap:wrap;justify-content:flex-end}
-.dsp-slotbtn{width:30px;height:26px;border-radius:7px;border:1px solid var(--dsw-alias-border-l1, rgba(128,128,128,.25));background:transparent;color:var(--dsw-alias-label-secondary, #b9b9b4);font:inherit;font-size:11px;cursor:pointer;padding:0}
-.dsp-slotbtn:hover:not(:disabled){background:var(--dsw-alias-interactive-bg-hover, rgba(255,255,255,.06))}
-.dsp-slotbtn.on{background:var(--dsw-alias-button-primary-fill, #f5a623);border-color:transparent;color:var(--dsw-alias-label-inverse, #201500);font-weight:600}
-.dsp-slotbtn.locked{opacity:.35;cursor:not-allowed}
+.dsp-prof-actions{display:flex;align-items:center;justify-content:flex-end;flex-wrap:wrap;gap:2px;flex:none}
+.dsp-prof-actions .dsp-sval{margin-right:4px}
+.dsp-prof-edit{display:flex;align-items:center;gap:6px;flex:none;padding:2px 0}
+.dsp-sinput{width:170px;max-width:42vw;height:28px;padding:0 8px;border-radius:8px;border:1px solid var(--dsw-alias-border-l1, rgba(128,128,128,.3));background:var(--dsw-alias-bg-layer-1, transparent);color:var(--dsw-alias-label-primary, #f4f4f5);font-family:inherit;font-size:13px;line-height:18px;outline:none;transition:border-color 120ms ease}
+.dsp-sinput:focus{border-color:var(--dsw-alias-brand-primary, #d97757)}
+.dsp-sbtn{flex:none;height:28px;padding:0 10px;border:1px solid transparent;border-radius:7px;background:transparent;color:var(--dsw-alias-label-secondary, #b0aea5);font-family:inherit;font-size:12px;line-height:18px;cursor:pointer;transition:background-color 120ms ease, color 120ms ease}
+.dsp-sbtn:hover:not(:disabled){background:var(--dsw-alias-interactive-bg-hover, rgba(128,128,128,.12));color:var(--dsw-alias-label-primary, #f4f4f5)}
+.dsp-sbtn:disabled{opacity:.4;cursor:not-allowed}
+.dsp-sbtn-primary{color:var(--dsw-alias-brand-primary, #d97757);font-weight:500}
+.dsp-sbtn-primary:hover:not(:disabled){background:color-mix(in srgb, var(--dsw-alias-brand-primary, #d97757) 12%, transparent);color:var(--dsw-alias-brand-primary, #d97757)}
+.dsp-sbtn-danger{color:var(--dsw-alias-state-error-primary, #d0342c);font-weight:500}
+.dsp-sbtn-danger:hover:not(:disabled){background:color-mix(in srgb, var(--dsw-alias-state-error-primary, #d0342c) 12%, transparent);color:var(--dsw-alias-state-error-primary, #d0342c)}
+.dsp-settings a:focus-visible,.dsp-settings button:focus-visible,.dsp-settings input:focus-visible,.dsp-settings [tabindex]:focus-visible{outline:2px solid var(--dsw-alias-brand-primary, #d97757);outline-offset:1px}
+.dsp-seg{position:relative;display:inline-flex;flex:none;gap:2px;padding:2px;border-radius:7px;background:var(--dsw-specific-selector, rgba(128,128,128,.16));max-width:100%;overflow-x:auto;scrollbar-width:none}
+.dsp-seg::-webkit-scrollbar{display:none}
+.dsp-seg::before{content:"";position:absolute;left:0;top:0;width:var(--pill-w, 0);height:var(--pill-h, 0);border-radius:5px;background:var(--dsw-alias-bg-overlay, #ffffff);box-shadow:0 1px 2px rgba(20,20,19,.1);transform:translate(var(--pill-x, 0), var(--pill-y, 0));opacity:0;pointer-events:none;transition:transform .24s cubic-bezier(.22,.61,.36,1), width .24s cubic-bezier(.22,.61,.36,1), height .24s cubic-bezier(.22,.61,.36,1), opacity .12s ease}
+.dsp-seg[data-ready]::before{opacity:1}
+[data-ds-dark-theme] .dsp-seg::before{background:rgba(255,255,255,.14);box-shadow:none}
+.dsp-segbtn{position:relative;z-index:1;height:26px;padding:0 12px;border:0;border-radius:5px;background:transparent;color:var(--dsw-alias-label-secondary, #b0aea5);font-family:inherit;font-size:13px;line-height:18px;cursor:pointer;white-space:nowrap;transition:color 120ms ease}
+.dsp-segbtn:hover{color:var(--dsw-alias-label-primary, #f4f4f5)}
+.dsp-segbtn.on{color:var(--dsw-alias-label-primary, #f4f4f5);font-weight:500}
+.dsp-switch{flex:none;width:36px;height:20px;padding:2px;border:0;border-radius:10px;background:var(--dsw-alias-interactive-bg-hover, rgba(128,128,128,.3));position:relative;cursor:pointer;transition:background-color 120ms ease}
+.dsp-switch i{display:block;width:16px;height:16px;border-radius:50%;background:var(--dsw-alias-bg-overlay, #ffffff);box-shadow:0 1px 2px rgba(20,20,19,.18);translate:0 0}
+.dsp-switch.on,.dsp-switch[data-on]{background:var(--dsw-alias-brand-primary, #d97757)}
+.dsp-switch.on i,.dsp-switch[data-on] i{translate:16px 0}
+.dsp-switch[data-moved][data-on] i{animation:dsp-switch-on 350ms cubic-bezier(.34,1.45,.64,1) both}
+.dsp-switch[data-moved]:not([data-on]) i{animation:dsp-switch-off 350ms cubic-bezier(.34,1.45,.64,1) both}
+.dsp-switch:disabled{opacity:.4;cursor:not-allowed}
 .dsp-evlog{display:flex;flex-direction:column;gap:2px;max-height:150px;overflow:auto;font-family:ui-monospace, "Cascadia Mono", Consolas, monospace;font-size:11px;line-height:16px}
 .dsp-ev{display:flex;gap:8px;align-items:baseline}
 .dsp-ev-time{flex:none;opacity:.5}
@@ -1094,7 +1158,9 @@ box-shadow:0 0 7px color-mix(in srgb, var(--dsp-accent) 90%, transparent)}
 .dsp-ev-config .dsp-ev-text{color:var(--dsw-alias-brand-primary, #d97757)}
 .dsp-ev-skip .dsp-ev-text{color:var(--dsw-alias-state-warning-primary, #d8a12a)}
 .dsp-ev-empty{opacity:.45}
-.dsp-switch:disabled{opacity:.4;cursor:not-allowed}
+@keyframes dsp-switch-on{0%{translate:0 0}55%{translate:17px 0}80%,to{translate:16px 0}}
+@keyframes dsp-switch-off{0%{translate:16px 0}55%{translate:-1px 0}80%,to{translate:0 0}}
+@media (prefers-reduced-motion: reduce){.dsp-switch,.dsp-switch i,.dsp-seg::before,.dsp-segbtn,.dsp-sbtn,.dsp-sinput,.dsp-tabs::before,.dsp-tab,.dsp-thumb{transition:none!important;animation:none!important}}
 @keyframes dsp-slide{to{transform:translateX(28.28px)}}
 @keyframes dsp-spin{to{transform:rotate(360deg)}}
 @keyframes dsp-blink{50%{opacity:0}}
@@ -1154,7 +1220,7 @@ box-shadow:0 0 7px color-mix(in srgb, var(--dsp-accent) 90%, transparent)}
 
   <div class="sect">
     <h2 data-i18n="a2.title"><span>02</span>判定：什么时候才关</h2>
-    <p data-i18n="a2.p">处于阻断态时直接不下发；其余五道闸门同时满足才下发 <code>shutdown /s</code>：</p>
+    <p data-i18n="a2.p">处于阻断态时直接不下发；其余五道闸门同时满足才下发 <code>shutdown /s</code>（C 形态那六格灯里，「只算成功」与「正在倒计时」是额外画出的两格，闸门还是五道）：</p>
     <ol class="gates">
       <li data-i18n="a2.g1"><b>已武装</b> —— 你手动点的</li>
       <li data-i18n="a2.g2"><b>没有倒计时在跑</b> —— 避免重复下发</li>
@@ -1241,7 +1307,8 @@ box-shadow:0 0 7px color-mix(in srgb, var(--dsp-accent) 90%, transparent)}
         <span data-i18n="a7.cap2">倒计时：同一位置，整条转红</span>
       </div>
     </div>
-    <p data-i18n="a7.p">卡片目前固定在侧边栏的这个位置。后续计划把它做成可以独立出现的形态，届时这里会补充说明。</p>
+    <p data-i18n="a7.p">卡片固定在侧边栏这个位置；点卡片右上角的窗口按钮，可以把状态面板拉成独立窗口，切到别的会话也看得见。</p>
+    <p data-i18n="a7.p2">悬浮窗默认开启简洁模式：去掉页面边框与统计行，只留卡片。外观、主题、语言跟随设置，切换后约一秒内自动重绘；折叠状态不跟随——悬浮窗始终展开。</p>
   </div>
 
   <div class="install full">
@@ -1286,7 +1353,7 @@ box-shadow:0 0 7px color-mix(in srgb, var(--dsp-accent) 90%, transparent)}
     <div class="block">
       <div class="blabel" data-i18n="try.appearance">外观</div>
       <div class="seg" id="variants" role="group" aria-label="外观" data-i18n-aria="try.appearanceAria">
-        <button data-v="A" class="on" data-i18n="try.vA">A · 警戒带</button>
+        <button data-v="A" class="on" data-i18n="try.vA">A · 极简</button>
         <button data-v="B" data-i18n="try.vB">B · 雷达</button>
         <button data-v="C" data-i18n="try.vC">C · 终端</button>
       </div>
@@ -1312,7 +1379,7 @@ box-shadow:0 0 7px color-mix(in srgb, var(--dsp-accent) 90%, transparent)}
   <aside class="tipscol">
     <div class="blabel" data-i18n="try.tips">怎么玩</div>
     <ol class="tips">
-      <li data-i18n="try.tip1"><b>左边是它真正待的地方</b>：技能中心下方、会话列表上方。目前卡片固定在这个位置；后续会支持让它独立出现，届时这里的交互会跟着变。<b>这页的卡片可以点</b>，武装、取消、解除都在左边操作。</li>
+      <li data-i18n="try.tip1"><b>左边是它真正待的地方</b>：技能中心下方、会话列表上方。点卡片右上角的窗口按钮，还能把它拉成独立窗口（默认简洁模式，只留卡片）。<b>这页的卡片可以点</b>，武装、取消、解除都在左边操作。</li>
       <li data-i18n="try.tip2">流程：<b>随机场景</b> → 点卡片上的<b>武装</b> → 开始检测 → 后台任务与会话逐个减少 → 全部结束后进入倒计时 → 下发。</li>
       <li data-i18n="try.tip3">检测途中会有小概率撞上阻断态：<code>halted</code> 要你点「解除并重试」，<code>waiting</code> 过几秒自己恢复。</li>
       <li data-i18n="try.tip4">倒计时期间你可以随时「取消关机」，模式仍保持武装；也可能撞上阻断。</li>
@@ -1359,6 +1426,30 @@ box-shadow:0 0 7px color-mix(in srgb, var(--dsp-accent) 90%, transparent)}
   // sentences carry emphasis or a link. Text that must stay verbatim in every
   // language (Holding, Standby, `shutdown --when idle`, `jobs 3 · agent 2`) is
   // kept inside those strings untouched.
+  //
+  // SYNC CONTRACT — this table is a *copy* of product copy, not the source.
+  // The card-facing keys below must match lib/client.js's MSG, which is the
+  // single source of truth:
+  //
+  //   demo key                 ->  lib/client.js key
+  //   card.title               ->  app.title
+  //   card.arm/cancel/disarm   ->  btn.arm / btn.cancel / btn.disarm
+  //   card.retry               ->  hud.retry
+  //   card.a.*.big             ->  big.<state>          (off/armed/hold/fire/fired/…)
+  //   card.a.*.meta            ->  meta.<state>         + meta.jobs / meta.sessions
+  //   card.a.hold.jobs/agents  ->  meta.jobs / meta.sessions
+  //   card.a.blocked.*.meta    ->  set.blocked.halted / set.blocked.waiting
+  //   card.c.cond              ->  code.gates
+  //   card.c.waiting/halted    ->  code.waiting / code.halted
+  //   card.hud.retry/manual    ->  hud.retry / hud.manual
+  //   card.hud.fired           ->  hud.state.fired
+  //   var.A/B/C.name           ->  set.variant.a / b / c
+  //   now.*                    ->  meta.* / hud.state.*
+  //   log.*                    ->  data/events.log 的 view（宿主 i18n）
+  //
+  // Change any of those in lib/client.js and the same wording must land here,
+  // in all three languages. Page-only keys (hero, a1–a7, try, install, cta,
+  // sb.*) have no product counterpart and are free to change.
   var DEMO_MSG = {
     zh: {
       'meta.title': 'Shutdown Guard · 任务完成后自动关机',
@@ -1398,7 +1489,7 @@ box-shadow:0 0 7px color-mix(in srgb, var(--dsp-accent) 90%, transparent)}
       'a1.p2': '但「任务结束」不等于「可以关机」——后台任务还在跑、会话报错了、agent 在等你回答问题、你在半路手动终止了……这些情况下关机全是事故。这个插件把这些情况逐个挡下来，只有真的可以关的时候才关。',
 
       'a2.title': '<span>02</span>判定：什么时候才关',
-      'a2.p': '处于阻断态时直接不下发；其余五道闸门同时满足才下发 <code>shutdown /s</code>：',
+      'a2.p': '处于阻断态时直接不下发；其余五道闸门同时满足才下发 <code>shutdown /s</code>（C 形态那六格灯里，「只算成功」与「正在倒计时」是额外画出的两格，闸门还是五道）：',
       'a2.g1': '<b>已武装</b> —— 你手动点的',
       'a2.g2': '<b>没有倒计时在跑</b> —— 避免重复下发',
       'a2.g3': '<b>所有 root 会话都空闲</b> —— 没有任何 agent 还在干活',
@@ -1406,10 +1497,10 @@ box-shadow:0 0 7px color-mix(in srgb, var(--dsp-accent) 90%, transparent)}
       'a2.g5': '<b>本批次没有会话报错</b> —— <code>onlyOnSuccess</code>，默认开',
 
       'a3.title': '<span>03</span>三种外观',
-      'a3.cap1': '<b>A · 警戒带</b>大字状态 + 底部滚动的红黄斜纹',
+      'a3.cap1': '<b>A · 极简</b>大标题 + 一句话，底部警示带',
       'a3.cap2': '<b>B · 雷达</b>同心圆 + 扫描光束，任务以圆点呈现',
       'a3.cap3': '<b>C · 终端</b>命令行摘要 + 六段判定指示灯',
-      'a3.alt1': 'A · 警戒带：大字状态 + 底部滚动的红黄斜纹',
+      'a3.alt1': 'A · 极简：大标题 + 一句话，底部警示带',
       'a3.alt2': 'B · 雷达：同心圆 + 扫描光束，任务以圆点呈现',
       'a3.alt3': 'C · 终端：命令行摘要 + 六段判定指示灯',
       'a3.p1': '雷达里的圆点按数量增删、不重排：数量变化时，你正在看的那几个点不会跳位置。设置里切换，立即生效，无需重启。',
@@ -1435,7 +1526,8 @@ box-shadow:0 0 7px color-mix(in srgb, var(--dsp-accent) 90%, transparent)}
       'a7.cap2': '倒计时：同一位置，整条转红',
       'a7.alt1': '武装时：技能中心下方、会话列表上方',
       'a7.alt2': '倒计时：同一位置，整条转红',
-      'a7.p': '卡片目前固定在侧边栏的这个位置。后续计划把它做成可以独立出现的形态，届时这里会补充说明。',
+      'a7.p': '卡片固定在侧边栏这个位置；点卡片右上角的窗口按钮，可以把状态面板拉成独立窗口，切到别的会话也看得见。',
+      'a7.p2': '悬浮窗默认开启简洁模式：去掉页面边框与统计行，只留卡片。外观、主题、语言跟随设置，切换后约一秒内自动重绘；折叠状态不跟随——悬浮窗始终展开。',
 
       'install.text': '设置 → 插件 → 添加，填<b>插件目录的绝对路径</b> → 安装 → 重启 DSH。客户端的 bundle 只在启动时编入模块图，改完代码必须重启，刷新页面无效。',
       'install.link': '完整说明在 GitHub →',
@@ -1445,7 +1537,7 @@ box-shadow:0 0 7px color-mix(in srgb, var(--dsp-accent) 90%, transparent)}
 
       'try.appearance': '外观',
       'try.appearanceAria': '外观',
-      'try.vA': 'A · 警戒带',
+      'try.vA': 'A · 极简',
       'try.vB': 'B · 雷达',
       'try.vC': 'C · 终端',
       'try.scene': '场景',
@@ -1457,7 +1549,7 @@ box-shadow:0 0 7px color-mix(in srgb, var(--dsp-accent) 90%, transparent)}
       'try.log': '模拟日志',
       'try.logEmpty': '还没有记录',
       'try.tips': '怎么玩',
-      'try.tip1': '<b>左边是它真正待的地方</b>：技能中心下方、会话列表上方。目前卡片固定在这个位置；后续会支持让它独立出现，届时这里的交互会跟着变。<b>这页的卡片可以点</b>，武装、取消、解除都在左边操作。',
+      'try.tip1': '<b>左边是它真正待的地方</b>：技能中心下方、会话列表上方。点卡片右上角的窗口按钮，还能把它拉成独立窗口（默认简洁模式，只留卡片）。<b>这页的卡片可以点</b>，武装、取消、解除都在左边操作。',
       'try.tip2': '流程：<b>随机场景</b> → 点卡片上的<b>武装</b> → 开始检测 → 后台任务与会话逐个减少 → 全部结束后进入倒计时 → 下发。',
       'try.tip3': '检测途中会有小概率撞上阻断态：<code>halted</code> 要你点「解除并重试」，<code>waiting</code> 过几秒自己恢复。',
       'try.tip4': '倒计时期间你可以随时「取消关机」，模式仍保持武装；也可能撞上阻断。',
@@ -1512,8 +1604,8 @@ box-shadow:0 0 7px color-mix(in srgb, var(--dsp-accent) 90%, transparent)}
       'now.hold.agents': '会话 {n}',
       'now.countdown': '倒计时 {sec}',
 
-      'var.A.name': '警戒带',
-      'var.A.desc': '大字状态 + 底部红黄斜纹',
+      'var.A.name': '极简',
+      'var.A.desc': '大标题 + 一句话 + 底部警示带',
       'var.B.name': '雷达',
       'var.B.desc': '同心圆 + 扫描光束',
       'var.C.name': '终端',
@@ -1576,7 +1668,7 @@ box-shadow:0 0 7px color-mix(in srgb, var(--dsp-accent) 90%, transparent)}
       'a1.p2': 'But “the task is finished” is not the same as “it is safe to shut down” — background jobs may still be running, a session may have errored, the agent may be waiting for your answer, you may have stopped it halfway. Shutting down in any of those cases is an incident. This plugin blocks each case, one by one, and only shuts down when it is genuinely safe.',
 
       'a2.title': '<span>02</span>The check: when it actually shuts down',
-      'a2.p': 'In a blocked state nothing is sent. Otherwise all five gates must pass before <code>shutdown /s</code> is issued:',
+      'a2.p': 'In a blocked state nothing is sent. Otherwise all five gates must pass before <code>shutdown /s</code> is issued (the six blocks in look C also draw "success-only" and "counting down"; those are extra indicators, the gates stay five):',
       'a2.g1': '<b>Armed</b> — you clicked it yourself',
       'a2.g2': '<b>No countdown running</b> — avoids sending twice',
       'a2.g3': '<b>Every root session idle</b> — no agent is still working',
@@ -1584,10 +1676,10 @@ box-shadow:0 0 7px color-mix(in srgb, var(--dsp-accent) 90%, transparent)}
       'a2.g5': '<b>No session errored in this batch</b> — <code>onlyOnSuccess</code>, on by default',
 
       'a3.title': '<span>03</span>Three looks',
-      'a3.cap1': '<b>A · Hazard tape</b> A large status word plus a scrolling red-and-yellow strip',
-      'a3.cap2': '<b>B · Radar</b> Concentric rings and a sweep, each task shown as a dot',
-      'a3.cap3': '<b>C · Terminal</b> A command-line summary plus six decision LEDs',
-      'a3.alt1': 'A · Hazard tape: large status plus a scrolling red-and-yellow strip',
+      'a3.cap1': '<b>A · Minimal</b> A big status line, one sentence, hazard tape along the bottom',
+      'a3.cap2': '<b>B · Radar</b> Concentric rings and a sweep; work shows up as dots',
+      'a3.cap3': '<b>C · Terminal</b> A command-line summary plus six condition blocks',
+      'a3.alt1': 'A · Minimal: a big status line, one sentence, hazard tape along the bottom',
       'a3.alt2': 'B · Radar: concentric rings and a sweep, tasks shown as dots',
       'a3.alt3': 'C · Terminal: command-line summary plus six decision LEDs',
       'a3.p1': 'Dots in the radar are added and removed by count, never re-sorted: when the number changes, the dots you are looking at stay put. Switch in settings — it applies immediately, no restart.',
@@ -1613,7 +1705,8 @@ box-shadow:0 0 7px color-mix(in srgb, var(--dsp-accent) 90%, transparent)}
       'a7.cap2': 'Countdown: same spot, the whole strip turns red',
       'a7.alt1': 'When armed: below Skill Center, above the session list',
       'a7.alt2': 'Countdown: same spot, the whole strip turns red',
-      'a7.p': 'For now the card is fixed to this spot in the sidebar. The plan is to let it appear independently later; this page will be updated when that lands.',
+      'a7.p': 'The card lives here in the sidebar; the window button in its top-right corner detaches the status panel into a window of its own, so it stays visible when you switch sessions.',
+      'a7.p2': 'The floating window starts in compact mode: page chrome and the stats line are dropped, only the card remains. Look, theme and language follow the settings and repaint within about a second; the folded state does not — a floating window is always expanded.',
 
       'install.text': 'Settings → Plugins → Add, enter the <b>absolute path to the plugin directory</b> → Install → restart DSH. The client bundle is only wired into the module graph at startup, so code changes need a restart — reloading the page does nothing.',
       'install.link': 'Full instructions on GitHub →',
@@ -1623,7 +1716,7 @@ box-shadow:0 0 7px color-mix(in srgb, var(--dsp-accent) 90%, transparent)}
 
       'try.appearance': 'Look',
       'try.appearanceAria': 'Look',
-      'try.vA': 'A · Hazard tape',
+      'try.vA': 'A · Minimal',
       'try.vB': 'B · Radar',
       'try.vC': 'C · Terminal',
       'try.scene': 'Scenario',
@@ -1635,7 +1728,7 @@ box-shadow:0 0 7px color-mix(in srgb, var(--dsp-accent) 90%, transparent)}
       'try.log': 'Simulation log',
       'try.logEmpty': 'No entries yet',
       'try.tips': 'How to play',
-      'try.tip1': '<b>The left side is where it really lives</b>: below Skill Center, above the session list. The card is fixed there for now; later it will be able to appear on its own, and the interaction here will follow. <b>The card on this page is clickable</b> — arm, cancel and clear all happen on the left.',
+      'try.tip1': '<b>The left side is where it really lives</b>: below Skill Center, above the session list. The window button in the card\'s top-right corner also detaches it into a window of its own (compact by default, card only). <b>The card on this page is clickable</b> — arm, cancel and clear all happen on the left.',
       'try.tip2': 'Flow: <b>roll a scenario</b> → click <b>Arm</b> on the card → checking starts → background jobs and sessions drain one by one → when all are done a countdown begins → the command is issued.',
       'try.tip3': 'While checking there is a small chance of hitting a blocked state: <code>halted</code> waits for you to click “Clear and retry”, <code>waiting</code> recovers on its own after a few seconds.',
       'try.tip4': 'During the countdown you can “Cancel shutdown” at any time; the mode stays armed. A blocked state can happen here too.',
@@ -1690,8 +1783,8 @@ box-shadow:0 0 7px color-mix(in srgb, var(--dsp-accent) 90%, transparent)}
       'now.hold.agents': '{n} sessions',
       'now.countdown': 'Countdown {sec}',
 
-      'var.A.name': 'Hazard tape',
-      'var.A.desc': 'Large status + red/yellow strip',
+      'var.A.name': 'Minimal',
+      'var.A.desc': 'Big status line + one sentence + hazard tape',
       'var.B.name': 'Radar',
       'var.B.desc': 'Concentric rings + sweep',
       'var.C.name': 'Terminal',
@@ -1754,7 +1847,7 @@ box-shadow:0 0 7px color-mix(in srgb, var(--dsp-accent) 90%, transparent)}
       'a1.p2': 'Но «задачи завершены» не значит «можно выключать»: фоновые задачи ещё идут, сессия завершилась с ошибкой, агент ждёт вашего ответа, вы сами остановили его на полпути — в любом из этих случаев выключение становится аварией. Плагин отсекает каждый такой случай и выключает, только когда это действительно безопасно.',
 
       'a2.title': '<span>02</span>Проверка: когда выключение разрешено',
-      'a2.p': 'В состоянии блокировки команда не отправляется. Иначе должны пройти все пять проверок, и только потом отправляется <code>shutdown /s</code>:',
+      'a2.p': 'В состоянии блокировки команда не отправляется. Иначе должны пройти все пять проверок, и только потом отправляется <code>shutdown /s</code> (шесть блоков в виде C дополнительно показывают «только успешные» и «идёт отсчёт» — это индикаторы, а не проверки):',
       'a2.g1': '<b>Режим включён</b> — вы нажали сами',
       'a2.g2': '<b>Нет активного обратного отсчёта</b> — чтобы не отправить дважды',
       'a2.g3': '<b>Все корневые сессии свободны</b> — ни один агент не работает',
@@ -1762,10 +1855,10 @@ box-shadow:0 0 7px color-mix(in srgb, var(--dsp-accent) 90%, transparent)}
       'a2.g5': '<b>В этой партии не было ошибок сессий</b> — <code>onlyOnSuccess</code>, включено по умолчанию',
 
       'a3.title': '<span>03</span>Три вида',
-      'a3.cap1': '<b>A · Сигнальная лента</b> Крупный статус и бегущая красно-жёлтая полоса внизу',
+      'a3.cap1': '<b>A · Минимал</b> Крупный заголовок, одна строка, сигнальная лента внизу',
       'a3.cap2': '<b>B · Радар</b> Концентрические круги и луч сканирования, задачи показаны точками',
       'a3.cap3': '<b>C · Терминал</b> Сводка командной строки и шесть индикаторов проверок',
-      'a3.alt1': 'A · Сигнальная лента: крупный статус и бегущая красно-жёлтая полоса внизу',
+      'a3.alt1': 'A · Минимал: крупный заголовок, одна строка, сигнальная лента внизу',
       'a3.alt2': 'B · Радар: концентрические круги и луч сканирования, задачи точками',
       'a3.alt3': 'C · Терминал: сводка командной строки и шесть индикаторов проверок',
       'a3.p1': 'Точки на радаре добавляются и убираются по количеству, но не пересортировываются: когда число меняется, точки, на которые вы смотрите, остаются на местах. Вид переключается в настройках и применяется сразу, без перезапуска.',
@@ -1791,7 +1884,8 @@ box-shadow:0 0 7px color-mix(in srgb, var(--dsp-accent) 90%, transparent)}
       'a7.cap2': 'Обратный отсчёт: то же место, вся полоса краснеет',
       'a7.alt1': 'Режим включён: под центром навыков, над списком сессий',
       'a7.alt2': 'Обратный отсчёт: то же место, вся полоса краснеет',
-      'a7.p': 'Пока карточка закреплена за этим местом в боковой панели. В планах — дать ей отдельное появление; тогда здесь появится пояснение.',
+      'a7.p': 'Карточка живёт здесь, в боковой панели; кнопка с окном в её правом верхнем углу выносит панель состояния в отдельное окно — оно остаётся на виду, когда вы переключаетесь на другую сессию.',
+      'a7.p2': 'Плавающее окно открывается в компактном режиме: рамка страницы и строка статистики убираются, остаётся только карточка. Вид, тема и язык следуют настройкам и перерисовываются примерно за секунду; свёрнутость не переносится — плавающее окно всегда развёрнуто.',
 
       'install.text': 'Настройки → Плагины → Добавить, укажите <b>абсолютный путь к каталогу плагина</b> → Установить → перезапустите DSH. Клиентский bundle подключается к графу модулей только при старте, поэтому после правок кода нужен перезапуск — обновление страницы не помогает.',
       'install.link': 'Полная инструкция на GitHub →',
@@ -1801,7 +1895,7 @@ box-shadow:0 0 7px color-mix(in srgb, var(--dsp-accent) 90%, transparent)}
 
       'try.appearance': 'Вид',
       'try.appearanceAria': 'Вид',
-      'try.vA': 'A · Сигнальная лента',
+      'try.vA': 'A · Минимал',
       'try.vB': 'B · Радар',
       'try.vC': 'C · Терминал',
       'try.scene': 'Сценарий',
@@ -1813,7 +1907,7 @@ box-shadow:0 0 7px color-mix(in srgb, var(--dsp-accent) 90%, transparent)}
       'try.log': 'Журнал симуляции',
       'try.logEmpty': 'Записей пока нет',
       'try.tips': 'Как играть',
-      'try.tip1': '<b>Слева — её настоящее место</b>: под центром навыков, над списком сессий. Пока карточка закреплена здесь; позже её можно будет показывать отдельно, и взаимодействие здесь тоже изменится. <b>Карточка на этой странице кликабельна</b> — включение, отмена и снятие делаются слева.',
+      'try.tip1': '<b>Слева — её настоящее место</b>: под центром навыков, над списком сессий. Кнопка с окном в правом верхнем углу карточки выносит её в отдельное окно (по умолчанию компактное, только карточка). <b>Карточка на этой странице кликабельна</b> — включение, отмена и снятие делаются слева.',
       'try.tip2': 'Порядок: <b>случайный сценарий</b> → нажмите <b>Включить</b> на карточке → начнётся проверка → фоновые задачи и сессии будут убывать по одной → когда всё закончится, пойдёт отсчёт → команда уйдёт.',
       'try.tip3': 'Во время проверки с небольшой вероятностью срабатывает блокировка: <code>halted</code> ждёт нажатия «Снять и повторить», <code>waiting</code> сама восстанавливается через несколько секунд.',
       'try.tip4': 'Во время отсчёта можно в любой момент нажать «Отменить выключение» — режим останется включённым. Блокировка тоже может случиться.',
@@ -1868,8 +1962,8 @@ box-shadow:0 0 7px color-mix(in srgb, var(--dsp-accent) 90%, transparent)}
       'now.hold.agents': 'сессий {n}',
       'now.countdown': 'Отсчёт {sec}',
 
-      'var.A.name': 'Сигнальная лента',
-      'var.A.desc': 'Крупный статус + лента',
+      'var.A.name': 'Минимал',
+      'var.A.desc': 'Крупный заголовок + одна строка + сигнальная лента',
       'var.B.name': 'Радар',
       'var.B.desc': 'Круги + луч сканирования',
       'var.C.name': 'Терминал',
@@ -2072,7 +2166,10 @@ box-shadow:0 0 7px color-mix(in srgb, var(--dsp-accent) 90%, transparent)}
     return out
   })()
 
-  var TAG = { off: 'OFF', armed: 'ARMED', hold: 'WAIT', fire: 'FIRE', fired: 'FIRED' }
+  // Tags mirror lib/client.js's MSG (`tag.*`): `fired` reads DONE there, and a
+  // blocked card carries PAUSED in both of its sub-states — the Retrying /
+  // Paused split lives in the HUD line and the retry button, not in the tag.
+  var TAG = { off: 'OFF', armed: 'ARMED', hold: 'WAIT', fire: 'FIRE', fired: 'DONE' }
 
   function pad2(n) { return n < 10 ? '0' + n : String(n) }
   function clock(sec) { return pad2(Math.floor(sec / 60)) + ':' + pad2(sec % 60) }
@@ -2287,7 +2384,7 @@ box-shadow:0 0 7px color-mix(in srgb, var(--dsp-accent) 90%, transparent)}
 
   function tagOf(s) {
     var v = s.view
-    return v === 'blocked' ? (s.blocked === 'waiting' ? 'RETRY' : 'PAUSED') : TAG[v]
+    return v === 'blocked' ? 'PAUSED' : TAG[v]
   }
 
   function buttonOf(s) {
