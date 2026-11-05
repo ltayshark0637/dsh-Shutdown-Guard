@@ -9,6 +9,10 @@ const state = {
   armed: false, state: 'idle', deadline: 0, countdownSec: 60,
   erroredCount: 0, lastSkip: null, runningCount: 0, rootsCount: 2,
   jobsRunning: 0, jobsTotal: 0,
+  // Custom profiles on: the fixture then covers the real path where the
+  // profiles group is part of the settings tree.
+  customEnabled: true,
+  activeProfileId: 'default',
 }
 
 global.fetch = async () => ({ ok: true, json: async () => state })
@@ -59,12 +63,17 @@ function flat(node, out) {
   return out
 }
 // The slot renders `h(SettingsSection)`; evaluate the component itself.
-const element = slots['settings.section'].render({})
-const rendered = typeof element.type === 'function' ? element.type({}) : element
-const text = flat(rendered, []).join(' | ')
-const missing = ['外观', '判定与关机', 'AFK 自动回答', '自定义配置', '选择配置', '会话都停下来', '后台任务跑完', '倒计时时长', '状态', '上次为什么没关机', '事件日志']
-  .filter((n) => !text.includes(n))
-assert.deepStrictEqual(missing, [], 'missing settings labels; got: ' + text.slice(0, 300))
-assert.ok(!text.includes('终端里的 6 个小块'), 'LED legend hidden while variant != C')
+// The section reads its switch state from the first /state answer, so the
+// render has to wait one turn for that stub to resolve.
+void (async () => {
+  await new Promise((resolve) => setImmediate(resolve))
+  const element = slots['settings.section'].render({})
+  const rendered = typeof element.type === 'function' ? element.type({}) : element
+  const text = flat(rendered, []).join(' | ')
+  const missing = ['外观', '判定与关机', 'AFK 自动回答', '自定义配置', '选择配置', '会话都停下来', '后台任务跑完', '倒计时时长', '状态', '上次为什么没关机', '事件日志']
+    .filter((n) => !text.includes(n))
+  assert.deepStrictEqual(missing, [], 'missing settings labels; got: ' + text.slice(0, 300))
+  assert.ok(!text.includes('终端里的 6 个小块'), 'LED legend hidden while variant != C')
 
-console.log('client bundle smoke: PASS')
+  console.log('client bundle smoke: PASS')
+})().catch((err) => { console.error(err); process.exitCode = 1 })
