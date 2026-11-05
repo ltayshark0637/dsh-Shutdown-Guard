@@ -405,6 +405,54 @@ const cardOnly = (c) => single(frame(card(c)))
 // 浅色配色）+ `.frame.light`（外框底色）；与 14-light 同一套写法。
 const themedCard = (c, theme) => single(frame(card({ ...c, lum: theme === 'light' ? 'light' : 'dark' }), theme === 'light' ? 'light' : ''))
 
+// Claude 档不再有静态调色板：运行时由 resolveClaudePaint() 读 dsh-claude-style
+// 暴露在 :root/body 上的 CSS 变量，再换算成卡片的 --dsp-*。纯静态渲染没有那个
+// 插件，所以这里把「真实样本里的变量值 + 同一套换算」显式注入，图和产品一致。
+// 换算规则照 lib/client.js：bg=bg-layer-1、fg=label-primary、muted=label-secondary、
+// line=divider、accent=apex、danger=state-error-primary、track=hover-bg、
+// tape-a=accent 85% + 黑、tape-b=danger、accent-ink=对 accent 对比度更高的黑/白。
+const CLAUDE_PALETTES = {
+  light: {
+    vars: {
+      '--dsw-alias-label-primary': '#161616',
+      '--dsw-alias-label-secondary': '#6b6b6b',
+      '--dsw-alias-bg-layer-1': '#ffffff',
+      '--dsw-alias-border-l1': 'rgba(22,22,22,.08)',
+      '--dsw-alias-brand-primary': '#d97757',
+      '--dsw-alias-state-error-primary': '#ec1313',
+      '--dsh-claude-apex': '#d97757',
+      '--dsh-claude-divider': 'rgba(22,22,22,.05)',
+      '--dsh-claude-hover-bg': 'rgba(22,22,22,.04)',
+    },
+    card: '--dsp-bg:#ffffff;--dsp-fg:#161616;--dsp-muted:#6b6b6b;--dsp-line:rgba(22,22,22,.05);' +
+      '--dsp-accent:#d97757;--dsp-danger:#ec1313;--dsp-track:rgba(22,22,22,.04);' +
+      '--dsp-tape-a:#b8654a;--dsp-tape-b:#ec1313;--dsp-accent-ink:#1a1200',
+  },
+  dark: {
+    vars: {
+      '--dsw-alias-label-primary': '#fdfdfd',
+      '--dsw-alias-label-secondary': '#a3a3a3',
+      '--dsw-alias-bg-layer-1': '#212121',
+      '--dsw-alias-border-l1': 'rgba(255,255,255,.12)',
+      '--dsw-alias-brand-primary': '#d97757',
+      '--dsw-alias-state-error-primary': '#f25a5a',
+      '--dsh-claude-apex': '#d97757',
+      '--dsh-claude-divider': 'rgba(255,255,255,.08)',
+      '--dsh-claude-hover-bg': 'rgba(255,255,255,.06)',
+    },
+    card: '--dsp-bg:#212121;--dsp-fg:#fdfdfd;--dsp-muted:#a3a3a3;--dsp-line:rgba(255,255,255,.08);' +
+      '--dsp-accent:#d97757;--dsp-danger:#f25a5a;--dsp-track:rgba(255,255,255,.06);' +
+      '--dsp-tape-a:#b8654a;--dsp-tape-b:#f25a5a;--dsp-accent-ink:#1a1200',
+  },
+}
+
+function claudeShot(view, theme) {
+  const p = CLAUDE_PALETTES[theme]
+  const rootVars = Object.entries(p.vars).map(([k, v]) => `${k}:${v}`).join(';')
+  const css = `:root{${rootVars}}.dsp-card.dsp-claude{${p.card}}`
+  return single(frame(card({ view, variant: 'A', claude: true })), css)
+}
+
 // 18 张主图：样式 A/B/C × 语言 zh/en/ru × 主题 浅/深。
 // 排序按「样式 → 语言 → 主题」，文件名自带全部维度，排序即分组。
 const MATRIX = { variants: ['a', 'b', 'c'], langs: LANGS, themes: ['light', 'dark'] }
@@ -455,7 +503,8 @@ const shotDefs = {
 
   // 14-15: light and Claude palettes
   '14-light': () => single(frame(card({ view: 'armed', variant: 'A', lum: 'light' }), 'light')),
-  '15-claude': () => cardOnly({ view: 'fire', variant: 'A', claude: true }),
+  '15-claude': () => claudeShot('off', 'light'),
+  '15-claude-dark': () => claudeShot('off', 'dark'),
 
   // 16: folded
   '16-folded': () => cardOnly({ view: 'armed', variant: 'A', folded: true }),
