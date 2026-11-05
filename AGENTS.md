@@ -5,7 +5,7 @@
 
 ## 0. 生效自检
 
-若本文件已加载，每次回复第一行输出：`[guard-repo]`
+若本文件已加载，每次回复第一行输出：`[SDG （角色）Agent 当前在处理：（当前对话的主题）]`
 缺这一行说明未加载 —— 先确认当前会话的工作目录是本仓库，再动手。
 
 ## 1. 这是什么
@@ -13,11 +13,11 @@
 DSH 插件 `dsh-shutdown-guard`：任务结束后自动关机，侧边栏守夜卡片。Windows only，ESM，零运行时依赖，已发布 npm。
 三个入口，改哪个都要看清：
 
-| 文件 | 角色 |
-| --- | --- |
-| `lib/index.mjs` | 宿主侧：判定闸、倒计时、关机、retry 策略 |
+| 文件            | 角色                                            |
+| --------------- | ----------------------------------------------- |
+| `lib/index.mjs` | 宿主侧：判定闸、倒计时、关机、retry 策略        |
 | `lib/client.js` | 侧边栏卡片（64KB 单文件，CSS + React 都在里面） |
-| `lib/i18n.mjs` | zh/en/ru 文案与语言解析 |
+| `lib/i18n.mjs`  | zh/en/ru 文案与语言解析                         |
 
 ## 2. 改完的判定标准
 
@@ -51,10 +51,15 @@ node test/client.test.cjs   # 客户端 bundle smoke，用假 React 跑真 clien
 ## 5. 红线
 
 1. **不改 DSH 自身**：不碰 `app.asar`、不改 harness 源码，一律通过槽位与事件挂载。
+
 2. **不引第三方运行时依赖**：服务端只用 `node:fs` / `node:path` / `node:crypto`，浏览器侧只 `require('react')`；日志走 `log(message, kind)`，不用 `console.log`。
+
 3. **文档图只能由脚本生成**：`node scripts/gen-gallery.cjs` → `powershell -NoProfile -ExecutionPolicy Bypass -File scripts/screenshot.ps1`。禁止手工 P 图，禁止把 `preview/*.png` 直接当 README 配图（那是设计过程稿，不是当前实现）。
+
 4. **`data/` 是运行时会话数据**（`config.json`、`events.log`）：不手改、不提交、不当交付物；排查问题只读片段。
+
 5. **`dist/dsh-shutdown-guard-1.5.0.zip` 是过期的手工产物**：不要当作发布源，也不要据此判断当前版本；当前版本以 `package.json` 为准。
+
    <!-- 待确认：这个 zip 是否仍要作为 GitHub Release 附件发布；若是，发 1.5.1 时必须重建 -->
 
 ## 6. 目录语义与可清理边界
