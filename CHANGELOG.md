@@ -4,12 +4,12 @@
 
 - 新增独立悬浮窗口：宿主侧新增 `GET /api/dsh-shutdown-guard/window`，返回一个自包含的只读页面（内联 CSS / JS，除同源 `/state` 外不外联任何资源），侧边栏卡片上多一个入口按钮，点开即得到真正的第二个窗口，可以拖到副屏一直盯着倒计时。页面自带三语文案，不占用宿主目录的键；文案由宿主按当前语言渲染好后直接显示。
 - 设置菜单标题跟随宿主语言即时切换：语言一变，设置里的标题立即跟着变，不需要重启 DSH。两条路径都覆盖了——`ctx.locale.register` 注册命名空间（宿主在 locale revision 变化时重读设置台账），以及切换语言后重新注册 `settings.section` 槽位（槽位版本变化时宿主才会重读标签）。语言偏好仍经 `POST /config` 的 `language` 字段写入，权威值落在 `data/config.json`。
-- 6 组卡片文案补齐三语：状态标签（TAG）、HUD 状态词、任务 / 会话计数单位、终端风状态行、倒计时预设（30 秒 / 60 秒 / 2 分钟 / 5 分钟），卡片里不再有写死的中文或英文。
+- 卡片文案全部走三语目录（100 键 × 3 语，键集齐平）。**中文界面刻意保留一批英文技术词**：状态方块（`OFF` / `ARMED` / `WAIT` / `FIRE` / `DONE` / `PAUSED`）、雷达 HUD 状态词（`Holding` / `Offline` / `Retrying` …）、终端风命令行（`T-minus` / `holding` / `halted` …）、`shutdown --when idle` 这类命令名；其余说明、计数、按钮、设置页全为中文。英文与俄文界面各自完整翻译，不受这条混排约定影响。
 - 文档：三份 README 补独立悬浮窗口的说明；`docs/screenshots/` 下 20 张截图与 3 段动画（共 23 个文件）按 v1.5.2 重新生成，截图文案改由 `scripts/gen-gallery.cjs` 直接从 `lib/client.js` 的 MSG 目录与内联 CSS 读取，不再手工同步（出图仍走 `scripts/screenshot.ps1`，不手工 P 图）。
 - 图标：新增 `scripts/gen-icon.cjs`，由脚本生成 `assets/` 下的 180px 站点图标与图标集；`package.json` 的 `icon` 字段指向 `assets/icon-shield-2-128.png`（琥珀盾牌 + 30% 透明内层做厚度 + 实心关机符号，36px 档单独绘制），插件列表里不再显示默认齿轮。
 - 测试：新增 `window-page-ok` 断言 —— `/window` 返回 200、`text/html`、完整文档且含产品名；路由清单断言同步加入该路由，宿主断言共 28 项。
 - 修复：热重载后侧边栏偶发出现两个卡片（第二个是改动前的旧卡片，文案还是英文）。原因是新的模块实例只认自己内存里的 `host`，旧实例留在 DOM 里的节点和它的轮询定时器都没人管。现在用实例令牌 `window.__dshShutdownGuardOwner` 定主：新实例挂载即接管，旧实例下一拍发现主人不是自己就清掉自己的节点并停手；建 host 前先清掉 `regionArea` 里残留的同类节点；`<style>` 标签同样去重。
-- 修复：中文下 `code.waiting` / `code.halted` 两条闸位说明仍显示 `waiting` / `halted`，已改为「等待中 · 自动重试」「已停止 · 需人工处理」。
+- 中文界面的技术词按既定约定保持英文：`code.waiting` / `code.halted` 渲染为「`waiting` · 自动重试」「`halted` · 需人工处理」——技术词英文、解释中文，与上一栏的混排约定一致。
 
 ## v1.5.1 — 2026-11-04
 
