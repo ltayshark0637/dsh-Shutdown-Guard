@@ -194,7 +194,7 @@ The default profile is **everyone's safe floor**: 60 seconds, wait for backgroun
 
 ### Creating a custom profile
 
-Settings → **Profiles** → `+ New`: it copies the current profile, you name it (≤24 characters) and save; it becomes the active profile.
+Settings → **Appearance** → **Profiles** → `+ New`: it copies the current profile, you name it (≤24 characters) and save; it becomes the active profile.
 
 - Every custom profile can be made the default, renamed, or deleted.
 - Deleting the profile in use falls back to the default profile, with a confirmation first.
