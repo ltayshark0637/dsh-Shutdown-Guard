@@ -1135,6 +1135,38 @@ assert.strictEqual(routes.size, 0, 'disposer removes HTTP routes')
   }
   calls.push('cancel-after-deadline-copy-ok')
 
+  // 41b. The honest "already sent" marker is the sentInline flag, not `state`:
+  // an inline command leaves the process at countdownSec, while `state` only
+  // flips to 'fired' after countdownSec + marginSec + 5. A cancel inside that
+  // gap must not spawn a second command nor claim it cancelled anything.
+  await postState('/disarm')
+  await postState('/config', { updateProfile: { id: 'c1', patch: { action: 'lock', countdownSec: 10, marginSec: 45 } } })
+  await postState('/arm')
+  const gapBeforeIds = new Set(timers.keys())
+  statusHandler({ agent: rootAgent, status: 'idle' })
+  await flush()
+  const gapFresh = [...timers.keys()].filter((id) => !gapBeforeIds.has(id))
+  assert.ok(gapFresh.length >= 2, 'the arm registered the inline deadline and the fired timer')
+  const gapBase = spawns.length
+  timers.get(gapFresh[0])()
+  await flush()
+  assert.strictEqual(spawns.length, gapBase + 1, 'the inline command has been spawned')
+  st = await stateNow()
+  assert.strictEqual(st.state, 'countdown', 'the state still lags behind the sent command')
+  assert.strictEqual(st.lastAction.action, 'lock', 'lastAction records the inline command that ran')
+  const gapEventsLen = (await eventsNow()).length
+  await postState('/cancel')
+  await flush()
+  assert.strictEqual(spawns.length, gapBase + 1, 'a cancel in the gap spawns nothing more')
+  {
+    const added = (await eventsNow()).slice(gapEventsLen)
+    assert.ok(added.length > 0, 'the gap cancel recorded an event')
+    assert.strictEqual(added[added.length - 1].key, 'log.actionAlreadyRan', 'the gap cancel says the action already ran')
+    assert.ok(!added.some((e) => e.key === 'log.cancelledArmed' || e.key === 'log.cancelledDisarmed'), 'no cancelled event in the gap')
+  }
+  assert.strictEqual((await stateNow()).state, 'idle', 'the local state resets as usual')
+  calls.push('inline-cancel-in-gap-ok')
+
   // 42. Custom argv validation: limit, entry length, type and empty entries are
   // rejected rather than silently trimmed; a usable argv round-trips verbatim.
   await postState('/disarm')
