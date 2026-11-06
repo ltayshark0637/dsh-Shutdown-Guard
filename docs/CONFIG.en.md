@@ -185,7 +185,7 @@ If a re-probe finds that the **currently selected action** has become unavailabl
 | --- | --- |
 | `no-script` | `action: custom` but no script uploaded yet |
 | `missing-interpreter` | the script is there, but none of `python` / `python3` / `node` / `powershell` can be found |
-| `needs-elevation` | used for built-in actions on non-win32: availability reports `'unknown'` with this reason — the command was found, but TCC / polkit may require authorisation |
+| `needs-elevation` | used for built-in actions on non-win32: availability reports `'unknown'` with this reason — the command was found, but TCC / polkit may require authorisation. **This is a conservative label, not a detection**: on non-Windows there is no way to know in advance whether an authorisation prompt will appear, so it is always marked "may require authorisation" |
 | `unsupported-on-platform` | the platform has no honest way to do it (macOS `lock`) |
 | `no-host-restart` | `restart-dsh`: Electron's `app.relaunch()` is out of reach |
 | `script-not-acknowledged` | the script's `sha256` does not match `scriptAck`; confirmation is needed again |
