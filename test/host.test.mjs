@@ -1179,15 +1179,57 @@ assert.strictEqual(routes.size, 0, 'disposer removes HTTP routes')
   assert.strictEqual(r.status, 400, 'a non-string entry is rejected')
   r = await postState('/config', { updateProfile: { id: 'c1', patch: { customArgv: ['', ''] } } })
   assert.strictEqual(r.status, 400, 'empty entries are rejected')
+  // 42b. Picking `custom` is a saved choice, not an arming promise: with an
+  // empty argv it saves (200) but can never arm; the gate recomputes from the
+  // profile instead of trusting the probe cache.
   r = await postState('/config', { updateProfile: { id: 'c1', patch: { action: 'custom' } } })
-  assert.strictEqual(r.status, 400, 'custom needs a command')
-  assert.match(String(r.body.error || ''), /customArgv/, 'the rejection names customArgv')
+  assert.strictEqual(r.status, 200, 'custom can be saved without a command')
+  assert.strictEqual(r.body.profiles.find((p) => p.id === 'c1').action, 'custom', 'the response keeps the saved action')
+  assert.deepStrictEqual(r.body.profiles.find((p) => p.id === 'c1').customArgv, [], 'the empty command is stored as-is')
+  assert.strictEqual(readCfg().profiles.find((p) => p.id === 'c1').action, 'custom', 'the choice reaches the config file')
+  assert.deepStrictEqual(readCfg().profiles.find((p) => p.id === 'c1').customArgv, [], 'no command is persisted')
+  st = await stateNow()
+  assert.deepStrictEqual(st.actions.custom, { available: false, reason: 'no-custom-command' }, 'custom reports why it cannot run')
+  assert.strictEqual(st.actionReady, false, 'the empty command is not ready')
+  n = spawns.length
+  await postState('/arm')
+  statusHandler({ agent: rootAgent, status: 'idle' })
+  await flush()
+  st = await stateNow()
+  assert.strictEqual(st.state, 'idle', 'an empty custom command never enters the countdown')
+  assert.strictEqual(st.lastSkip.key, 'log.actionUnavailable', 'the skip line explains the missing command')
+  assert.strictEqual(spawns.length, n, 'nothing is spawned for an empty custom command')
+
+  // Filling the command flips the gate immediately (no probe round trip), and
+  // clearing it must save and flip it back just as immediately.
   const legal = ['C:\\Windows\\System32\\cmd.exe', '/c', 'echo hi']
   r = await postState('/config', { updateProfile: { id: 'c1', patch: { customArgv: legal } } })
   assert.strictEqual(r.status, 200, 'a legal custom argv is accepted')
   assert.deepStrictEqual(r.body.profiles.find((p) => p.id === 'c1').customArgv, legal, 'it is stored verbatim')
   assert.deepStrictEqual(readCfg().profiles.find((p) => p.id === 'c1').customArgv, legal, 'it reaches the config file')
+  await flush()
+  st = await stateNow()
+  assert.deepStrictEqual(st.actions.custom, { available: true, reason: null }, 'custom becomes runnable as soon as argv is filled')
+  assert.strictEqual(st.actionReady, true, 'the gate follows the saved command')
+  await postState('/arm')
+  statusHandler({ agent: rootAgent, status: 'idle' })
+  await flush()
+  assert.strictEqual((await stateNow()).state, 'countdown', 'a filled custom command can arm')
+  await postState('/cancel')
   calls.push('custom-argv-validate-ok')
+
+  // 42c. Clearing the command again is still a legal save; only the gate changes.
+  await postState('/disarm')
+  r = await postState('/config', { updateProfile: { id: 'c1', patch: { customArgv: [] } } })
+  assert.strictEqual(r.status, 200, 'clearing the command is a legal save')
+  await flush()
+  st = await stateNow()
+  assert.strictEqual(st.profiles.find((p) => p.id === 'c1').action, 'custom', 'clearing argv does not reset the chosen action')
+  assert.deepStrictEqual(st.profiles.find((p) => p.id === 'c1').customArgv, [], 'the command is gone')
+  assert.strictEqual(st.actionReady, false, 'the gate turns false immediately after clearing')
+  assert.strictEqual(st.actions.custom.available, false, 'the capability report follows too')
+  await postState('/config', { updateProfile: { id: 'c1', patch: { action: 'shutdown' } } })
+  calls.push('custom-gate-follows-argv-ok')
 
   // 43. The parent gate may force the effective value to false, but the stored
   // choice must survive so flipping the parent back restores the user's value.
