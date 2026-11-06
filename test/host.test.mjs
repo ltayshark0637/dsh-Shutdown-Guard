@@ -799,7 +799,9 @@ assert.strictEqual(res.status, 400, 'the default profile cannot be deleted')
   const { fileURLToPath } = await import('node:url')
   const here = pathMod.dirname(fileURLToPath(import.meta.url))
   const saved = JSON.parse(fs.readFileSync(pathMod.join(here, '..', 'data', 'config.json'), 'utf8'))
-  assert.strictEqual(saved.version, 2, 'the profile store is written as v2')
+  // v3 adds the top-level `parked` field; the rest of the store is unchanged.
+  assert.strictEqual(saved.version, 3, 'the profile store is written as v3')
+  assert.strictEqual(saved.parked, null, 'nothing is parked when no halt happened')
   assert.strictEqual(saved.afkAutoAnswer, undefined, 'no global AFK flag is left behind')
   assert.strictEqual(saved.profiles.find((p) => p.id === 'c3').notify.blocked, false, 'per-profile notify survives a restart')
 }
