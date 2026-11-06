@@ -183,7 +183,7 @@ profile 里还有一项 `scriptAck: { "sha256": "9f2c…", "at": 1762500100000 }
 | --- | --- |
 | `no-script` | `action: custom` 但还没上传脚本 |
 | `missing-interpreter` | 脚本在，但 `python` / `python3` / `node` / `powershell` 一个都找不到 |
-| `needs-elevation` | 内置动作在非 win32 上就用它：可用性报 `'unknown'`、原因给这个 —— 命令找到了，但 TCC / polkit 可能要求授权 |
+| `needs-elevation` | 内置动作在非 win32 上就用它：可用性报 `'unknown'`、原因给这个 —— 命令找到了，但 TCC / polkit 可能要求授权。**这是保守标注，不是检测**：非 Windows 上无法预知授权弹窗会不会出现，所以一律标为「可能需授权」 |
 | `unsupported-on-platform` | 本平台没有诚实的做法（macOS 的 `lock`） |
 | `no-host-restart` | `restart-dsh`：够不着 Electron 的 `app.relaunch()` |
 | `script-not-acknowledged` | 脚本的 `sha256` 与 `scriptAck` 不一致，需重新确认 |
