@@ -1,6 +1,6 @@
 # Changelog
 
-## v1.5.2 — 2026-11-06
+## v1.6.0 — 2026-11-06
 
 - **悬浮窗口**：卡片上多了一个入口，点开是真正的第二个窗口，可以拖到副屏一直盯着倒计时，切到别的会话也看得见。窗口里就是侧边栏卡片本身——同一套状态机、同一套配色、同一枚主按钮，左上角指示点随 `blocked / off / fired / countdown / hold / armed` 变色并呼吸，最近事件留在卡片下方。外观（A / B / C）、主题、语言三项由宿主持有（`POST /ui` 写进 `data/ui.json`，`/state` 的 `ui` 字段读出），在设置里一改，窗口下一轮轮询就重画，不用关重开。之所以不继续只靠 `localStorage`：桌面端的侧边栏与 `window.open` 出来的窗口可能落在不同的存储分区，早先的表现就是「语言能跟随、颜色与外观不跟随」。
 - **悬浮窗简洁模式（默认开启）**：只留卡片本身，隐藏顶部品牌行、状态徽章、统计行、最近事件和底部提示；页面背景透明、卡片居中，看起来就是一张悬在桌面上的卡片。开关放在设置页的「外观」组里，窗口内刻意不放切换控件——一个只剩一张卡片的窗口，不该再叠一个开关上去。
@@ -31,7 +31,7 @@
 - 修复：设置菜单里的插件标题不跟随语言。`ctx.locale.register` 注册命名空间，并在切换语言后重新注册 `settings.section` 槽位，两条路径都覆盖，不需要重启 DSH。
 - 修复：冷启动后语言丢失。语言偏好改由宿主 `data/ui.json` 持有，`localStorage` 只作首帧兜底，不再依赖某个存储分区。
 - 测试：宿主断言 28 → 43 项，新增 `events-i18n-ok`、`events-since-ok`、`events-nested-i18n-ok`、`window-page-ok`、`window-radar-parity-ok`（悬浮窗与卡片的 agent 点数同源）、`window-tape-ok`（悬浮窗警示带与卡片同一套状态规则）、`ui-state-ok`、`ui-compact-ok`、`profile-v2-ok`、`profile-legacy-ok`（后两项覆盖 v1 → v2 读取与旧全局字段迁移）、`agent-total-ok`、`agent-total-fallback-ok`（后两项覆盖子 Agent 计数与宿主不提供成员列表时的回落）；发版前又补了 4 条配置用例——空槽按需创建、从没动过的空槽在升级时清理、记住上次用的配置、那份配置被删后回落到默认。客户端从 1 条 bundle smoke 扩到 14 项：雷达 5 条（点数取运行中 agent 总数、不退回主会话数、上限 12 个与 `+N`、读屏描述、宿主不提供该字段时回落）、强调色 4 条（`oklch` 与 `color-mix` 两种推导都不会推出没彩度的灰、灰度强调色能退回琥珀、不用 canvas 取色）、内置配色 3 条（读不到 Claude Style 的配色属性才用内置陶土橙、palette 为 `host` 时不走内置配色、属性为空表示插件已安装）、主题名 1 条（选项显示为 `Claude Style`）。
-- 文档：新增面向下载者的 `RELEASE-1.5.2.md`；三份 README 的安装、配置与截图按本版更新，并加上 awesome-dsh-plugin 的收录徽章（贴在 dshbase 那枚旁边）。dsh-plugin.org 与 dpharness 的页面还没上线或还没更新，暂不贴。
+- 文档：新增面向下载者的 `RELEASE-1.6.0.md`；三份 README 的安装、配置与截图按本版更新，并加上 awesome-dsh-plugin 的收录徽章（贴在 dshbase 那枚旁边）。dsh-plugin.org 与 dpharness 的页面还没上线或还没更新，暂不贴。
 - ⚠️ 升级注意：`data/config.json` 无需手动迁移，读取时自动兼容、保存时写成 `version: 2`；默认配置现在拒绝改动，想自定义就新建一个配置；旧版全局的 AFK 与通知开关会并入升级时生效的那个配置。**包变大了，这是预期内的**：设置页那 18 张缩略图以内联 base64 的形式进了 `lib/client.js`（约 76KB），该文件从约 143KB 涨到 237KB；本版 npm 包约 190 kB（未压缩解包约 500 kB），仍是 11 个文件，不是装错了。
 
 ## v1.5.1 — 2026-11-04
