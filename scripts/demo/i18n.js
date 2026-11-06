@@ -102,7 +102,7 @@
       'a3.alt1': 'A · 极简：大标题 + 一句话，底部警示带',
       'a3.alt2': 'B · 雷达：同心圆 + 扫描光束，任务以圆点呈现',
       'a3.alt3': 'C · 终端：命令行摘要 + 六段判定指示灯',
-      'a3.p1': '雷达里的圆点按数量增删、不重排：数量变化时，你正在看的那几个点不会跳位置。设置里切换，立即生效，无需重启。',
+      'a3.p1': '雷达里的圆点按数量增删、不重排：数量变化时，你正在看的那几个点不会跳位置。设置里切换，立即生效，无需重启。底部的警示带也跟着状态走：未武装或被阻断时是主题色的深浅两档，武装后回到红黄斜纹，渐变过去、不闪；下面的 04 一节把这两种状态并排放着，可以直接对比。',
       'a3.p2': '想自己动手试试？打开 <a href="#try">试一试</a> —— 换外观、掷状态、看日志，都是本地随机的，不联网。',
 
       'a4.title': '<span>04</span>六种运行状态',
@@ -351,7 +351,7 @@
       'a3.alt1': 'A · Minimal: a big status line, one sentence, hazard tape along the bottom',
       'a3.alt2': 'B · Radar: concentric rings and a sweep, tasks shown as dots',
       'a3.alt3': 'C · Terminal: command-line summary plus six decision LEDs',
-      'a3.p1': 'Dots in the radar are added and removed by count, never re-sorted: when the number changes, the dots you are looking at stay put. Switch in settings — it applies immediately, no restart.',
+      'a3.p1': 'Dots in the radar are added and removed by count, never re-sorted: when the number changes, the dots you are looking at stay put. Switch in settings — it applies immediately, no restart. The hazard tape follows the state as well: two quiet shades of the theme colour while the card is off or blocked, the red-and-yellow stripes once it is armed, fading between them instead of flashing; section 04 below shows the two states side by side.',
       'a3.p2': 'Want to try it yourself? Open <a href="#try">Try it</a> — change the look, roll a state, watch the log. All local and random, no network.',
 
       'a4.title': '<span>04</span>Six runtime states',
@@ -600,7 +600,7 @@
       'a3.alt1': 'A · Минимал: крупный заголовок, одна строка, сигнальная лента внизу',
       'a3.alt2': 'B · Радар: концентрические круги и луч сканирования, задачи точками',
       'a3.alt3': 'C · Терминал: сводка командной строки и шесть индикаторов проверок',
-      'a3.p1': 'Точки на радаре добавляются и убираются по количеству, но не пересортировываются: когда число меняется, точки, на которые вы смотрите, остаются на местах. Вид переключается в настройках и применяется сразу, без перезапуска.',
+      'a3.p1': 'Точки на радаре добавляются и убираются по количеству, но не пересортировываются: когда число меняется, точки, на которые вы смотрите, остаются на местах. Вид переключается в настройках и применяется сразу, без перезапуска. Лента внизу тоже следует за состоянием: два спокойных оттенка темы, пока карточка выключена или заблокирована, и красно-жёлтые полосы, как только режим включён; смена плавная, без вспышек — в разделе 04 эти два состояния стоят рядом.',
       'a3.p2': 'Хотите попробовать сами? Откройте <a href="#try">«Попробовать»</a> — сменить вид, выбросить состояние, посмотреть журнал. Всё считается локально и случайно, без сети.',
 
       'a4.title': '<span>04</span>Шесть рабочих состояний',

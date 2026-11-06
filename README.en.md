@@ -47,6 +47,8 @@ The same look in light and dark; the trilingual captures live in `docs/screensho
 
 Dots in the radar are added and removed, never reordered: when the count changes, the dots you are looking at do not jump.
 
+The hazard tape along the bottom of the card follows the state: while the card is off or blocked it stays in two quiet shades of the theme colour, out of the way; the moment you arm it, the familiar red-and-yellow stripes come back to say it is standing by. The change is a fade, not a flash.
+
 <p align="center"><img src="https://cdn.jsdelivr.net/gh/ltayshark0637/dsh-Shutdown-Guard@main/docs/screenshots/anim-radar.gif" width="330" alt="Radar sweep"></p>
 
 Pick one of the three thumbnail cards in the Appearance tab; it takes effect immediately, no restart. The picture switches with the UI language and the lightness of the surface behind it.
