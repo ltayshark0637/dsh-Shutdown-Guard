@@ -23,6 +23,7 @@
 const fs = require('node:fs')
 const path = require('node:path')
 const zlib = require('node:zlib')
+const { spawnSync } = require('node:child_process')
 
 const root = path.join(__dirname, '..')
 const SHOTS = path.join(root, 'docs', 'screenshots')
@@ -162,8 +163,13 @@ function buildPalette(img, maxColors) {
       : { r: (k >>> 24) & 255, g: (k >>> 16) & 255, b: (k >>> 8) & 255, a: k & 255, count }
   ))
   const boxes = [entries.filter((e) => !e.clear)]
+  // The clear entry costs one palette slot, so quantise into maxColors - 1.
+  // Getting this wrong once produced 257-entry PLTE chunks: the header still
+  // claimed 400x256, so every check that only read IHDR passed, while browsers
+  // refused to decode the picture and the settings cards collapsed.
   const clearCount = counts.get(-1) || 0
-  while (boxes.length < maxColors) {
+  const budget = clearCount ? maxColors - 1 : maxColors
+  while (boxes.length < budget) {
     let pick = -1
     let best = -1
     for (let i = 0; i < boxes.length; i++) {
@@ -320,6 +326,64 @@ function encodeIndexed(width, height, palette, idx) {
   ])
 }
 
+// Structural gate for the indexed PNG we just built. A header-only check is not
+// enough: a 257-entry PLTE still reports the right IHDR dimensions yet browsers
+// reject the file, so the palette and the index stream are checked here too.
+function assertIndexedPng(buf, key) {
+  let off = 8
+  let count = 0
+  let ihdr = null
+  let plte = null
+  let trns = null
+  const idat = []
+  while (off < buf.length) {
+    const len = buf.readUInt32BE(off)
+    const type = buf.toString('latin1', off + 4, off + 8)
+    const data = buf.subarray(off + 8, off + 8 + len)
+    if (type === 'IHDR') ihdr = data
+    else if (type === 'PLTE') plte = data
+    else if (type === 'tRNS') trns = data
+    else if (type === 'IDAT') idat.push(data)
+    off += 12 + len
+    count += 1
+  }
+  const fail = (msg) => { throw new Error(key + ': ' + msg) }
+  if (!ihdr) fail('no IHDR')
+  if (ihdr[8] !== 8 || ihdr[9] !== 3) fail('expected 8-bit indexed, got depth ' + ihdr[8] + ' type ' + ihdr[9])
+  if (!plte) fail('no PLTE')
+  if (plte.length % 3 !== 0) fail('PLTE length ' + plte.length + ' is not a multiple of 3')
+  if (plte.length > 768) fail('PLTE has ' + plte.length / 3 + ' entries (max 256)')
+  const colors = plte.length / 3
+  if (trns && trns.length > colors) fail('tRNS ' + trns.length + ' > palette ' + colors)
+  if (!idat.length) fail('no IDAT')
+  const w = ihdr.readUInt32BE(0)
+  const h = ihdr.readUInt32BE(4)
+  const raw = zlib.inflateSync(Buffer.concat(idat))
+  if (raw.length !== (w + 1) * h) fail('IDAT size ' + raw.length + ' != ' + (w + 1) * h)
+  for (let y = 0; y < h; y++) {
+    if (raw[y * (w + 1)] !== 0) fail('row ' + y + ' filter is not 0')
+    for (let x = 0; x < w; x++) {
+      if (raw[y * (w + 1) + 1 + x] >= colors) fail('index out of palette at ' + x + ',' + y)
+    }
+  }
+  return { width: w, height: h, colors }
+}
+
+// Real decode through Pillow when it is installed: it is the same class of check
+// a browser does (and it was what flagged the 257-entry palettes). Falls back to
+// our own reader, which now also expands indexed files.
+function decodeCheck(file) {
+  const script = 'import sys\nfrom PIL import Image\nim = Image.open(sys.argv[1])\nim.load()\nprint(im.size[0], im.size[1])'
+  const res = spawnSync('python', ['-c', script, file], { encoding: 'utf8' })
+  if (res.error && res.error.code === 'ENOENT') {
+    const img = decodePNG(fs.readFileSync(file))
+    return { via: 'own-decoder', width: img.width, height: img.height }
+  }
+  if (res.status !== 0) throw new Error(file + ': PIL refused the file: ' + (res.stderr || res.stdout || '').trim())
+  const [w, h] = String(res.stdout).trim().split(/\s+/).map(Number)
+  return { via: 'pillow', width: w, height: h }
+}
+
 // a→c、zh→ru、light→dark：与 _ops/variant-thumbs.txt 的行序一致。
 const VARIANTS = ['a', 'b', 'c']
 const LANGS = ['zh', 'en', 'ru']
@@ -339,7 +403,8 @@ function buildOne(entry) {
   for (const colors of PALETTE_STEPS) {
     const indexed = toIndexed(img, colors, true)
     const png = encodeIndexed(indexed.width, indexed.height, indexed.palette, indexed.idx)
-    last = { key: entry.key, img, indexed, png, colors }
+    const checked = assertIndexedPng(png, entry.key)
+    last = { key: entry.key, img, indexed, png, colors, palette: checked.colors }
     if (png.length <= MAX_BYTES) return last
   }
   if (last.png.length <= HARD_MAX_BYTES) return last
@@ -373,22 +438,39 @@ function main() {
   let minB = Infinity
   let maxB = 0
   const over = []
+  const written = []
+  const decoders = new Set()
   for (const r of results) {
     const file = path.join(OUT, 'variant-' + r.key + '.png')
     fs.writeFileSync(file, r.png)
+    written.push(file)
+    // Ask a real decoder before claiming the picture is usable: the last round
+    // shipped 16 files whose IHDR was perfect and which no browser would open.
+    try {
+      const check = decodeCheck(file)
+      decoders.add(check.via)
+      if (check.width !== r.indexed.width || check.height !== r.indexed.height) {
+        throw new Error(file + ': decoded ' + check.width + 'x' + check.height + ', expected ' +
+          r.indexed.width + 'x' + r.indexed.height)
+      }
+    } catch (e) {
+      for (const w of written) fs.rmSync(w, { force: true })
+      throw e
+    }
     lines.push(r.key + ' ' + r.png.toString('base64'))
     totalB64 += r.png.toString('base64').length
     minB = Math.min(minB, r.png.length)
     maxB = Math.max(maxB, r.png.length)
-    if (r.png.length > MAX_BYTES) over.push(r.key + ' ' + r.png.length + ' B / ' + r.colors + ' colors')
+    if (r.png.length > MAX_BYTES) over.push(r.key + ' ' + r.png.length + ' B / ' + r.palette + ' colors')
     console.log('assets/variant-' + r.key + '.png  ' + r.indexed.width + 'x' + r.indexed.height +
-      '  ' + r.png.length + ' B  ' + r.colors + ' colors')
+      '  ' + r.png.length + ' B  ' + r.palette + ' palette entries  decoded')
   }
   const txt = path.join(root, '_ops', 'variant-thumbs.txt')
   fs.writeFileSync(txt, lines.join('\n') + '\n', 'utf8')
   console.log('bytes ' + minB + '-' + maxB)
   console.log('base64 total ' + totalB64 + ' B (' + (totalB64 / 1024).toFixed(1) + ' KiB)')
   console.log('over budget ' + (over.length ? over.join('; ') : 'none'))
+  console.log('decoded by ' + [...decoders].join(', '))
   console.log('_ops/variant-thumbs.txt  ' + (lines.length - 3) + ' thumbs, ' + fs.statSync(txt).size + ' B')
 }
 
