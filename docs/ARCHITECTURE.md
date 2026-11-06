@@ -76,6 +76,10 @@ off ──武装──▶ armed ──有后台任务──▶ hold ──任务
 
 重试节奏见 [CONFIG](./CONFIG.md#6-重试策略)。
 
+**只有 `halted` 会落盘**（`config.json` 的 `parked`）：`waiting` 有计时器会自愈，存下来会变成「重启之后永远在等」。
+清除边界：武装、解除、成功回合、`shutdownOnHalt` 触发时清；重启、切 profile、改语言、改外观时**不清** —— 那些都不改变「这一批已经熔断」的事实。
+熔断之后是否仍执行动作，由 `shutdownOnHalt` 决定，有效值还要看母开关 `onlyOnSuccess`（见 [CONFIG](./CONFIG.md) 第 2 节）。
+
 ## 5. AFK 自动接管
 
 只在武装期间生效，三件事：
@@ -114,7 +118,11 @@ off ──武装──▶ armed ──有后台任务──▶ hold ──任务
 
 ## 7. 平台与失败面
 
-- 宿主侧目前仍在 `apply()` 里对 `process.platform !== 'win32'` 早退（打一条 `log.platformUnsupported` 即返回）；动作表已经写好 win32 / darwin / linux 三列（见 [CONFIG](./CONFIG.md) 第 4 节），跨平台挂载的开关还没打开。
+- **平台**：win32、macOS、Linux 现在都按同一条路径挂载 —— 动作表为每个平台备好一行，`apply()` 里只剩一条防御性早退（某平台连 `shutdown` 行都没有时才触发，目前不可达，`log.platformUnsupported` 保留在文案目录里）。
+  - **Windows 是完整验证过的**；macOS / Linux **已实现但未实测**。
+  - macOS `lock` 没有可靠 CLI（`displaysleepnow` 只是熄屏，⌃⌘Q 需要辅助功能权限），明确报 `unsupported-on-platform`，不半锁；macOS `hibernate` 没有用户级命令，降级为 `pmset sleepnow`。
+  - Linux `signout` 用 `loginctl terminate-user`，会连带结束 DSH 自己（DSH 跑在该用户会话里）。
+  - 非 win32 上凡是能解析到命令的动作，可用性一律报 `'unknown'`：TCC / polkit 可能在最后一刻拒绝，报 `true` 就是撒谎。
 - 不修改 `app.asar` 与 DSH 源码，全部通过槽位与事件挂载。
 - 零运行时依赖：服务端只用 `node:fs` / `node:path` / `node:crypto`，浏览器侧只 `require('react')`。
 - 日志走 `log(message, kind)`，不用 `console.log`。
