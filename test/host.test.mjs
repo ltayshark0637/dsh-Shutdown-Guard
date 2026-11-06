@@ -122,6 +122,16 @@ function request(method, path, origin, payload) {
 
 const flush = () => new Promise((resolve) => setImmediate(resolve))
 
+/** Timer ids registered since `before` was captured, in registration order. */
+function newTimers(before) {
+  return [...timers.keys()].filter((id) => !before.has(id))
+}
+function fireTimer(id) {
+  const cb = timers.get(id)
+  assert.ok(cb, `timer ${id} is still registered`)
+  cb()
+}
+
 assert.deepStrictEqual(
   [...routes.keys()].sort(),
   ['/api/dsh-shutdown-guard/arm', '/api/dsh-shutdown-guard/cancel', '/api/dsh-shutdown-guard/config', '/api/dsh-shutdown-guard/disarm', '/api/dsh-shutdown-guard/events', '/api/dsh-shutdown-guard/state', '/api/dsh-shutdown-guard/ui', '/api/dsh-shutdown-guard/window'],
@@ -153,23 +163,25 @@ assert.strictEqual(res.status, 200)
 assert.strictEqual(JSON.parse(res.body).armed, true)
 calls.push('arm-ok')
 
-// 5. last agent goes idle -> countdown + real /s /t 15
+// 5. last agent goes idle -> countdown only. Nothing is handed to the OS at
+// arm time any more: every action is inline and fires at the deadline.
 rootAgent.status = 'idle'
 statusHandler({ agent: rootAgent, status: 'idle' })
-assert.strictEqual(spawns.length, 0, 'spawn is async')
+assert.strictEqual(spawns.length, 0, 'nothing is sent when the countdown starts')
 await flush()
-assert.deepStrictEqual(spawns[0], ['C:\\Windows\\System32\\shutdown.exe', '/s', '/t', '65'])
+assert.strictEqual(spawns.length, 0, 'still nothing after the arm settles')
 res = await request('GET', '/api/dsh-shutdown-guard/state')
 body = JSON.parse(res.body)
 assert.strictEqual(body.state, 'countdown')
 assert.ok(body.deadline > Date.now() - 1000)
 calls.push('countdown-ok')
 
-// 6. a new task starts -> /a, stays armed
+// 6. a new task starts -> the countdown is dropped, but no undo command exists
+// to send (nothing ever left the process) and the mode stays armed.
 rootAgent.status = 'running'
 statusHandler({ agent: rootAgent, status: 'running' })
 await flush()
-assert.deepStrictEqual(spawns[1], ['C:\\Windows\\System32\\shutdown.exe', '/a'])
+assert.strictEqual(spawns.length, 0, 'cancelling an inline countdown sends nothing')
 body = JSON.parse((await request('GET', '/api/dsh-shutdown-guard/state')).body)
 assert.strictEqual(body.state, 'idle')
 assert.strictEqual(body.armed, true, 'running keeps the mode armed')
@@ -188,7 +200,9 @@ assert.strictEqual(body.erroredCount, 1)
 assert.ok(body.lastSkip && /出错/.test(body.lastSkip.reason))
 calls.push('error-skip-ok')
 
-// 8. clean batch -> countdown, then fired timer, then /cancel keeps armed
+// 8. clean batch -> countdown, the deadline timer sends one immediate `/s /t 0`,
+// and only the later fired timer flips the state. Cancel then sends nothing.
+const firedBefore = new Set(timers.keys())
 statusHandler({ agent: rootAgent, status: 'running' })
 rootAgent.status = 'idle'
 statusHandler({ agent: rootAgent, status: 'idle' })
@@ -196,10 +210,17 @@ await flush()
 body = JSON.parse((await request('GET', '/api/dsh-shutdown-guard/state')).body)
 assert.strictEqual(body.state, 'countdown')
 assert.strictEqual(body.erroredCount, 0)
+assert.strictEqual(spawns.length, 0, 'the countdown itself sends nothing')
 
-const lastTimer = [...timers.values()].pop()
-assert.ok(lastTimer, 'fired timer registered')
-lastTimer()
+const timersForFired = newTimers(firedBefore)
+assert.ok(timersForFired.length >= 2, 'the countdown registered the deadline and the fired timer')
+fireTimer(timersForFired[0])
+await flush()
+assert.strictEqual(spawns.length, 1, 'the deadline sends exactly one command')
+assert.deepStrictEqual(spawns[0].slice(1), ['/s', '/t', '0'], 'win32 shutdown is immediate now')
+body = JSON.parse((await request('GET', '/api/dsh-shutdown-guard/state')).body)
+assert.strictEqual(body.state, 'countdown', 'the command is out but the state has not flipped yet')
+fireTimer(timersForFired[1])
 body = JSON.parse((await request('GET', '/api/dsh-shutdown-guard/state')).body)
 assert.strictEqual(body.state, 'fired')
 
@@ -208,7 +229,7 @@ res = await request('POST', '/api/dsh-shutdown-guard/cancel', 'http://localhost:
 await flush()
 const cancelBody = JSON.parse(res.body)
 assert.strictEqual(cancelBody.ok, true)
-assert.deepStrictEqual(spawns[before], ['C:\\Windows\\System32\\shutdown.exe', '/a'])
+assert.strictEqual(spawns.length, before, 'cancel never sends an undo command')
 body = JSON.parse((await request('GET', '/api/dsh-shutdown-guard/state')).body)
 assert.strictEqual(body.state, 'idle')
 assert.strictEqual(body.armed, true, 'cancel keeps the mode armed')
@@ -238,17 +259,19 @@ assert.strictEqual(body.state, 'countdown', 'settling the last job arms the shut
 assert.strictEqual(body.jobsRunning, 0)
 calls.push('job-settle-arms-ok')
 
-// 10. a job starting during the countdown cancels /a but keeps the mode armed
+// 10. a job starting during the countdown drops it but keeps the mode armed,
+// and sends nothing (there is no OS-held timer to undo any more).
 const beforeJobCancel = spawns.length
 emitJob({ type: 'registered', job: { id: 'bash-2', kind: 'bash', label: '后台测试', status: 'running' } })
 await flush()
-assert.deepStrictEqual(spawns[beforeJobCancel], ['C:\\Windows\\System32\\shutdown.exe', '/a'])
+assert.strictEqual(spawns.length, beforeJobCancel, 'a countdown cancel sends nothing')
 body = JSON.parse((await request('GET', '/api/dsh-shutdown-guard/state')).body)
 assert.strictEqual(body.state, 'idle')
 assert.strictEqual(body.armed, true)
 assert.strictEqual(body.jobsRunning, 1)
 emitJob({ type: 'settled', job: { id: 'bash-2', kind: 'bash', label: '后台测试', status: 'completed' } })
 await flush()
+assert.strictEqual(JSON.parse((await request('GET', '/api/dsh-shutdown-guard/state')).body).state, 'countdown', 'settling arms again')
 calls.push('job-during-countdown-cancels-ok')
 
 // 11. disarm
@@ -416,8 +439,8 @@ assert.strictEqual(nudges.length, 2, 'second failure asks for the wrap-up')
 rootAgent.status = 'idle'
 statusHandler({ agent: rootAgent, status: 'idle' })
 await flush()
-assert.strictEqual(spawns.length, beforeWrap + 1, 'wrap-up finished: shutdown is armed')
-assert.deepStrictEqual(spawns[beforeWrap].slice(1, 3), ['/s', '/t'])
+assert.strictEqual(spawns.length, beforeWrap, 'wrap-up finished: the countdown starts, nothing is sent')
+assert.strictEqual(JSON.parse((await request('GET', '/api/dsh-shutdown-guard/state')).body).state, 'countdown', 'wrap-up finished: shutdown is armed')
 await request('POST', '/api/dsh-shutdown-guard/cancel', 'http://127.0.0.1:43129')
 calls.push('afk-wrap-shutdown-ok')
 
@@ -492,7 +515,8 @@ statusHandler({ agent: rootAgent, status: 'running' })
 rootAgent.status = 'idle'
 statusHandler({ agent: rootAgent, status: 'idle' })
 await flush()
-assert.strictEqual(spawns.length, beforeAbort + 1, 'the next completed run may arm again')
+assert.strictEqual(spawns.length, beforeAbort, 'the next completed run may arm again, sending nothing yet')
+assert.strictEqual(JSON.parse((await request('GET', '/api/dsh-shutdown-guard/state')).body).state, 'countdown', 'the next completed run enters the countdown')
 await request('POST', '/api/dsh-shutdown-guard/cancel', 'http://127.0.0.1:43129')
 calls.push('interrupt-ignored-ok')
 
@@ -799,8 +823,8 @@ assert.strictEqual(res.status, 400, 'the default profile cannot be deleted')
   const { fileURLToPath } = await import('node:url')
   const here = pathMod.dirname(fileURLToPath(import.meta.url))
   const saved = JSON.parse(fs.readFileSync(pathMod.join(here, '..', 'data', 'config.json'), 'utf8'))
-  // v3 adds the top-level `parked` field; the rest of the store is unchanged.
-  assert.strictEqual(saved.version, 3, 'the profile store is written as v3')
+  // v4 adds script uploads; the rest of the store is unchanged.
+  assert.strictEqual(saved.version, 4, 'the profile store is written as v4')
   assert.strictEqual(saved.parked, null, 'nothing is parked when no halt happened')
   assert.strictEqual(saved.afkAutoAnswer, undefined, 'no global AFK flag is left behind')
   assert.strictEqual(saved.profiles.find((p) => p.id === 'c3').notify.blocked, false, 'per-profile notify survives a restart')
@@ -1026,8 +1050,8 @@ assert.strictEqual(routes.size, 0, 'disposer removes HTTP routes')
   }
   assert.strictEqual(st.actions['restart-dsh'].available, false, 'DSH cannot restart itself')
   assert.strictEqual(st.actions['restart-dsh'].reason, 'no-host-restart', 'the reason is machine-readable')
-  assert.strictEqual(st.actions.custom.available, false, 'custom without argv is unavailable')
-  assert.strictEqual(st.actions.custom.reason, 'no-custom-command', 'custom explains the empty argv')
+  assert.strictEqual(st.actions.custom.available, false, 'custom without a script is unavailable')
+  assert.strictEqual(st.actions.custom.reason, 'no-script', 'custom explains the missing script')
   assert.strictEqual(st.actionReady, true, 'the selected shutdown action is usable')
   calls.push('capability-report-ok')
 
@@ -1053,25 +1077,20 @@ assert.strictEqual(routes.size, 0, 'disposer removes HTTP routes')
   await postState('/cancel')
   calls.push('actions-tri-state-ok')
 
-  // 37. win32 shutdown is deferred to the OS: arming hands it `/s /t N`, and only
-  // cancelling hands it `/a`; the local reset must not spawn anything else.
+  // 37. Every action is inline now, including win32 shutdown: nothing reaches
+  // the OS while the countdown runs, and cancel never sends an undo command.
   await postState('/disarm')
   await postState('/config', { updateProfile: { id: 'c1', patch: { action: 'shutdown' } } })
-  await postState('/arm')
   n = spawns.length
+  await postState('/arm')
   statusHandler({ agent: rootAgent, status: 'idle' })
   await flush()
-  assert.strictEqual(spawns.length, n + 1, 'defer arm sends one command')
-  assert.deepStrictEqual(spawns[n].slice(1, 3), ['/s', '/t'], 'defer arm asks the OS for a delay')
-  assert.match(spawns[n][3], /^\d+$/, 'the delay is the countdown plus margin')
+  assert.strictEqual((await stateNow()).state, 'countdown', 'shutdown still enters the countdown')
+  assert.strictEqual(spawns.length, n, 'arming shutdown sends nothing')
   await postState('/cancel')
   await flush()
-  assert.strictEqual(spawns.length, n + 2, 'defer cancel sends the undo')
-  assert.deepStrictEqual(spawns[n + 1].slice(1), ['/a'], 'defer cancel is shutdown /a')
-  const afterDefer = spawns.length
-  await flush()
-  assert.strictEqual(spawns.length, afterDefer, 'no later spawn after a defer cancel')
-  calls.push('defer-cancel-ok')
+  assert.strictEqual(spawns.length, n, 'cancelling shutdown sends nothing')
+  calls.push('shutdown-countdown-sends-nothing-ok')
 
   // 38. An inline action is not handed to the OS at arm time, so cancelling in
   // the countdown must leave the spawn log completely untouched.
@@ -1167,69 +1186,159 @@ assert.strictEqual(routes.size, 0, 'disposer removes HTTP routes')
   assert.strictEqual((await stateNow()).state, 'idle', 'the local state resets as usual')
   calls.push('inline-cancel-in-gap-ok')
 
-  // 42. Custom argv validation: limit, entry length, type and empty entries are
-  // rejected rather than silently trimmed; a usable argv round-trips verbatim.
+  // 42. A script is uploaded as bytes: the host writes it under data/scripts,
+  // /state exposes metadata only, and uploading one forces the custom action.
   await postState('/disarm')
-  let r = await postState('/config', { updateProfile: { id: 'c1', patch: { customArgv: Array.from({ length: 17 }, (_, i) => 'a' + i) } } })
-  assert.strictEqual(r.status, 400, 'more than 16 entries is rejected')
-  assert.match(String(r.body.error || ''), /at most 16/, 'the rejection explains the limit')
-  r = await postState('/config', { updateProfile: { id: 'c1', patch: { customArgv: ['a'.repeat(257)] } } })
-  assert.strictEqual(r.status, 400, 'an entry longer than 256 chars is rejected')
-  r = await postState('/config', { updateProfile: { id: 'c1', patch: { customArgv: [123] } } })
-  assert.strictEqual(r.status, 400, 'a non-string entry is rejected')
-  r = await postState('/config', { updateProfile: { id: 'c1', patch: { customArgv: ['', ''] } } })
-  assert.strictEqual(r.status, 400, 'empty entries are rejected')
-  // 42b. Picking `custom` is a saved choice, not an arming promise: with an
-  // empty argv it saves (200) but can never arm; the gate recomputes from the
-  // profile instead of trusting the probe cache.
-  r = await postState('/config', { updateProfile: { id: 'c1', patch: { action: 'custom' } } })
-  assert.strictEqual(r.status, 200, 'custom can be saved without a command')
-  assert.strictEqual(r.body.profiles.find((p) => p.id === 'c1').action, 'custom', 'the response keeps the saved action')
-  assert.deepStrictEqual(r.body.profiles.find((p) => p.id === 'c1').customArgv, [], 'the empty command is stored as-is')
-  assert.strictEqual(readCfg().profiles.find((p) => p.id === 'c1').action, 'custom', 'the choice reaches the config file')
-  assert.deepStrictEqual(readCfg().profiles.find((p) => p.id === 'c1').customArgv, [], 'no command is persisted')
-  st = await stateNow()
-  assert.deepStrictEqual(st.actions.custom, { available: false, reason: 'no-custom-command' }, 'custom reports why it cannot run')
-  assert.strictEqual(st.actionReady, false, 'the empty command is not ready')
-  n = spawns.length
-  await postState('/arm')
-  statusHandler({ agent: rootAgent, status: 'idle' })
-  await flush()
-  st = await stateNow()
-  assert.strictEqual(st.state, 'idle', 'an empty custom command never enters the countdown')
-  assert.strictEqual(st.lastSkip.key, 'log.actionUnavailable', 'the skip line explains the missing command')
-  assert.strictEqual(spawns.length, n, 'nothing is spawned for an empty custom command')
-
-  // Filling the command flips the gate immediately (no probe round trip), and
-  // clearing it must save and flip it back just as immediately.
-  const legal = ['C:\\Windows\\System32\\cmd.exe', '/c', 'echo hi']
-  r = await postState('/config', { updateProfile: { id: 'c1', patch: { customArgv: legal } } })
-  assert.strictEqual(r.status, 200, 'a legal custom argv is accepted')
-  assert.deepStrictEqual(r.body.profiles.find((p) => p.id === 'c1').customArgv, legal, 'it is stored verbatim')
-  assert.deepStrictEqual(readCfg().profiles.find((p) => p.id === 'c1').customArgv, legal, 'it reaches the config file')
-  await flush()
-  st = await stateNow()
-  assert.deepStrictEqual(st.actions.custom, { available: true, reason: null }, 'custom becomes runnable as soon as argv is filled')
-  assert.strictEqual(st.actionReady, true, 'the gate follows the saved command')
-  await postState('/arm')
-  statusHandler({ agent: rootAgent, status: 'idle' })
-  await flush()
-  assert.strictEqual((await stateNow()).state, 'countdown', 'a filled custom command can arm')
-  await postState('/cancel')
-  calls.push('custom-argv-validate-ok')
-
-  // 42c. Clearing the command again is still a legal save; only the gate changes.
-  await postState('/disarm')
-  r = await postState('/config', { updateProfile: { id: 'c1', patch: { customArgv: [] } } })
-  assert.strictEqual(r.status, 200, 'clearing the command is a legal save')
-  await flush()
-  st = await stateNow()
-  assert.strictEqual(st.profiles.find((p) => p.id === 'c1').action, 'custom', 'clearing argv does not reset the chosen action')
-  assert.deepStrictEqual(st.profiles.find((p) => p.id === 'c1').customArgv, [], 'the command is gone')
-  assert.strictEqual(st.actionReady, false, 'the gate turns false immediately after clearing')
-  assert.strictEqual(st.actions.custom.available, false, 'the capability report follows too')
   await postState('/config', { updateProfile: { id: 'c1', patch: { action: 'shutdown' } } })
-  calls.push('custom-gate-follows-argv-ok')
+  const scriptDir = pathMod.join(here, '..', 'data', 'scripts')
+  fs.rmSync(scriptDir, { recursive: true, force: true })
+  const scriptBody = '@echo off\r\nshutdown /s /t 0\r\n'
+  let r = await postState('/config', { putScript: { profileId: 'c1', name: 'bye.cmd', ext: 'cmd', content: scriptBody } })
+  assert.strictEqual(r.status, 200, 'a script can be uploaded')
+  let savedProfile = r.body.profiles.find((p) => p.id === 'c1')
+  assert.strictEqual(savedProfile.action, 'custom', 'uploading a script selects the custom action')
+  assert.strictEqual(savedProfile.script.name, 'bye.cmd', 'the display name is kept')
+  assert.strictEqual(savedProfile.script.ext, 'cmd', 'the extension is kept')
+  assert.strictEqual(savedProfile.script.bytes, Buffer.byteLength(scriptBody), 'the byte count matches the upload')
+  assert.match(savedProfile.script.sha256, /^[0-9a-f]{64}$/, 'the content hash is recorded')
+  const scriptFile = pathMod.join(scriptDir, 'c1.cmd')
+  assert.strictEqual(fs.readFileSync(scriptFile, 'utf8'), scriptBody, 'the bytes land under data/scripts')
+  st = await stateNow()
+  assert.deepStrictEqual(Object.keys(st.script).sort(), ['bytes', 'ext', 'name', 'savedAt', 'sha256'], 'state carries metadata only')
+  assert.strictEqual(st.script.sha256, savedProfile.script.sha256, 'the state hash matches the file')
+  assert.ok(!JSON.stringify(st.script).includes('shutdown /s'), 'state never leaks the script body')
+  await flush()
+  calls.push('put-script-ok')
+
+  // 42b. Consent is bound to the exact bytes: an unacknowledged script cannot
+  // arm, and replacing the body invalidates the old acknowledgement.
+  let scriptN = spawns.length
+  await postState('/arm')
+  statusHandler({ agent: rootAgent, status: 'idle' })
+  await flush()
+  st = await stateNow()
+  assert.strictEqual(st.state, 'idle', 'an unacknowledged script never enters the countdown')
+  assert.strictEqual(st.lastSkip.key, 'log.actionUnavailable', 'the skip line explains the block')
+  assert.strictEqual(st.lastSkip.params.error, 'script-not-acknowledged', 'the machine-readable reason is consent')
+  assert.strictEqual(spawns.length, scriptN, 'nothing is sent before consent')
+  r = await postState('/config', { ackScript: { profileId: 'c1' } })
+  assert.strictEqual(r.status, 200, 'the user can acknowledge the exact bytes')
+  await flush()
+  st = await stateNow()
+  assert.strictEqual(st.scriptAckOk, true, 'state reports the acknowledgement')
+  await postState('/arm')
+  statusHandler({ agent: rootAgent, status: 'idle' })
+  await flush()
+  assert.strictEqual((await stateNow()).state, 'countdown', 'an acknowledged script can arm')
+  await postState('/cancel')
+  r = await postState('/config', { putScript: { profileId: 'c1', name: 'bye.cmd', ext: 'cmd', content: scriptBody + 'echo changed\r\n' } })
+  assert.strictEqual(r.status, 200, 'the body can be replaced')
+  await flush()
+  st = await stateNow()
+  assert.strictEqual(st.scriptAckOk, false, 'new bytes invalidate the acknowledgement')
+  scriptN = spawns.length
+  await postState('/arm')
+  statusHandler({ agent: rootAgent, status: 'idle' })
+  await flush()
+  st = await stateNow()
+  assert.strictEqual(st.state, 'idle', 'the replaced script cannot arm on the old consent')
+  assert.strictEqual(st.lastSkip.params.error, 'script-not-acknowledged', 'the new bytes need a new consent')
+  assert.strictEqual(spawns.length, scriptN, 'still nothing is sent')
+  calls.push('script-ack-gate-ok')
+
+  // 42c. A language with no interpreter is unavailable, and says so instead of
+  // arming and failing later.
+  const realResolve = subprocess.resolveExecutable
+  subprocess.resolveExecutable = async (name) => {
+    if (name === 'python' || name === 'python3') return ''
+    return realResolve(name)
+  }
+  r = await postState('/config', { putScript: { profileId: 'c1', name: 'bye.py', ext: 'py', content: 'print("bye")\n' } })
+  assert.strictEqual(r.status, 200, 'a .py script is accepted as bytes')
+  await flush()
+  st = await stateNow()
+  assert.deepStrictEqual(st.actions.custom, { available: false, reason: 'missing-interpreter' }, 'a missing interpreter is named')
+  subprocess.resolveExecutable = realResolve
+  await postState('/config', { recheck: true })
+  await flush()
+  calls.push('interpreter-missing-ok')
+
+  // 42d. Every action is inline: the countdown sends nothing, the deadline sends
+  // exactly one command with no OS-side delay.
+  await postState('/disarm')
+  await postState('/config', { updateProfile: { id: 'c1', patch: { action: 'shutdown' } } })
+  const inlineBefore = new Set(timers.keys())
+  await postState('/arm')
+  statusHandler({ agent: rootAgent, status: 'idle' })
+  await flush()
+  scriptN = spawns.length
+  assert.strictEqual((await stateNow()).state, 'countdown', 'shutdown enters the countdown')
+  assert.strictEqual(spawns.length, scriptN, 'the countdown sends nothing')
+  const inlineFresh = newTimers(inlineBefore)
+  assert.ok(inlineFresh.length >= 2, 'the deadline and fired timers are registered')
+  fireTimer(inlineFresh[0])
+  await flush()
+  assert.strictEqual(spawns.length, scriptN + 1, 'the deadline sends exactly one command')
+  assert.deepStrictEqual(spawns[scriptN].slice(-3), ['/s', '/t', '0'], 'win32 shutdown asks the OS for no delay')
+  await postState('/cancel')
+  calls.push('inline-only-ok')
+
+  // 42e. Deleting the file is not a crash: /state stays readable and the skip
+  // line reports the missing script instead of arming something that cannot run.
+  await postState('/disarm')
+  await postState('/config', { updateProfile: { id: 'c1', patch: { action: 'custom' } } })
+  await postState('/config', { putScript: { profileId: 'c1', name: 'gone.cmd', ext: 'cmd', content: '@echo off\r\n' } })
+  await postState('/config', { ackScript: { profileId: 'c1' } })
+  fs.rmSync(pathMod.join(scriptDir, 'c1.cmd'), { force: true })
+  await postState('/config', { recheck: true })
+  await flush()
+  st = await stateNow()
+  assert.strictEqual(st.actions.custom.reason, 'no-script', 'a deleted script is reported as missing')
+  scriptN = spawns.length
+  await postState('/arm')
+  statusHandler({ agent: rootAgent, status: 'idle' })
+  await flush()
+  st = await stateNow()
+  assert.strictEqual(st.state, 'idle', 'a missing file never arms')
+  assert.strictEqual(st.lastSkip.key, 'log.actionUnavailable', 'the skip line explains it')
+  assert.strictEqual(spawns.length, scriptN, 'nothing is sent for a missing file')
+  calls.push('script-file-missing-ok')
+
+  // 42f. Stores from 1.6.x load: v2 (the 1.6.0 release) and v3 (the beta) keep
+  // their profiles and are rewritten as v4 on the first save.
+  await postState('/disarm')
+  for (const oldVersion of [2, 3]) {
+    const seeded = {
+      id: 'c1',
+      label: 'Mine',
+      countdownSec: 120,
+      marginSec: 5,
+      onlyOnSuccess: true,
+      blockOnJobs: true,
+      afkAutoAnswer: true,
+      action: 'shutdown',
+    }
+    fs.writeFileSync(cfgFile, JSON.stringify({
+      version: oldVersion,
+      customEnabled: true,
+      activeProfileId: 'c1',
+      language: 'zh',
+      profiles: [seeded],
+    }) + '\n', 'utf8')
+    mount()
+    mount = apply(ctx, { countdownSec: 10, marginSec: 5, onlyOnSuccess: true, language: 'zh' })
+    await flush()
+    st = await stateNow()
+    const loaded = st.profiles.find((p) => p.id === 'c1')
+    assert.ok(loaded, `v${oldVersion} keeps the custom profile`)
+    assert.strictEqual(loaded.countdownSec, 120, `v${oldVersion} keeps the profile values`)
+    await postState('/config', { language: 'zh' })
+    const disk = readCfg()
+    assert.strictEqual(disk.version, 4, `v${oldVersion} is rewritten as v4`)
+    assert.ok(disk.profiles.some((p) => p.id === 'c1'), `v${oldVersion} keeps the profile on disk`)
+    calls.push(oldVersion === 2 ? 'migrate-v2-to-4-ok' : 'migrate-v3-to-4-ok')
+  }
+  await postState('/config', { updateProfile: { id: 'c1', patch: { action: 'shutdown' } } })
 
   // 43. The parent gate may force the effective value to false, but the stored
   // choice must survive so flipping the parent back restores the user's value.
@@ -1243,7 +1352,7 @@ assert.strictEqual(routes.size, 0, 'disposer removes HTTP routes')
   assert.strictEqual(readCfg().profiles.find((p) => p.id === 'c1').shutdownOnHalt, true, 'and the stored value is still there')
   calls.push('halt-effective-not-written-ok')
 
-  // 44. A halted batch is parked on disk (v3) and restored on the next boot
+  // 44. A halted batch is parked on disk (v4) and restored on the next boot
   // without replaying the failure as a fresh event.
   await postState('/disarm')
   await postState('/config', { updateProfile: { id: 'c1', patch: { onlyOnSuccess: true, shutdownOnHalt: true, action: 'shutdown' } } })
@@ -1253,7 +1362,7 @@ assert.strictEqual(routes.size, 0, 'disposer removes HTTP routes')
   assert.strictEqual(st.blockedLevel, 'halted', 'QUOTA halts the batch')
   assert.ok(st.parkedAt > 0, 'the halt carries a timestamp')
   let disk = readCfg()
-  assert.strictEqual(disk.version, 3, 'the store is written as v3')
+  assert.strictEqual(disk.version, 4, 'the store is written as v4')
   assert.strictEqual(disk.parked.code, 'QUOTA', 'the halt code is persisted')
   assert.strictEqual(disk.parked.level, 'halted', 'only a halted block is persisted')
   const parkedAt = disk.parked.at
@@ -1354,7 +1463,7 @@ assert.strictEqual(routes.size, 0, 'disposer removes HTTP routes')
   st = await stateNow()
   assert.strictEqual(st.state, 'countdown', 'the halted batch still shuts down')
   assert.strictEqual(st.blockedLevel, null, 'the block is cleared at the countdown')
-  assert.strictEqual(spawns.length, n + 1, 'the deferred shutdown was handed to the OS')
+  assert.strictEqual(spawns.length, n, 'the countdown itself sends nothing')
   await postState('/cancel')
   await postState('/disarm')
   calls.push('halt-fires-ok')
