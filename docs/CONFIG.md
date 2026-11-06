@@ -133,6 +133,7 @@ POST /config
 - 存储位置：`<DATA_DIR>/scripts/<profileId>.<ext>`。**不在 npm 包目录**：包目录在升级时会被整体替换、安装后通常不可写；`DATA_DIR` 才是插件的可写目录（`config.json`、`events.log` 也在这里）。
 - 文件名由**宿主**生成，用户输入不参与拼路径，规避路径穿越；每个 profile 只留一份，换文件即覆盖。
 - 脚本正文**永不**进 `config.json`、事件日志或 `/state` —— 这些地方只有元数据。
+- 整个请求体上限 **1 MiB**（`BODY_LIMIT`）：`/config` 以前只带小补丁时是 8 KiB，脚本走 JSON 文本、转义后体积约翻倍，所以放宽了；超过会直接断开连接而不是返回 413。
 
 脚本在 profile 里的形状：
 
