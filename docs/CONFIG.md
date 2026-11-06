@@ -182,11 +182,12 @@ profile 里还有一项 `scriptAck: { "sha256": "9f2c…", "at": 1762500100000 }
 | --- | --- |
 | `no-script` | `action: custom` 但还没上传脚本 |
 | `missing-interpreter` | 脚本在，但 `python` / `python3` / `node` / `powershell` 一个都找不到 |
-| `needs-elevation` | 命令存在但需要提权 |
+| `needs-elevation` | 内置动作在非 win32 上就用它：可用性报 `'unknown'`、原因给这个 —— 命令找到了，但 TCC / polkit 可能要求授权 |
 | `unsupported-on-platform` | 本平台没有诚实的做法（macOS 的 `lock`） |
 | `no-host-restart` | `restart-dsh`：够不着 Electron 的 `app.relaunch()` |
 | `script-not-acknowledged` | 脚本的 `sha256` 与 `scriptAck` 不一致，需重新确认 |
-| `no-cli` / `no-session` | 探测阶段的兜底：命令不存在 / 会话不可用 |
+| `no-cli` | 探测阶段找不到可执行文件（`argvReachable` 的失败值；macOS 的图标/路径问题也落这里） |
+| `no-session` | 枚举里保留，当前没有任何路径会产出它（会话不可用的旧分支） |
 
 `no-custom-command` 这个旧值已删除（它属于被替换掉的命令行模型，从未发布过）。
 
