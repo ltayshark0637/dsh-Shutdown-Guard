@@ -1,0 +1,146 @@
+# Architecture and gating
+
+> Chinese original: [ARCHITECTURE.md](ARCHITECTURE.md)
+
+This document is for maintainers: how state flows, how the five gates decide, how blocking and retries work together, and why the window page must stay same-source with the card.
+The user-facing guide is in [README](../README.en.md).
+
+## 1. Three entry points and the data flow
+
+The repository root *is* the plugin directory, and the host side and the client side each own half of it:
+
+| File | Responsibility |
+| --- | --- |
+| `lib/index.mjs` | Host side: gating checks, countdown, `shutdown.exe` invocation, retry and circuit breaking, config persistence, HTTP routes, floating-window page generation |
+| `lib/client.js` | Sidebar card: a single bundle; CSS and React both live inside it |
+| `lib/i18n.mjs` | Copy in three languages and language resolution (`LANGS`, `resolveLang`) |
+| `cordis.patch.yml` | Factory patch inside the plugin package (lowest priority) |
+
+The data flow is a one-way pull chain; nothing is pushed:
+
+```
+Host state (snapshot + events)
+      │  GET /state?since=<ms>  (the card and the window page each poll)
+      ├──▶ Sidebar card (lib/client.js)
+      └──▶ Floating-window page (windowHtml() in lib/index.mjs)
+```
+
+`/state` also returns `ui` (variant / theme / lang); the window page reads it every second and repaints, so a changed setting moves the window with it and no refresh is needed.
+
+## 2. Six runtime states
+
+| State | Meaning | Card **label** |
+| --- | --- | --- |
+| `off` | Not enabled; nothing is watched | `OFF` |
+| `armed` | Armed, conditions met, waiting for the next batch of tasks | `ARMED` |
+| `hold` | Waiting for background jobs to finish | `WAIT` |
+| `fire` | Counting down; the action **has not been sent yet** and goes out only at zero | `FIRE` |
+| `fired` | Action sent; it cannot be undone | `DONE` |
+| `blocked` | Blocked (two sub-states, `halted` or `waiting`) | `PAUSED` |
+
+Transitions:
+
+```
+off ──arm──▶ armed ──background tasks running──▶ hold ──tasks finish──▶ armed
+                │                                                      │
+                └──conditions met, no countdown──▶ fire ──countdown ends──▶ fired
+                │
+                └──blocking error──▶ blocked ──recovered──▶ armed
+```
+
+- All actions are **inline**: the plugin counts the countdown itself, and at zero it sends **exactly once** — sending means immediate execution. Cancelling during the countdown = **nothing is sent**; after cancelling the plugin **stays armed**, and the next batch of tasks will still trigger the action when it finishes.
+- Cost: if DSH is killed or crashes during the countdown, the action **will not** run. The old implementation used a system timer (`shutdown /t N`), and in that case the machine would still have shut down; now it is "it happens only while the plugin is alive".
+- After `fired` there is no automatic re-arm; a human has to click again.
+
+## 3. Five gating checks
+
+While in `blocked` nothing is dispatched at all; in every other case all five must hold at the same time before the action runs (default `shutdown`, but it can also be a restart / sleep / sign-out / a user-uploaded script):
+
+| # | Gate | Field | Default |
+| --- | --- | --- | --- |
+| 1 | Armed (clicked manually by a human) | — | — |
+| 2 | No countdown running (avoid a duplicate dispatch) | — | — |
+| 3 | All root sessions idle, no agent still working | — | — |
+| 4 | No running / stopping background jobs | `blockOnJobs` | `true` |
+| 5 | No session reported an error in this batch | `onlyOnSuccess` | `true` |
+
+If any one of them is missing, nothing shuts down, and the reason is written into the card and the "Status" tab of the settings page (`data/events.log` holds the full stream).
+
+`marginSec` (default 5 seconds) is the headroom left for `shutdown /t`; it takes no part in the decision.
+
+## 4. Blocked state
+
+When an error cannot be handled as an ordinary failure, the plugin **does not disarm**; it only recolours the card and spells out the reason:
+
+| Sub-state | Colour | Trigger | Recovery |
+| --- | --- | --- | --- |
+| `halted` | grey-blue | insufficient quota, invalid credentials, context limit exceeded, capability unsupported, disk full | human only: click "Disarm and retry" |
+| `waiting` | grey-green, breathing dot | rate limiting, 5xx, network interruption, empty response, timeout, image offload | automatic retry per policy; when due, a "continue the original plan" instruction is injected |
+
+Retry cadence: see [CONFIG](./CONFIG.en.md#6-retry-policies).
+
+**Only `halted` is persisted** (`parked` in `config.json`): `waiting` has a timer and heals itself, and storing it would turn into "still waiting forever after a restart".
+Clear boundaries: cleared on arm, on disarm, on a successful turn, and when `shutdownOnHalt` fires; **not** cleared on restart, profile switch, language change or appearance change — none of those change the fact that "this batch has already been halted".
+Whether the action still runs after a halt is decided by `shutdownOnHalt`, whose effective value also depends on the master switch `onlyOnSuccess` (see [CONFIG](./CONFIG.en.md) section 2).
+
+## 5. AFK automatic takeover
+
+Takes effect only while armed; three things:
+
+1. **Answering questions automatically** (`afkAutoAnswer`, on by default): replies "the user is AFK — finish the tasks already assigned, write up a summary report to disk, and do not touch branches nobody asked about", returns `selected: []` plus the custom text, and **selects no option on the user's behalf**; with it off, questions are shown to the user as usual.
+2. **Error recovery**: when a session reports an error, the agent is first asked to diagnose it and continue the original plan; a second failure in the same session switches to "stop retrying, write a report and wrap up".
+3. **Interrupt protection**: if the user manually stops a task halfway, no shutdown is triggered.
+
+## 6. Floating window and sidebar: MIRROR CONTRACT
+
+The window page is generated by the host side (`windowHtml()` in `lib/index.mjs`); the card lives on the client (`lib/client.js`).
+The two are **two separate rendering implementations**, and any display logic they share must be changed on both sides. Below is the original constraint from `lib/index.mjs` (kept verbatim):
+
+> MIRROR CONTRACT — this page is a *copy* of the card, not a reference to it:
+> whenever lib/client.js changes a variant body, a theme token, a state colour
+> or a card string, the same change must land here, and the comparison
+> screenshots under `_ops/worklog/` must be regenerated. The card settings
+> (variant / theme / lang) are held by the host and arrive in every `/state`
+> snapshot as `ui`, so the 1s poll repaints this page when they change; the
+> same localStorage keys are read once as a first-paint fallback because the
+> sidebar and this window can sit in different storage partitions. `folded` is
+> ignored on purpose — a floating window is always expanded.
+>
+> Counters belong to that contract as well: B's run dots (one per live agent, cap
+> `DOT_CAP = 12`, `+N` badge, `role="img"` + `radar.aria`) and C's agent counter
+> must stay same-source with lib/client.js's `syncDots()` / `unit.agent`. Both
+> read `agentRunningTotal` (falling back to `runningCount`), never `runningCount`
+> alone — otherwise a Team of subagents shows three dots in the sidebar and one
+> here, which is the contradiction a user notices first.
+
+Notes:
+
+- The window page has one extra row of statistics (the sidebar does not); that is the **only** allowed difference, and `folded` is ignored on purpose.
+- The floating window's "compact mode" is held by the host (`compact` in `data/ui.json`, on by default); there is no toggle inside the window.
+- Three fallbacks are written into the page markup: host not mounted → placeholder; `/state` 5xx → keep the last snapshot and show offline; language switched elsewhere → re-fetch events following `state.lang`.
+
+## 7. Platforms and the failure surface
+
+- **Platforms**: win32, macOS and Linux now all mount through the same path — the action table has a row ready for each platform, and `apply()` keeps only one defensive early return (triggered only when a platform has no `shutdown` row at all; currently unreachable, and `log.platformUnsupported` stays in the message catalog).
+  - **Windows is fully verified**; macOS / Linux are **implemented but not tested on real hardware**.
+  - macOS `lock` has no reliable CLI (`displaysleepnow` only blanks the display, and ⌃⌘Q needs accessibility permission), so it reports `unsupported-on-platform` explicitly rather than half-locking; macOS `hibernate` has no user-level command and degrades to `pmset sleepnow`.
+  - Linux `signout` uses `loginctl terminate-user`, which also ends DSH itself (DSH runs inside that user session).
+  - On non-win32, every action whose command can be resolved reports availability as `'unknown'`: TCC / polkit may refuse at the last moment, and reporting `true` would be a lie.
+- `app.asar` and the DSH sources are never modified; everything mounts through slots and events.
+- Zero runtime dependencies: the server side uses only `node:fs` / `node:path` / `node:crypto`, and the browser side only `require('react')`.
+- Logging goes through `log(message, kind)`, never `console.log`.
+
+## 8. Directory responsibilities
+
+```
+lib/          source of truth: host, card, i18n
+cordis.patch.yml  factory patch
+test/         assertions (host.test.mjs / client.test.cjs)
+scripts/      screenshots, demo page, icons, release helpers
+docs/         maintainer docs (this file, CONFIG, DEVELOPING, BETA)
+data/         runtime data (config.json / ui.json / events.log / scripts/), never committed
+```
+
+`data/scripts/` holds user-uploaded execution scripts, with file names of the form `<profileId>.<ext>`, generated by the host. It **must live outside the package**: the npm package directory is replaced wholesale on upgrade and is usually not writable after install, so scripts placed inside it would vanish on the next upgrade. Script bodies never enter `config.json`; the config keeps only metadata such as `sha256`, size and display name.
+
+`preview/` is design-process material, not the current implementation; `docs/screenshots/` is generated by scripts.
