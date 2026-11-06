@@ -1,6 +1,6 @@
 {
   "name": "dsh-shutdown-guard",
-  "version": "1.6.0",
+  "version": "1.6.1",
   "description": "任务结束后自动关机 —— 侧边栏守夜卡片：五道判定闸、后台任务守卫、AFK 接管、阻断态分级",
   "author": {
     "name": "ltayshark0637",
