@@ -27,7 +27,16 @@ class ClassList {
 function makeStyle() {
   const props = {}
   return {
-    cssText: '',
+    _cssText: '',
+    get cssText() { return this._cssText },
+    // probeRgb() writes `background:<value>` through cssText, so the fake
+    // computed style has to see it.
+    set cssText(v) {
+      this._cssText = String(v)
+      const m = /(?:^|;)\s*background(?:-color)?\s*:\s*([^;]+)/i.exec(this._cssText)
+      if (m) props.background = m[1].trim()
+    },
+    get backgroundColor() { return props.background || '' },
     setProperty(k, v) { props[k] = String(v) },
     removeProperty(k) { delete props[k] },
     getPropertyValue(k) { return props[k] || '' },
@@ -332,6 +341,168 @@ void (async () => {
   dots = cardEl().querySelector('.dsp-dots')
   assert.strictEqual(dots.querySelectorAll('.dsp-rdot-run').length, 4, 'missing agentRunningTotal falls back to runningCount')
   calls.push('radar-dots-fallback-ok')
+
+  // --- Claude Style accent colour parsing ------------------------------------
+  // The real bundle resolves custom-property colours through a 1x1 canvas.
+  // Node has no colour engine, so the fake canvas below emulates exactly what
+  // Chrome computes for these fixtures (oklch -> sRGB bytes); everything
+  // downstream (colorRgb chain, isDullAccent, fallback choice) is real code.
+  const RESOLVED = new Map([
+    ['#4d6bfe', [77, 107, 254]],
+    ['oklch(0.66143 0.182299 269.607)', [77, 107, 254]],
+    ['color-mix(in oklch, #4d6bfe 82%, #f4f9ff)', [107, 133, 254]],
+    ['#0f1115', [15, 17, 21]],
+    ['#61666b', [97, 102, 107]],
+    ['oklch(0.5 0 0)', [119, 119, 119]],
+    ['rebeccapurple', [102, 51, 153]],
+    ['#f4f9ff', [244, 249, 255]],
+    ['#0b0d10', [11, 13, 16]],
+  ])
+  // Read the fallback ambers from the bundle instead of freezing them here.
+  const clientSrc = fs.readFileSync(path.join(__dirname, '..', 'lib', 'client.js'), 'utf8')
+  const fallbackOf = (name) => {
+    const m = new RegExp("var " + name + " = '(#[0-9a-fA-F]{6})'").exec(clientSrc)
+    assert.ok(m, name + ' is declared in client.js')
+    return m[1]
+  }
+  const FALLBACK = {
+    light: fallbackOf('FALLBACK_ACCENT_LIGHT_BG'),
+    dark: fallbackOf('FALLBACK_ACCENT_DARK_BG'),
+  }
+  const CSS_VARS = {
+    '--dsw-alias-label-primary': '#111111',
+    '--dsw-alias-label-secondary': '#555555',
+    '--dsh-claude-divider': '#dddddd',
+    '--dsw-alias-state-error-primary': '#d92d20',
+    '--dsh-claude-hover-bg': 'rgba(255,255,255,0.1)',
+  }
+
+  function makeCanvasCtx() {
+    let style = '#010203'
+    return {
+      get fillStyle() { return style },
+      set fillStyle(v) {
+        const s = String(v)
+        // Unsupported syntax leaves the sentinel in place, like a real canvas.
+        style = RESOLVED.has(s) ? s : '#010203'
+      },
+      clearRect() {},
+      fillRect() {},
+      getImageData() {
+        const rgb = RESOLVED.get(style) || [1, 2, 3]
+        return { data: [rgb[0], rgb[1], rgb[2], 255] }
+      },
+    }
+  }
+
+  function accentFor(accent, bg, withCanvas) {
+    const localRegion = new El('div')
+    localRegion.setAttribute('class', 'regionArea')
+    const doc = {
+      head: new El('head'),
+      body: new El('body'),
+      documentElement: new El('html'),
+      createElement(tag) {
+        const el = new El(tag)
+        if (String(tag).toLowerCase() === 'canvas') {
+          el.getContext = () => (withCanvas ? makeCanvasCtx() : null)
+        }
+        return el
+      },
+      querySelector(sel) { return matchSimple(localRegion, sel) ? localRegion : this.body.querySelector(sel) },
+      querySelectorAll(sel) { return this.body.querySelectorAll(sel) },
+      addEventListener() {},
+      removeEventListener() {},
+    }
+    doc.body.setAttribute('data-dsh-claude-palette', 'claude')
+    doc.body.appendChild(localRegion)
+
+    const vars = Object.assign({}, CSS_VARS, {
+      '--dsw-alias-bg-layer-1': bg,
+      '--dsw-alias-brand-primary': accent,
+    })
+    const styleOf = (el) => {
+      if (el && el.tagName === 'span') {
+        const raw = (el.style && el.style.backgroundColor) || ''
+        const rgb = RESOLVED.get(raw)
+        // Chrome serialises oklch()/color-mix() as authored, so the old rgb
+        // parser cannot read them. Hex and named colours come back as rgb().
+        const legacy = raw.indexOf('oklch(') === 0 || raw.indexOf('color-mix(') === 0
+        return {
+          backgroundColor: rgb && !legacy ? 'rgb(' + rgb[0] + ', ' + rgb[1] + ', ' + rgb[2] + ')' : raw,
+          getPropertyValue() { return '' },
+        }
+      }
+      return { backgroundColor: bg, getPropertyValue: (n) => vars[n] || '' }
+    }
+    const win = {
+      addEventListener() {}, removeEventListener() {}, open() {},
+      matchMedia: () => ({ matches: false, addEventListener() {}, removeEventListener() {}, addListener() {}, removeListener() {} }),
+      getComputedStyle: styleOf,
+    }
+    const errors = []
+    let captured = null
+    win.__ModuleLoader__ = { load(opts) { captured = opts } }
+    const sandbox = {
+      window: win,
+      document: doc,
+      getComputedStyle: styleOf,
+      localStorage: {
+        // The card does not adopt /state's ui during its 1.5s startup grace,
+        // so the theme has to come from the persisted preference.
+        getItem: (key) => (key === 'dsh-shutdown-guard.theme' ? 'claude' : null),
+        setItem() {},
+      },
+      fetch: async () => ({ ok: true, json: async () => ({ armed: false, state: 'idle', ui: { theme: 'claude' }, lang: 'zh', language: 'zh' }) }),
+      setInterval: () => 0,
+      clearInterval() {},
+      setTimeout: () => 0,
+      clearTimeout() {},
+      MutationObserver: class { observe() {} disconnect() {} takeRecords() { return [] } },
+      requestAnimationFrame: () => 0,
+      console: { log() {}, warn() {}, error(...args) { errors.push(args) } },
+    }
+    vm.createContext(sandbox)
+    vm.runInContext(clientSrc, sandbox)
+    assert.ok(captured && captured.factory, 'client bundle loads inside the colour sandbox')
+    const react = {
+      createElement: (type, props, ...children) => ({ type, props: props || {}, children }),
+      useSyncExternalStore: (subscribe, get) => { subscribe(() => {}); return get() },
+    }
+    const mod = captured.factory(() => react)
+    mod.apply({ effect(fn) { fn() }, slots: { inject() {}, register() {} } })
+    const card = localRegion.querySelector('.dsp-card')
+    assert.ok(card, 'colour sandbox mounts a card')
+    return { accent: card.style.getPropertyValue('--dsp-accent'), errors }
+  }
+
+  function assertAccent(name, accent, bg, expected, withCanvas = true) {
+    const got = accentFor(accent, bg, withCanvas)
+    assert.deepStrictEqual(got.errors, [], name + ' produces no console errors')
+    assert.strictEqual(got.accent, expected, name + ': got ' + got.accent)
+  }
+
+  // 1. oklch() and color-mix(in oklch, …) carry chroma: never the amber fallback.
+  assertAccent('accent-oklch', 'oklch(0.66143 0.182299 269.607)', '#f4f9ff', 'oklch(0.66143 0.182299 269.607)')
+  assert.notStrictEqual(accentFor('oklch(0.66143 0.182299 269.607)', '#f4f9ff', true).accent, FALLBACK.light)
+  calls.push('accent-oklch-not-dull-ok')
+
+  assertAccent('accent-color-mix', 'color-mix(in oklch, #4d6bfe 82%, #f4f9ff)', '#0b0d10', 'color-mix(in oklch, #4d6bfe 82%, #f4f9ff)')
+  assert.notStrictEqual(accentFor('color-mix(in oklch, #4d6bfe 82%, #f4f9ff)', '#0b0d10', true).accent, FALLBACK.dark)
+  calls.push('accent-color-mix-not-dull-ok')
+
+  // 2. True greys still fall back, and the surface luminance picks the shade.
+  assertAccent('accent-gray-hex-light', '#0f1115', '#f4f9ff', FALLBACK.light)
+  assertAccent('accent-gray-hex-dark', '#61666b', '#0b0d10', FALLBACK.dark)
+  assertAccent('accent-gray-oklch', 'oklch(0.5 0 0)', '#f4f9ff', FALLBACK.light)
+  calls.push('accent-gray-falls-back-ok')
+
+  // 3. Without a 2d context the old element probe still resolves a colour that
+  //    the legacy rgb() parser can read, so the card does not crash and the
+  //    accent survives. (oklch/color-mix stay unreadable without canvas, as in
+  //    Chrome, and fall back to amber — the degradation this fix bounds.)
+  assertAccent('accent-no-canvas', 'rebeccapurple', '#f4f9ff', 'rebeccapurple', false)
+  calls.push('accent-no-canvas-probe-ok')
 
   // --- settings section renders with profiles + events -----------------------
   await settle()
