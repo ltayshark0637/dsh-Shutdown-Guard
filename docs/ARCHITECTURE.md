@@ -32,8 +32,8 @@
 | `off` | 未开启，什么都不看 | `OFF` |
 | `armed` | 已武装、条件已满足，等下一批任务 | `ARMED` |
 | `hold` | 等后台任务跑完 | `WAIT` |
-| `fire` | 倒计时中，关机指令已下发 | `FIRE` |
-| `fired` | 已下发且不可撤销 | `DONE` |
+| `fire` | 倒计时中，动作**还没发**，到点才发 | `FIRE` |
+| `fired` | 动作已发出，不可撤销 | `DONE` |
 | `blocked` | 阻断（`halted` 或 `waiting` 两个子态） | `PAUSED` |
 
 迁移：
@@ -46,12 +46,13 @@ off ──武装──▶ armed ──有后台任务──▶ hold ──任务
                 └──阻断性错误──▶ blocked ──恢复──▶ armed
 ```
 
-- 倒计时期间可取消：取消后**仍保持武装**，下一批任务干完照样会关。
+- 所有动作都是 **inline**：倒计时由插件自己数，到点只发一次、发出去就是立即执行。倒计时期间取消 = **什么都不发**，取消后**仍保持武装**，下一批任务干完照样会执行。
+- 代价：倒计时期间 DSH 被杀掉或崩溃，动作**不会**执行。旧实现用系统定时器（`shutdown /t N`），那种情况仍会关；现在是「插件活着才发生」。
 - `fired` 之后没有「再次武装」的自动恢复，需要人再点一次。
 
 ## 3. 五道判定闸
 
-处于 `blocked` 时直接不下发；其余情况必须五条同时成立才调 `shutdown /s`：
+处于 `blocked` 时直接不下发；其余情况必须五条同时成立才执行动作（默认 `shutdown`，也可能是重启 / 睡眠 / 注销 / 用户上传的脚本）：
 
 | # | 闸门 | 字段 | 默认 |
 | --- | --- | --- | --- |
@@ -134,8 +135,10 @@ lib/          源码真相：宿主、卡片、i18n
 cordis.patch.yml  出厂 patch
 test/         断言（host.test.mjs / client.test.cjs）
 scripts/      截图、演示页、图标、发布辅助
-docs/         面向维护者的文档（本文件、CONFIG、DEVELOPING）
-data/         运行时会话数据（config.json / events.log），不提交
+docs/         面向维护者的文档（本文件、CONFIG、DEVELOPING、BETA）
+data/         运行时数据（config.json / ui.json / events.log / scripts/），不提交
 ```
+
+`data/scripts/` 放用户上传的执行脚本，文件名是 `<profileId>.<ext>`，由宿主生成。它**必须在包外**：npm 包目录在升级时被整体替换、安装后通常不可写，脚本放进去会在下一次升级时消失。脚本正文不进 `config.json`，配置里只留 `sha256`、大小、显示名这些元数据。
 
 `preview/` 是设计过程稿，不是当前实现；`docs/screenshots/` 是脚本产物。

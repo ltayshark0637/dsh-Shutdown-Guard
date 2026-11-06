@@ -56,7 +56,7 @@ The window icon at the right of the card header pulls the card out into a floati
 Four tabs; it opens on Appearance and every switch applies immediately.
 
 - **Appearance**: card style (three thumbnailed cards, thumbnails following UI language and background), theme, fold by default, compact floating window, UI language.
-- **Watch**: the "custom profile" switch on its own, then the profile list (switch, set as default, rename, delete, create) once it is on; below that the four gating rows and "AFK auto-answer".
+- **Watch**: the "custom profile" switch on its own, then the profile list (switch, set as default, rename, delete, create) once it is on; below that the four gating rows, "AFK auto-answer", and the **what to do at the deadline** picker (shut down / restart / sleep / hibernate / lock screen / sign out / custom script).
 - **Notifications**: one master switch plus four per-event switches (countdown started, about to shut down, first block, block cleared).
 - **Status**: current block, why it did not shut down last time, recent events.
 
@@ -69,7 +69,7 @@ A: The default profile requires all four of "every session idle", "no background
 A: Open Status → "why it did not shut down last time"; it names the reason (background jobs, errors, not armed, …).
 
 **Q: Can I back out during the countdown?**
-A: Yes — the "cancel shutdown" button on the card, or plain `shutdown /a`. Cancelling keeps it armed for the next batch.
+A: Yes — use the "cancel shutdown" button on the card. Cancelling sends **no command at all** for that round, and it stays armed for the next batch; once a command has gone out it cannot be taken back.
 
 **Q: I changed a setting and nothing happened.**
 A: Both the host and the client bundle load only when DSH starts; HMR does not apply to locally linked plugins.

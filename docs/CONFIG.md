@@ -17,7 +17,7 @@
 
 ```json
 {
-  "version": 3,
+  "version": 4,
   "activeProfileId": "default",
   "customEnabled": false,
   "lastCustomProfileId": null,
@@ -29,7 +29,7 @@
 
 | 顶层键 | 类型 | 默认 | 说明 |
 | --- | --- | --- | --- |
-| `version` | 数字 | `3` | schema 版本；v1.6.1 从 2 升到 3 |
+| `version` | 数字 | `4` | schema 版本；v1.6.1 从 2 升到 4（3 是开发期过渡形状，从未发布） |
 | `activeProfileId` | string | `default` | 当前生效的 profile id |
 | `customEnabled` | bool | `false` | 是否允许使用自定义 profile |
 | `lastCustomProfileId` | string \| null | `null` | 关掉再打开时要回到的那份 |
@@ -84,93 +84,124 @@
 | 键 | 类型 | 默认 | 说明 |
 | --- | --- | --- | --- |
 | `action` | 枚举（8 个 id） | `shutdown` | 任务完成后执行什么动作，见第 4 节 |
-| `customArgv` | string 数组 | `[]` | 仅当 `action: custom` 时生效；上限 **16 条 × 每条 256 字符** |
+| `script` | 对象 \| null | `null` | 上传脚本的元数据（`name` / `ext` / `file` / `bytes` / `sha256` / `savedAt`）；正文在磁盘上，不在配置里 |
+| `scriptAck` | 对象 \| null | `null` | 用户对**这一份**脚本的确认：`{ sha256, at }` |
 | `shutdownOnHalt` | bool | `true` | 熔断（`halted`）之后是否仍执行动作 |
 
-- `customArgv` 直接 `exec` 文件 + 参数，**不经 shell**：没有引号解析、没有管道、没有 `&&`。写进去的字符串原样作为 argv，所以 `["sh", "-c", "…"]` 这种才需要 shell 的事要自己显式写。
+- `script` 与 `scriptAck` 只在 `action: custom` 时有意义；`scriptAck.sha256` 必须等于 `script.sha256`，否则拒绝武装（`script-not-acknowledged`），细节见 4.3。
 - `shutdownOnHalt: false` 表示「熔断后不动作」；默认 `true` 与旧行为一致（熔断只是不再等条件，不改变动作本身）。
-- 这三项都进 `PROFILE_PATCH_FIELDS`，因此可以按 profile 分别设。注意 `shutdownOnHalt` **不在**默认 profile 的锁定字段里（锁定的是 `countdownSec`、`marginSec`、`onlyOnSuccess`、`blockOnJobs`、`afkAutoAnswer`），所以默认 profile 也能改它。
+- 这四项都进 `PROFILE_PATCH_FIELDS`，因此可以按 profile 分别设。注意 `shutdownOnHalt` **不在**默认 profile 的锁定字段里（锁定的是 `countdownSec`、`marginSec`、`onlyOnSuccess`、`blockOnJobs`、`afkAutoAnswer`），所以默认 profile 也能改它。
 
-## 4. `action` 的八个取值
+## 4. `action`：到点做什么
+
+八个 id，**七个可用**；`restart-dsh` 列出但置灰。
 
 | id | win32 | macOS | Linux |
 | --- | --- | --- | --- |
-| `shutdown` | `shutdown /s /t <秒>`，**可取消**（`shutdown /a`） | `osascript` 关机，立即 | `systemctl poweroff`，立即 |
-| `restart` | `shutdown /r /t <秒>`，可取消 | `osascript` 重启，立即 | `systemctl reboot`，立即 |
+| `shutdown` | `shutdown /s /t 0` | `osascript` 关机 | `systemctl poweroff` |
+| `restart` | `shutdown /r /t 0` | `osascript` 重启 | `systemctl reboot` |
 | `hibernate` | `shutdown /h` | 无用户级休眠命令，**降级为睡眠**（`pmset sleepnow`） | `systemctl hibernate` |
 | `sleep` | `rundll32 powrprof.dll,SetSuspendState` | `pmset sleepnow` | `systemctl suspend` |
 | `lock` | `rundll32 user32.dll,LockWorkStation` | **不支持**（没有受支持的 CLI） | `loginctl lock-session` |
 | `signout` | `shutdown /l` | `osascript` 注销 | `loginctl terminate-user`，**会连带结束 DSH 自己**（DSH 跑在该用户会话里） |
 | `restart-dsh` | **列出但当前不可选** | 同左 | 同左 |
-| `custom` | 执行 `customArgv` | 同左 | 同左 |
+| `custom` | 执行**用户上传的脚本**（见 4.1） | 同左 | 同左 |
 
-- **`restart-dsh` 为什么置灰**：重启 DSH 要走 `app.relaunch()`，那是 Electron 主进程的能力，插件没有路径够到它；`process.exit()` 会跳过宿主清理、可能损坏正在跑的会话，所以刻意不做。它在枚举里保留位置，是为了让配置文件可读、将来宿主开放接口时直接点亮，**选择器里点不动不是 bug**。
-- 只有 win32 的 `shutdown` / `restart` 是「先定时、可取消」（`timing: 'defer'`）；其余动作一旦下发就不可撤销。
+- 所有动作都是 **inline**：倒计时由插件自己数，到点**只发一次**、发出去就是立即执行。取消 = 什么都不发。
+- 代价：倒计时期间 DSH 被杀掉或崩溃，动作**不会**执行。旧实现用系统定时器（`shutdown /t N`），那种情况仍会关。这是刻意的取舍 —— 宁可漏关，也不错关。
 - 未知 `action` 回落 `shutdown`：配置写坏也不会出现「武装着却没有任何动作」的状态。
+- **`restart-dsh` 为什么置灰**：重启 DSH 要走 `app.relaunch()`，那是 Electron 主进程的能力，插件没有路径够到它；`process.exit()` 会跳过宿主清理、可能损坏正在跑的会话，所以刻意不做。保留这个 id 是为了让配置文件可读、将来宿主开放接口时直接点亮。
 
-**能力探测与三态**：挂载时探一次，之后只在 `POST /config {recheck:true}` 时重探，**不轮询**。每个动作的状态是 `{available, reason}`，`available` 有三态：
+### 4.1 自定义动作 = 上传一个脚本文件
 
-| 值 | 含义 |
+`custom` 不再填命令行，**而是上传文件**：
+
+```http
+POST /config
+{ "putScript": { "profileId": "p1", "name": "收工清理", "ext": "ps1", "content": "<脚本正文>" } }
+```
+
+| 字段 | 约束 |
 | --- | --- |
-| `true` | 命令能解析、且系统后面没有别的否决环节（win32 的 `shutdown` 一类） |
-| `false` | 本平台没有诚实的命令，或命令不存在（macOS 的 `lock`、`restart-dsh`） |
+| `profileId` | 必须是已存在的 profile |
+| `name` | 显示名，去空白后 1–40 字符；随便叫什么都不会变成路径 |
+| `ext` | 白名单 `js` / `cmd` / `bat` / `py` / `ps1`，其余 400 |
+| `content` | UTF-8 文本，**上限 256 KiB**（按字节算，不是字符）；超限 400 |
+
+- 成功后该 profile 的 `action` **强制设为 `custom`** —— 上传脚本的意图就是用它。
+- 删除脚本：把 `script` 置 `null`（`{"profileId":"p1","patch":{"script":null}}`）。
+- 存储位置：`<DATA_DIR>/scripts/<profileId>.<ext>`。**不在 npm 包目录**：包目录在升级时会被整体替换、安装后通常不可写；`DATA_DIR` 才是插件的可写目录（`config.json`、`events.log` 也在这里）。
+- 文件名由**宿主**生成，用户输入不参与拼路径，规避路径穿越；每个 profile 只留一份，换文件即覆盖。
+- 脚本正文**永不**进 `config.json`、事件日志或 `/state` —— 这些地方只有元数据。
+
+脚本在 profile 里的形状：
+
+```json
+"script": { "name": "收工清理", "ext": "ps1", "file": "p1.ps1", "bytes": 412, "sha256": "9f2c…", "savedAt": 1762500000000 }
+```
+
+没有脚本时为 `null`。
+
+### 4.2 执行映射
+
+| `ext` | 实际命令 | 说明 |
+| --- | --- | --- |
+| `cmd` / `bat` | `cmd /c <path>` | Windows 的 `CreateProcess` 不执行脚本文件，必须套 `cmd` |
+| `ps1` | `powershell -NoProfile -ExecutionPolicy Bypass -File <path>` | 不读用户的 PowerShell profile，策略绕过只作用于这一次 |
+| `py` | `python <path>`，回退 `python3` | 两者都找不到 → `missing-interpreter` |
+| `js` | `node <path>` | 找不到 node → `missing-interpreter` |
+
+解释器探测复用动作能力探测（`subprocess.resolveExecutable`），结果落进 `/state.actions.custom`。缺解释器或没有脚本时，动作区显示不可用并给出原因，武装会被拒。
+
+### 4.3 确认绑定到脚本内容
+
+profile 里还有一项 `scriptAck: { "sha256": "9f2c…", "at": 1762500100000 } | null`。
+
+- **武装前必须满足 `scriptAck.sha256 === script.sha256`**，否则拒绝武装，原因是 `script-not-acknowledged`。
+- 脚本内容一变（重新上传、换了文件），`sha256` 就变，**此前的确认自动失效**，必须重新勾选。只改显示名不影响 `sha256`，确认继续有效。
+- 这条防的是「确认过一次，之后把文件换成别的」—— 只勾一次终身有效的确认，等于没有确认。
+
+### 4.4 能力探测与三态
+
+挂载时探一次，之后只在 `POST /config {recheck:true}` 时重探，**不轮询**。`/state.actions` 的每一项是 `{ available, reason }`：
+
+| `available` | 含义 |
+| --- | --- |
+| `true` | 命令能解析，且系统后面没有别的否决环节（win32 的 `shutdown` 一类） |
+| `false` | 本平台没有诚实的命令、命令不存在、缺少解释器、没有脚本或被确认拦住 |
 | `'unknown'` | 命令存在，但 macOS（TCC）或 Linux（polkit）可能在最后一刻拒绝 —— 这时报 `true` 就是撒谎 |
 
 非 win32 上所有可解析的命令一律报 `'unknown'`，不是 `true`。
-重测时如果**当前选中的动作**掉成不可用，宿主只打标记（`/state.actionReady === false`、卡片与设置页给出提示），**不改用户选的动作**。
+重测时如果**当前选中的动作**掉成不可用，宿主只打标记（`/state.actionReady === false`，卡片与设置页给出提示），**不改用户选的动作**。
 
-### 自定义命令怎么写
+### 4.5 `reason` 枚举
 
-**最要紧的一条：它是「参数列表」，不是脚本。** 设置页那个多行文本框里**一行就是一个参数**，第一行是程序，第二行起每行一个参数。
+`/state` 只发协议字符串，设置页负责翻成人话。
 
-```
-shutdown
-/s
-/t
-60
-```
-
-多行**不等于**多条命令 —— 上面是「执行 `shutdown`，传三个参数 `/s`、`/t`、`60`」，只做一件事。想连做几件事，得靠解释器（见下文 `cmd /c` 的例子）。
-
-**上限**：最多 16 行，每行最多 256 字符。尾部空行会被去掉；含 NUL 的整条拒绝；超限**整条拒绝**并报错，不会偷偷截断成一半的命令。
-
-**不经 shell**（`subprocess.spawn({ argv })`）。因此下列东西全部**不生效**，会原样当成参数传过去或直接失效：
-
-- 管道 `|`、重定向 `>` / `>>`、串联 `&&` / `&` / `;`
-- 变量展开 `%USERPROFILE%`、`$HOME`
-- 通配符 `*.log`
-- 命令替换、子 shell
-
-**引号不需要，也不该加。** 没有 shell 在解析引号，写了引号它会成为参数的一部分。路径带空格就整行原样写：
-
-```
-C:\Program Files\Some Tool\foo.exe
---quiet
-```
-
-`.bat` / `.ps1` **不能直接填**：Windows 的 `CreateProcess` 不执行脚本文件。必须显式写解释器 —— `cmd` + `/c` + 路径，或 `powershell` + `-File` + 路径。
-
-**工作目录是盘符根 `/`，不是插件目录、也不是你的项目目录**（`spawn` 里写死 `cwd: '/'`）。这是真实行为，不是保守建议：**相对路径几乎必然找不到文件，一律写绝对路径。**
-
-**执行时机**：`custom` 是 `inline` 动作，在**倒计时结束那一刻**执行一次。倒计时内取消 → 一条都不发；**一旦发出去就撤不回**。作为对比，Windows 上的内置 `shutdown` / `restart` 是 `defer`（`shutdown /t <秒>`），`shutdown /a` 能真的撤销。
-
-**输出**：stdout 与 stderr 各截 4096 字节，退出码与报错写进事件流，设置页「状态」标签里能看到。
-
-#### Windows 例子
-
-单元格里的**每一行 = 文本框里的一行 = 一个参数**。
-
-| 想干什么 | 逐行怎么填 |
+| 值 | 什么时候出现 |
 | --- | --- |
-| 延迟 60 秒关机 | `shutdown`<br>`/s`<br>`/t`<br>`60` |
-| 立刻重启 | `shutdown`<br>`/r`<br>`/t`<br>`0` |
-| 注销当前用户 | `logoff` |
-| 跑一个 .bat | `cmd`<br>`/c`<br>`C:\tools\after-batch.bat` |
-| 跑一个 .ps1 | `powershell`<br>`-NoProfile`<br>`-ExecutionPolicy`<br>`Bypass`<br>`-File`<br>`C:\tools\after-batch.ps1` |
-| 带空格的路径的 exe | `C:\Program Files\Some Tool\foo.exe`<br>`--quiet` |
-| 先杀进程再关机 | `cmd`<br>`/c`<br>`taskkill /f /im foo.exe & shutdown /s /t 0` |
+| `no-script` | `action: custom` 但还没上传脚本 |
+| `missing-interpreter` | 脚本在，但 `python` / `python3` / `node` / `powershell` 一个都找不到 |
+| `needs-elevation` | 命令存在但需要提权 |
+| `unsupported-on-platform` | 本平台没有诚实的做法（macOS 的 `lock`） |
+| `no-host-restart` | `restart-dsh`：够不着 Electron 的 `app.relaunch()` |
+| `script-not-acknowledged` | 脚本的 `sha256` 与 `scriptAck` 不一致，需重新确认 |
+| `no-cli` / `no-session` | 探测阶段的兜底：命令不存在 / 会话不可用 |
 
-最后一行说明一下：`cmd` 的第 3 个参数是**一整条字符串**，`&` 交给 `cmd` 去解释 —— 这正是「要 shell 就显式写解释器」的用法。同理，要 PowerShell 的管道就写 `powershell` + `-Command` + 整条脚本，而不是在参数里直接写 `|`。
+`no-custom-command` 这个旧值已删除（它属于被替换掉的命令行模型，从未发布过）。
+
+### 4.6 Windows 上四种脚本各是什么效果
+
+用户只需要上传文件，不写任何路径 —— 路径由宿主生成。
+
+| 上传的扩展名 | 需要机器上有 | 一个典型脚本的效果 |
+| --- | --- | --- |
+| `.cmd` / `.bat` | 无（`cmd.exe` 一定有） | 关掉浏览器、把日志打包、最后 `shutdown /s /t 0` |
+| `.ps1` | PowerShell | 同上，但能直接调 .NET / COM，比如给某个服务发停止信号 |
+| `.py` | `python` 或 `python3` | 走 HTTP 通知、清理临时目录 |
+| `.js` | `node` | 本地文件整理、调 `fetch` 发消息 |
+
+注意：脚本以**当前用户权限**运行，插件不审查内容，也不对其安全性作担保 —— 这也是为什么武装前必须确认免责文案（见 4.3）。
 
 ## 5. 端点
 
@@ -181,12 +212,12 @@ C:\Program Files\Some Tool\foo.exe
 | GET | `/state?since=<ms>` | 完整状态 + 增量事件 |
 | GET | `/events?since=&limit=` | 事件流水 |
 | POST | `/arm` `/disarm` `/cancel` | 武装 / 解除 / 取消本次倒计时 |
-| POST | `/config` | 改**行为**：profile、开关、语言 |
+| POST | `/config` | 改**行为**：profile、开关、语言、上传/删除脚本 |
 | POST | `/ui` | 改**外观**：卡片样式、主题、语言、悬浮窗简洁模式 |
 
 `/config` 与 `/ui` 是同一条 HTTP 服务上的两个写入口，分工按「行为 / 外观」切，因为两层数据存在不同的文件里、也由不同的界面消费：
 
-- `/config` 写 `data/config.json`。接受 `customEnabled`、`activeProfileId`、`language`、`profileId` + `patch`（以及顶层的 `afkAutoAnswer`）。
+- `/config` 写 `data/config.json`。接受 `customEnabled`、`activeProfileId`、`language`、`profileId` + `patch`（以及顶层的 `afkAutoAnswer`），另有 `putScript` 上传脚本与 `recheck:true` 重测动作能力（见 4.1、4.4）。
 - `/ui` 写 `data/ui.json`。接受 `variant`（`A`/`B`/`C`）、`theme`（`auto`/`dark`/`light`/`claude`）、`lang`（`auto`/`zh`/`en`/`ru`）、`compact`（布尔）。
 - `/ui` 拒绝 `notify`：通知是行为不是外观，返回 `400 {"error": "notify belongs to the active profile; use /config updateProfile"}`。
 
@@ -246,11 +277,12 @@ retryPolicies:
 
 `localStorage` 按存储分区隔离（侧边栏与悬浮窗可能不在同一个分区），所以语言、简洁模式这类「两个界面必须一致」的状态由宿主持有，并在每份 `/state` 里以 `ui` 下发；`localStorage` 只在首屏做一次兜底。
 
-## 8. schema 2 → 3 的迁移
+## 8. schema 迁移
 
-- 读取时先看 `version`：2 或缺失都按旧结构解析，随后写回 `version: 3`。
+- 当前 `CONFIG_VERSION = 4`。读取时先看 `version`：比 4 小的都按旧结构解析，随后写回 `version: 4`。
+- v2 → v3 引入了 `parked` 与按 profile 的通知开关；v3 → v4 用**脚本**取代了从未发布过的 `customArgv`（那个字段只在 1.6.1 的在制分支里短暂存在，没有任何已发布版本写过它，所以不做搬运）。
 - 旧结构里的 `profiles[]` 原样保留：不改 id、不拆分、不重排，**你手改过的值不会丢**。
-- 新增字段（`action`、`customArgv`、`shutdownOnHalt`）缺失时按默认值补齐：`shutdown` / `[]` / `true`。
+- 新增字段（`action`、`script`、`scriptAck`、`shutdownOnHalt`）缺失时按默认值补齐：`shutdown` / `null` / `null` / `true`。
 - v2 文件没有 `parked` 字段，读回即 `null`（等价于「没有熔断现场」）；没有需要搬运的旧状态。
 - `afkAutoAnswer`、`notify` 这类曾经同时存在于顶层与 profile 的键，以 profile 内的值为准，顶层旧值只在没有 profile 值时才被采用。
 - 升级时，从未动过的空 profile 槽会被清理；改过名字或动过任一开关的 profile 一定保留。
