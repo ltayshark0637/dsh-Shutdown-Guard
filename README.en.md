@@ -1,7 +1,7 @@
 # Shutdown Guard · Shut down when tasks finish
 [中文](README.md) · **English** · [Русский](README.ru.md)
 
-<p align="center"><img src="https://cdn.jsdelivr.net/gh/ltayshark0637/dsh-Shutdown-Guard@main/docs/screenshots/banner.png" width="880" alt="Shutdown Guard — automatic shutdown when tasks finish, a night-watch card in the sidebar"></p>
+<p align="center"><img src="https://ltayshark0637.github.io/dsh-Shutdown-Guard/screenshots/banner.png" width="880" alt="Shutdown Guard — automatic shutdown when tasks finish, a night-watch card in the sidebar"></p>
 
 [![version](https://img.shields.io/badge/version-1.6.0-2ea44f)](CHANGELOG.md)
 [![demo](https://img.shields.io/badge/%E2%96%B6-LIVE%20DEMO-d97757)](https://ltayshark0637.github.io/dsh-Shutdown-Guard/demo.html)
@@ -38,18 +38,18 @@ The same look in light and dark; the trilingual captures live in `docs/screensho
 
 | Minimal (light)                                                             | Radar (light)                                                        | Terminal (light)                                                                             |
 |:------------------------------------------------------------------------------:|:-----------------------------------------------------------------------:|:--------------------------------------------------------------------------------------------:|
-| <img src="https://cdn.jsdelivr.net/gh/ltayshark0637/dsh-Shutdown-Guard@main/docs/screenshots/03-armed-a-en-light.png" width="250"> | <img src="https://cdn.jsdelivr.net/gh/ltayshark0637/dsh-Shutdown-Guard@main/docs/screenshots/09-armed-b-en-light.png" width="250"> | <img src="https://cdn.jsdelivr.net/gh/ltayshark0637/dsh-Shutdown-Guard@main/docs/screenshots/15-armed-c-en-light.png" width="250"> |
+| <img src="https://ltayshark0637.github.io/dsh-Shutdown-Guard/screenshots/03-armed-a-en-light.png" width="250"> | <img src="https://ltayshark0637.github.io/dsh-Shutdown-Guard/screenshots/09-armed-b-en-light.png" width="250"> | <img src="https://ltayshark0637.github.io/dsh-Shutdown-Guard/screenshots/15-armed-c-en-light.png" width="250"> |
 
 | Minimal (dark)                                                             | Radar (dark)                                                        | Terminal (dark)                                                                             |
 |:------------------------------------------------------------------------------:|:-----------------------------------------------------------------------:|:--------------------------------------------------------------------------------------------:|
-| <img src="https://cdn.jsdelivr.net/gh/ltayshark0637/dsh-Shutdown-Guard@main/docs/screenshots/04-armed-a-en-dark.png" width="250"> | <img src="https://cdn.jsdelivr.net/gh/ltayshark0637/dsh-Shutdown-Guard@main/docs/screenshots/10-armed-b-en-dark.png" width="250"> | <img src="https://cdn.jsdelivr.net/gh/ltayshark0637/dsh-Shutdown-Guard@main/docs/screenshots/16-armed-c-en-dark.png" width="250"> |
+| <img src="https://ltayshark0637.github.io/dsh-Shutdown-Guard/screenshots/04-armed-a-en-dark.png" width="250"> | <img src="https://ltayshark0637.github.io/dsh-Shutdown-Guard/screenshots/10-armed-b-en-dark.png" width="250"> | <img src="https://ltayshark0637.github.io/dsh-Shutdown-Guard/screenshots/16-armed-c-en-dark.png" width="250"> |
 | Large status text + one-line explanation, scrolling hazard tape at the bottom (red-and-yellow while standing by)                 | Radar + a status line, sessions and background jobs shown as dots                      | Three terminal lines (command, counts, waiting) over six gate indicator lights                                                      |
 
 Dots in the radar are added and removed, never reordered: when the count changes, the dots you are looking at do not jump.
 
 The hazard tape along the bottom of the card and the floating window follows the state: in the built-in palettes it sits in two quiet shades of the theme colour while the card is off or blocked, and from the moment you arm it until the shutdown actually runs it goes back to the familiar red-and-yellow stripes. The change is a 280 ms fade, not a flash. With Claude Style or DeepSeek Blue the tape never switches to red-and-yellow; it keeps following that theme throughout — the stripes would clash there.
 
-<p align="center"><img src="https://cdn.jsdelivr.net/gh/ltayshark0637/dsh-Shutdown-Guard@main/docs/screenshots/anim-radar.gif" width="330" alt="Radar sweep"></p>
+<p align="center"><img src="https://ltayshark0637.github.io/dsh-Shutdown-Guard/screenshots/anim-radar.gif" width="330" alt="Radar sweep"></p>
 
 Pick one of the three thumbnail cards in the Appearance tab; it takes effect immediately, no restart. The picture switches with the UI language and the lightness of the surface behind it.
 
@@ -57,11 +57,11 @@ Pick one of the three thumbnail cards in the Appearance tab; it takes effect imm
 
 | Off                                              | Standby                                                  | Waiting on background jobs                                                           |
 |:---------------------------------------------------:|:-----------------------------------------------------:|:----------------------------------------------------------------------:|
-| <img src="https://cdn.jsdelivr.net/gh/ltayshark0637/dsh-Shutdown-Guard@main/docs/screenshots/01-off.png" width="250"> | <img src="https://cdn.jsdelivr.net/gh/ltayshark0637/dsh-Shutdown-Guard@main/docs/screenshots/02-armed.png" width="250"> | <img src="https://cdn.jsdelivr.net/gh/ltayshark0637/dsh-Shutdown-Guard@main/docs/screenshots/03-hold.png" width="250"> |
+| <img src="https://ltayshark0637.github.io/dsh-Shutdown-Guard/screenshots/01-off.png" width="250"> | <img src="https://ltayshark0637.github.io/dsh-Shutdown-Guard/screenshots/02-armed.png" width="250"> | <img src="https://ltayshark0637.github.io/dsh-Shutdown-Guard/screenshots/03-hold.png" width="250"> |
 
 | Countdown                                               | Issued                                                                  | Blocked                                                                     |
 |:----------------------------------------------------:|:-----------------------------------------------------------------------:|:------------------------------------------------------------------------:|
-| <img src="https://cdn.jsdelivr.net/gh/ltayshark0637/dsh-Shutdown-Guard@main/docs/screenshots/04-fire.png" width="250"> | <img src="https://cdn.jsdelivr.net/gh/ltayshark0637/dsh-Shutdown-Guard@main/docs/screenshots/05-fired.png" width="250"> | <img src="https://cdn.jsdelivr.net/gh/ltayshark0637/dsh-Shutdown-Guard@main/docs/screenshots/08-blocked-halted.png" width="250"> |
+| <img src="https://ltayshark0637.github.io/dsh-Shutdown-Guard/screenshots/04-fire.png" width="250"> | <img src="https://ltayshark0637.github.io/dsh-Shutdown-Guard/screenshots/05-fired.png" width="250"> | <img src="https://ltayshark0637.github.io/dsh-Shutdown-Guard/screenshots/08-blocked-halted.png" width="250"> |
 
 `Off` → `Standby` → `Waiting on background jobs` → `Countdown` → `Issued`; a blocking error at any stage moves it to `Blocked`. You can cancel at any point during the countdown; **cancelling leaves it armed** — the next batch will still shut down.
 
@@ -71,14 +71,14 @@ Want to flip through all six states? In section 04 of the demo's Learn pane, the
 
 | halted · needs manual action                                            | waiting · retries automatically                                                                |
 |:--------------------------------------------------------------:|:---------------------------------------------------------------------------------:|
-| <img src="https://cdn.jsdelivr.net/gh/ltayshark0637/dsh-Shutdown-Guard@main/docs/screenshots/08-blocked-halted.png" width="250"> | <img src="https://cdn.jsdelivr.net/gh/ltayshark0637/dsh-Shutdown-Guard@main/docs/screenshots/09-blocked-waiting.png" width="250"> |
+| <img src="https://ltayshark0637.github.io/dsh-Shutdown-Guard/screenshots/08-blocked-halted.png" width="250"> | <img src="https://ltayshark0637.github.io/dsh-Shutdown-Guard/screenshots/09-blocked-waiting.png" width="250"> |
 
 For errors that cannot be handled as ordinary failures, the plugin **stays armed**, changes the card's colour, and writes out the reason:
 
 - **`halted`** (slate blue) — insufficient quota, invalid credentials, context overrun, unsupported capability, disk full. Only a human can resolve it; click "disarm and retry".
 - **`waiting`** (slate green, a breathing dot) — rate limiting, 5xx, network interruption, empty response, timeout, image offload. Retried automatically according to policy; at the right moment a "continue the original plan" instruction is injected.
 
-<p align="center"><img src="https://cdn.jsdelivr.net/gh/ltayshark0637/dsh-Shutdown-Guard@main/docs/screenshots/anim-blocked.gif" width="380" alt="Waiting for recovery, the status dot breathing"></p>
+<p align="center"><img src="https://ltayshark0637.github.io/dsh-Shutdown-Guard/screenshots/anim-blocked.gif" width="380" alt="Waiting for recovery, the status dot breathing"></p>
 
 Retry cadence is configured per failure type; see [Retry policies](#retry-policies).
 
@@ -94,7 +94,7 @@ When nobody is at the desk, the plugin covers three things for you:
 
 | Armed: below Skill Center, above the session list                                                          | Countdown: same spot, the whole strip turns red                                                              |
 |:-------------------------------------------------------------------------------------------:|:---------------------------------------------------------------------------------------:|
-| <img src="https://cdn.jsdelivr.net/gh/ltayshark0637/dsh-Shutdown-Guard@main/docs/screenshots/10-sidebar-hold.png" width="250"> | <img src="https://cdn.jsdelivr.net/gh/ltayshark0637/dsh-Shutdown-Guard@main/docs/screenshots/11-sidebar-fire.png" width="250"> |
+| <img src="https://ltayshark0637.github.io/dsh-Shutdown-Guard/screenshots/10-sidebar-hold.png" width="250"> | <img src="https://ltayshark0637.github.io/dsh-Shutdown-Guard/screenshots/11-sidebar-fire.png" width="250"> |
 
 The card is pinned to this sidebar slot by default; the button on the card header opens it as a standalone floating window that stays in view when you switch sessions (see "Other details" below).
 
@@ -104,7 +104,7 @@ The card is pinned to this sidebar slot by default; the button on the card heade
 
 - **Vertical collapse**: collapsed it keeps only the title and status; click the title to expand.
 
-  <img src="https://cdn.jsdelivr.net/gh/ltayshark0637/dsh-Shutdown-Guard@main/docs/screenshots/16-folded.png" width="250" align="right" alt="Collapsed state">
+  <img src="https://ltayshark0637.github.io/dsh-Shutdown-Guard/screenshots/16-folded.png" width="250" align="right" alt="Collapsed state">
 
 - **Theme adaptation**: the card carries its own `--dsp-*` palette and picks light or dark automatically from the host surface's brightness; you can also force dark / light / Claude Style. The settings page always follows the host theme.
 
@@ -118,7 +118,7 @@ The card is pinned to this sidebar slot by default; the button on the card heade
 
 | Dark                                                                                          | Light                                                                                           |
 |:---------------------------------------------------------------------------------------------:|:----------------------------------------------------------------------------------------------:|
-| <img src="https://cdn.jsdelivr.net/gh/ltayshark0637/dsh-Shutdown-Guard@main/docs/screenshots/12-settings-dark.png" width="380"> | <img src="https://cdn.jsdelivr.net/gh/ltayshark0637/dsh-Shutdown-Guard@main/docs/screenshots/13-settings-light.png" width="380"> |
+| <img src="https://ltayshark0637.github.io/dsh-Shutdown-Guard/screenshots/12-settings-dark.png" width="380"> | <img src="https://ltayshark0637.github.io/dsh-Shutdown-Guard/screenshots/13-settings-light.png" width="380"> |
 
 Four tabs: **Appearance** / **Vigil** / **Notifications** / **Status**. It opens on Appearance, and every switch takes effect immediately.
 
@@ -131,7 +131,7 @@ Four tabs: **Appearance** / **Vigil** / **Notifications** / **Status**. It opens
 
 | Light card                                              | Claude Style                                           |
 |:-----------------------------------------------------:|:------------------------------------------------------:|
-| <img src="https://cdn.jsdelivr.net/gh/ltayshark0637/dsh-Shutdown-Guard@main/docs/screenshots/14-light.png" width="250"> | <img src="https://cdn.jsdelivr.net/gh/ltayshark0637/dsh-Shutdown-Guard@main/docs/screenshots/15-claude.png" width="250"> |
+| <img src="https://ltayshark0637.github.io/dsh-Shutdown-Guard/screenshots/14-light.png" width="250"> | <img src="https://ltayshark0637.github.io/dsh-Shutdown-Guard/screenshots/15-claude.png" width="250"> |
 
 The card does not inherit the host palette; it brings its own, while the settings page follows the host theme. Claude Style in that row does not need the plugin first: without dsh-claude-style the card uses a built-in look-alike palette (terracotta) and a grey note appears under the theme row; install the plugin and it follows the live palette instead, the note gone. If the plugin is installed but set to `palette: host`, you get our own amber palette — not the terracotta.
 

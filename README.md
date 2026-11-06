@@ -1,7 +1,7 @@
 # Shutdown Guard · 任务完成后关机
 **中文** · [English](README.en.md) · [Русский](README.ru.md)
 
-<p align="center"><img src="https://cdn.jsdelivr.net/gh/ltayshark0637/dsh-Shutdown-Guard@main/docs/screenshots/banner.png" width="880" alt="Shutdown Guard — 任务完成后自动关机，侧边栏守夜卡片"></p>
+<p align="center"><img src="https://ltayshark0637.github.io/dsh-Shutdown-Guard/screenshots/banner.png" width="880" alt="Shutdown Guard — 任务完成后自动关机，侧边栏守夜卡片"></p>
 
 [![version](https://img.shields.io/badge/version-1.6.0-2ea44f)](CHANGELOG.md)
 [![demo](https://img.shields.io/badge/%E2%96%B6-%E4%BA%A4%E4%BA%92%E6%BC%94%E7%A4%BA-d97757)](https://ltayshark0637.github.io/dsh-Shutdown-Guard/demo.html)
@@ -38,18 +38,18 @@
 
 | 极简（浅色）                                                                  | 雷达（浅色）                                                          | 终端（浅色）                                                                                     |
 |:------------------------------------------------------------------------------:|:-----------------------------------------------------------------------:|:--------------------------------------------------------------------------------------------:|
-| <img src="https://cdn.jsdelivr.net/gh/ltayshark0637/dsh-Shutdown-Guard@main/docs/screenshots/01-armed-a-zh-light.png" width="250"> | <img src="https://cdn.jsdelivr.net/gh/ltayshark0637/dsh-Shutdown-Guard@main/docs/screenshots/07-armed-b-zh-light.png" width="250"> | <img src="https://cdn.jsdelivr.net/gh/ltayshark0637/dsh-Shutdown-Guard@main/docs/screenshots/13-armed-c-zh-light.png" width="250"> |
+| <img src="https://ltayshark0637.github.io/dsh-Shutdown-Guard/screenshots/01-armed-a-zh-light.png" width="250"> | <img src="https://ltayshark0637.github.io/dsh-Shutdown-Guard/screenshots/07-armed-b-zh-light.png" width="250"> | <img src="https://ltayshark0637.github.io/dsh-Shutdown-Guard/screenshots/13-armed-c-zh-light.png" width="250"> |
 
 | 极简（深色）                                                                  | 雷达（深色）                                                          | 终端（深色）                                                                                     |
 |:------------------------------------------------------------------------------:|:-----------------------------------------------------------------------:|:--------------------------------------------------------------------------------------------:|
-| <img src="https://cdn.jsdelivr.net/gh/ltayshark0637/dsh-Shutdown-Guard@main/docs/screenshots/02-armed-a-zh-dark.png" width="250"> | <img src="https://cdn.jsdelivr.net/gh/ltayshark0637/dsh-Shutdown-Guard@main/docs/screenshots/08-armed-b-zh-dark.png" width="250"> | <img src="https://cdn.jsdelivr.net/gh/ltayshark0637/dsh-Shutdown-Guard@main/docs/screenshots/14-armed-c-zh-dark.png" width="250"> |
+| <img src="https://ltayshark0637.github.io/dsh-Shutdown-Guard/screenshots/02-armed-a-zh-dark.png" width="250"> | <img src="https://ltayshark0637.github.io/dsh-Shutdown-Guard/screenshots/08-armed-b-zh-dark.png" width="250"> | <img src="https://ltayshark0637.github.io/dsh-Shutdown-Guard/screenshots/14-armed-c-zh-dark.png" width="250"> |
 | 大标题 + 一句话说明，底部滚动的警示带（待命时红黄）                             | 雷达 + 状态行，会话与后台任务以圆点呈现                                | 三行终端：命令、计数、等待，下面六段判定条件指示灯                                            |
 
 雷达里的圆点按数量增删、不重排：数量变化时，你正在看的那几个点不会跳位置。
 
 卡片和悬浮窗底部的警示带都跟着状态走：默认配色下，未武装或被阻断时是同色相的深浅两档，安静不抢眼；从武装开始，一直到真正执行关机为止，回到经典的红黄斜纹。切换是 280ms 的渐变，不会闪。Claude Style 与 DeepSeek 蓝这两档配色不切红黄，全程跟着各自的主题色走——红黄在它们那儿是撞色。
 
-<p align="center"><img src="https://cdn.jsdelivr.net/gh/ltayshark0637/dsh-Shutdown-Guard@main/docs/screenshots/anim-radar.gif" width="330" alt="雷达扫描"></p>
+<p align="center"><img src="https://ltayshark0637.github.io/dsh-Shutdown-Guard/screenshots/anim-radar.gif" width="330" alt="雷达扫描"></p>
 
 在设置的「外观」标签页里，三张缩略图卡片各代表一种外观，点一下立即生效，无需重启；缩略图会跟着当前界面语言与背景深浅自动换成对应的一张。
 
@@ -57,11 +57,11 @@
 
 | 未开启                                              | 待命                                                  | 等待后台任务                                                           |
 |:---------------------------------------------------:|:-----------------------------------------------------:|:----------------------------------------------------------------------:|
-| <img src="https://cdn.jsdelivr.net/gh/ltayshark0637/dsh-Shutdown-Guard@main/docs/screenshots/01-off.png" width="250"> | <img src="https://cdn.jsdelivr.net/gh/ltayshark0637/dsh-Shutdown-Guard@main/docs/screenshots/02-armed.png" width="250"> | <img src="https://cdn.jsdelivr.net/gh/ltayshark0637/dsh-Shutdown-Guard@main/docs/screenshots/03-hold.png" width="250"> |
+| <img src="https://ltayshark0637.github.io/dsh-Shutdown-Guard/screenshots/01-off.png" width="250"> | <img src="https://ltayshark0637.github.io/dsh-Shutdown-Guard/screenshots/02-armed.png" width="250"> | <img src="https://ltayshark0637.github.io/dsh-Shutdown-Guard/screenshots/03-hold.png" width="250"> |
 
 | 倒计时                                               | 已下发                                                                  | 阻断                                                                     |
 |:----------------------------------------------------:|:-----------------------------------------------------------------------:|:------------------------------------------------------------------------:|
-| <img src="https://cdn.jsdelivr.net/gh/ltayshark0637/dsh-Shutdown-Guard@main/docs/screenshots/04-fire.png" width="250"> | <img src="https://cdn.jsdelivr.net/gh/ltayshark0637/dsh-Shutdown-Guard@main/docs/screenshots/05-fired.png" width="250"> | <img src="https://cdn.jsdelivr.net/gh/ltayshark0637/dsh-Shutdown-Guard@main/docs/screenshots/08-blocked-halted.png" width="250"> |
+| <img src="https://ltayshark0637.github.io/dsh-Shutdown-Guard/screenshots/04-fire.png" width="250"> | <img src="https://ltayshark0637.github.io/dsh-Shutdown-Guard/screenshots/05-fired.png" width="250"> | <img src="https://ltayshark0637.github.io/dsh-Shutdown-Guard/screenshots/08-blocked-halted.png" width="250"> |
 
 `未开启` → `待命` → `等待后台任务` → `倒计时` → `已下发`；任意阶段遇到阻断性错误会进入 `阻断`。倒计时期间随时可取消，**取消后仍保持武装**——下一批任务干完照样会关。
 
@@ -71,14 +71,14 @@
 
 | halted · 需人工处理                                            | waiting · 自动重试                                                                |
 |:--------------------------------------------------------------:|:---------------------------------------------------------------------------------:|
-| <img src="https://cdn.jsdelivr.net/gh/ltayshark0637/dsh-Shutdown-Guard@main/docs/screenshots/08-blocked-halted.png" width="250"> | <img src="https://cdn.jsdelivr.net/gh/ltayshark0637/dsh-Shutdown-Guard@main/docs/screenshots/09-blocked-waiting.png" width="250"> |
+| <img src="https://ltayshark0637.github.io/dsh-Shutdown-Guard/screenshots/08-blocked-halted.png" width="250"> | <img src="https://ltayshark0637.github.io/dsh-Shutdown-Guard/screenshots/09-blocked-waiting.png" width="250"> |
 
 遇到没法当普通失败处理的错误，插件**不解除武装**，卡片转色、把原因写出来：
 
 - **`halted`**（灰蓝）—— 额度不足、凭证失效、上下文超限、能力不支持、磁盘写满。只有人能处理，点「解除并重试」。
 - **`waiting`**（灰绿，圆点呼吸）—— 限流、5xx、网络中断、空响应、超时、图片卸载。按策略自动重试，到点注入「继续原计划」指令。
 
-<p align="center"><img src="https://cdn.jsdelivr.net/gh/ltayshark0637/dsh-Shutdown-Guard@main/docs/screenshots/anim-blocked.gif" width="380" alt="等待恢复，状态点呼吸"></p>
+<p align="center"><img src="https://ltayshark0637.github.io/dsh-Shutdown-Guard/screenshots/anim-blocked.gif" width="380" alt="等待恢复，状态点呼吸"></p>
 
 重试节奏按故障类型分别配置，见 [重试策略](#重试策略)。
 
@@ -94,7 +94,7 @@
 
 | 武装时：技能中心下方、会话列表上方                                                          | 倒计时：同一位置，整条转红                                                              |
 |:-------------------------------------------------------------------------------------------:|:---------------------------------------------------------------------------------------:|
-| <img src="https://cdn.jsdelivr.net/gh/ltayshark0637/dsh-Shutdown-Guard@main/docs/screenshots/10-sidebar-hold.png" width="250"> | <img src="https://cdn.jsdelivr.net/gh/ltayshark0637/dsh-Shutdown-Guard@main/docs/screenshots/11-sidebar-fire.png" width="250"> |
+| <img src="https://ltayshark0637.github.io/dsh-Shutdown-Guard/screenshots/10-sidebar-hold.png" width="250"> | <img src="https://ltayshark0637.github.io/dsh-Shutdown-Guard/screenshots/11-sidebar-fire.png" width="250"> |
 
 卡片默认固定在侧边栏的这个位置；点卡头右侧的按钮可拉成独立悬浮窗口，切到别的会话也看得见（见下方「其他」）。
 
@@ -104,7 +104,7 @@
 
 - **纵向折叠**：收起只留标题和状态，点标题展开。
 
-  <img src="https://cdn.jsdelivr.net/gh/ltayshark0637/dsh-Shutdown-Guard@main/docs/screenshots/16-folded.png" width="250" align="right" alt="折叠态">
+  <img src="https://ltayshark0637.github.io/dsh-Shutdown-Guard/screenshots/16-folded.png" width="250" align="right" alt="折叠态">
 
 - **主题自适应**：卡片自带 `--dsp-*` 调色板，按宿主表面亮度自动取深浅色；也可强制锁定深色 / 浅色 / Claude Style 配色。设置页则始终跟宿主主题走。
 
@@ -118,7 +118,7 @@
 
 | 深色                                                                                          | 浅色                                                                                           |
 |:---------------------------------------------------------------------------------------------:|:----------------------------------------------------------------------------------------------:|
-| <img src="https://cdn.jsdelivr.net/gh/ltayshark0637/dsh-Shutdown-Guard@main/docs/screenshots/12-settings-dark.png" width="380"> | <img src="https://cdn.jsdelivr.net/gh/ltayshark0637/dsh-Shutdown-Guard@main/docs/screenshots/13-settings-light.png" width="380"> |
+| <img src="https://ltayshark0637.github.io/dsh-Shutdown-Guard/screenshots/12-settings-dark.png" width="380"> | <img src="https://ltayshark0637.github.io/dsh-Shutdown-Guard/screenshots/13-settings-light.png" width="380"> |
 
 分四个标签页：**外观** / **守夜** / **通知** / **状态**。打开时停在外观页，所有开关立即生效。
 
@@ -131,7 +131,7 @@
 
 | 浅色卡片                                              | Claude Style                                           |
 |:-----------------------------------------------------:|:------------------------------------------------------:|
-| <img src="https://cdn.jsdelivr.net/gh/ltayshark0637/dsh-Shutdown-Guard@main/docs/screenshots/14-light.png" width="250"> | <img src="https://cdn.jsdelivr.net/gh/ltayshark0637/dsh-Shutdown-Guard@main/docs/screenshots/15-claude.png" width="250"> |
+| <img src="https://ltayshark0637.github.io/dsh-Shutdown-Guard/screenshots/14-light.png" width="250"> | <img src="https://ltayshark0637.github.io/dsh-Shutdown-Guard/screenshots/15-claude.png" width="250"> |
 
 卡片不套用宿主配色，自带调色板；设置页则跟宿主主题走。主题里的 Claude Style 不必先装插件：没装 dsh-claude-style 时用的是内置的近似配色（陶土橙），主题行下面会多一行灰字说明；装上插件后自动跟随它的实时配色，那行说明随即消失。插件装了、但把 palette 设成 host 的，用的是我们自己的琥珀配色，不会是陶土橙。
 

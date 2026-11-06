@@ -1,7 +1,7 @@
 # Shutdown Guard · Выключение после завершения задач
 [中文](README.md) · [English](README.en.md) · **Русский**
 
-<p align="center"><img src="https://cdn.jsdelivr.net/gh/ltayshark0637/dsh-Shutdown-Guard@main/docs/screenshots/banner.png" width="880" alt="Shutdown Guard — автоматическое выключение после завершения задач, ночная карточка на боковой панели"></p>
+<p align="center"><img src="https://ltayshark0637.github.io/dsh-Shutdown-Guard/screenshots/banner.png" width="880" alt="Shutdown Guard — автоматическое выключение после завершения задач, ночная карточка на боковой панели"></p>
 
 [![version](https://img.shields.io/badge/version-1.6.0-2ea44f)](CHANGELOG.md)
 [![demo](https://img.shields.io/badge/%E2%96%B6-%D0%94%D0%95%D0%9C%D0%9E-d97757)](https://ltayshark0637.github.io/dsh-Shutdown-Guard/demo.html)
@@ -38,18 +38,18 @@
 
 | Минимальный (светлая)                                                             | Радар (светлая)                                                        | Терминал (светлая)                                                                             |
 |:------------------------------------------------------------------------------:|:-----------------------------------------------------------------------:|:--------------------------------------------------------------------------------------------:|
-| <img src="https://cdn.jsdelivr.net/gh/ltayshark0637/dsh-Shutdown-Guard@main/docs/screenshots/05-armed-a-ru-light.png" width="250"> | <img src="https://cdn.jsdelivr.net/gh/ltayshark0637/dsh-Shutdown-Guard@main/docs/screenshots/11-armed-b-ru-light.png" width="250"> | <img src="https://cdn.jsdelivr.net/gh/ltayshark0637/dsh-Shutdown-Guard@main/docs/screenshots/17-armed-c-ru-light.png" width="250"> |
+| <img src="https://ltayshark0637.github.io/dsh-Shutdown-Guard/screenshots/05-armed-a-ru-light.png" width="250"> | <img src="https://ltayshark0637.github.io/dsh-Shutdown-Guard/screenshots/11-armed-b-ru-light.png" width="250"> | <img src="https://ltayshark0637.github.io/dsh-Shutdown-Guard/screenshots/17-armed-c-ru-light.png" width="250"> |
 
 | Минимальный (тёмная)                                                             | Радар (тёмная)                                                        | Терминал (тёмная)                                                                             |
 |:------------------------------------------------------------------------------:|:-----------------------------------------------------------------------:|:--------------------------------------------------------------------------------------------:|
-| <img src="https://cdn.jsdelivr.net/gh/ltayshark0637/dsh-Shutdown-Guard@main/docs/screenshots/06-armed-a-ru-dark.png" width="250"> | <img src="https://cdn.jsdelivr.net/gh/ltayshark0637/dsh-Shutdown-Guard@main/docs/screenshots/12-armed-b-ru-dark.png" width="250"> | <img src="https://cdn.jsdelivr.net/gh/ltayshark0637/dsh-Shutdown-Guard@main/docs/screenshots/18-armed-c-ru-dark.png" width="250"> |
+| <img src="https://ltayshark0637.github.io/dsh-Shutdown-Guard/screenshots/06-armed-a-ru-dark.png" width="250"> | <img src="https://ltayshark0637.github.io/dsh-Shutdown-Guard/screenshots/12-armed-b-ru-dark.png" width="250"> | <img src="https://ltayshark0637.github.io/dsh-Shutdown-Guard/screenshots/18-armed-c-ru-dark.png" width="250"> |
 | Крупный заголовок + одна строка пояснения, внизу бегущая лента (красно-жёлтая, пока карточка на посту)                                          | Радар + строка состояния, сессии и фоновые задачи показаны точками                      | Три строки терминала (команда, счётчики, ожидание) над шестью индикаторами условий                                                      |
 
 Точки на радаре только добавляются и удаляются, но не переставляются: при изменении количества те точки, на которые вы смотрите, не прыгают на другие места.
 
 Лента по нижнему краю карточки и плавающего окна меняется вместе с состоянием: в штатных палитрах, пока карточка выключена или заблокирована, она держится в двух спокойных оттенках цвета темы; с момента включения режима и до самого выключения возвращаются привычные красно-жёлтые полосы. Смена идёт плавно, за 280 мс, без вспышек. В палитрах Claude Style и DeepSeek Blue лента на красно-жёлтое не переключается и всё время следует за цветом темы — там полосы просто спорят с остальным.
 
-<p align="center"><img src="https://cdn.jsdelivr.net/gh/ltayshark0637/dsh-Shutdown-Guard@main/docs/screenshots/anim-radar.gif" width="330" alt="Сканирование радара"></p>
+<p align="center"><img src="https://ltayshark0637.github.io/dsh-Shutdown-Guard/screenshots/anim-radar.gif" width="330" alt="Сканирование радара"></p>
 
 Переключается на вкладке «Оформление»: три карточки с миниатюрами, щелчок применяется сразу, перезапуск не нужен; миниатюра меняется вместе с языком интерфейса и светлотой фона.
 
@@ -57,11 +57,11 @@
 
 | Выключено                                              | Ожидание                                                  | Ожидание фоновых задач                                                           |
 |:---------------------------------------------------:|:-----------------------------------------------------:|:----------------------------------------------------------------------:|
-| <img src="https://cdn.jsdelivr.net/gh/ltayshark0637/dsh-Shutdown-Guard@main/docs/screenshots/01-off.png" width="250"> | <img src="https://cdn.jsdelivr.net/gh/ltayshark0637/dsh-Shutdown-Guard@main/docs/screenshots/02-armed.png" width="250"> | <img src="https://cdn.jsdelivr.net/gh/ltayshark0637/dsh-Shutdown-Guard@main/docs/screenshots/03-hold.png" width="250"> |
+| <img src="https://ltayshark0637.github.io/dsh-Shutdown-Guard/screenshots/01-off.png" width="250"> | <img src="https://ltayshark0637.github.io/dsh-Shutdown-Guard/screenshots/02-armed.png" width="250"> | <img src="https://ltayshark0637.github.io/dsh-Shutdown-Guard/screenshots/03-hold.png" width="250"> |
 
 | Обратный отсчёт                                               | Команда отправлена                                                                  | Блокировка                                                                     |
 |:----------------------------------------------------:|:-----------------------------------------------------------------------:|:------------------------------------------------------------------------:|
-| <img src="https://cdn.jsdelivr.net/gh/ltayshark0637/dsh-Shutdown-Guard@main/docs/screenshots/04-fire.png" width="250"> | <img src="https://cdn.jsdelivr.net/gh/ltayshark0637/dsh-Shutdown-Guard@main/docs/screenshots/05-fired.png" width="250"> | <img src="https://cdn.jsdelivr.net/gh/ltayshark0637/dsh-Shutdown-Guard@main/docs/screenshots/08-blocked-halted.png" width="250"> |
+| <img src="https://ltayshark0637.github.io/dsh-Shutdown-Guard/screenshots/04-fire.png" width="250"> | <img src="https://ltayshark0637.github.io/dsh-Shutdown-Guard/screenshots/05-fired.png" width="250"> | <img src="https://ltayshark0637.github.io/dsh-Shutdown-Guard/screenshots/08-blocked-halted.png" width="250"> |
 
 `Выключено` → `Ожидание` → `Ожидание фоновых задач` → `Обратный отсчёт` → `Команда отправлена`; на любом этапе блокирующая ошибка переводит карточку в `Блокировка`. Во время обратного отсчёта можно отменить в любой момент; **после отмены охрана остаётся включённой** — следующая партия задач всё равно приведёт к выключению.
 
@@ -71,14 +71,14 @@
 
 | halted · нужно вмешательство человека                                            | waiting · автоматические повторы                                                                |
 |:--------------------------------------------------------------:|:---------------------------------------------------------------------------------:|
-| <img src="https://cdn.jsdelivr.net/gh/ltayshark0637/dsh-Shutdown-Guard@main/docs/screenshots/08-blocked-halted.png" width="250"> | <img src="https://cdn.jsdelivr.net/gh/ltayshark0637/dsh-Shutdown-Guard@main/docs/screenshots/09-blocked-waiting.png" width="250"> |
+| <img src="https://ltayshark0637.github.io/dsh-Shutdown-Guard/screenshots/08-blocked-halted.png" width="250"> | <img src="https://ltayshark0637.github.io/dsh-Shutdown-Guard/screenshots/09-blocked-waiting.png" width="250"> |
 
 При ошибках, которые нельзя обработать как обычный сбой, плагин **не снимает охрану**, меняет цвет карточки и пишет причину:
 
 - **`halted`** (серо-синий) — нехватка квоты, недействительные учётные данные, превышение контекста, неподдерживаемая возможность, переполнен диск. Справиться может только человек: нажмите «Снять и повторить».
 - **`waiting`** (серо-зелёный, точка «дышит») — ограничение частоты, 5xx, обрыв сети, пустой ответ, тайм-аут, выгрузка изображений. Повторяется автоматически по политике; в нужный момент внедряется инструкция «продолжить по исходному плану».
 
-<p align="center"><img src="https://cdn.jsdelivr.net/gh/ltayshark0637/dsh-Shutdown-Guard@main/docs/screenshots/anim-blocked.gif" width="380" alt="Ожидание восстановления, точка состояния «дышит»"></p>
+<p align="center"><img src="https://ltayshark0637.github.io/dsh-Shutdown-Guard/screenshots/anim-blocked.gif" width="380" alt="Ожидание восстановления, точка состояния «дышит»"></p>
 
 Ритм повторов настраивается отдельно для каждого типа сбоя, см. [Политики повторов](#политики-повторов).
 
@@ -94,7 +94,7 @@
 
 | Охрана включена: под «Центром навыков», над списком сессий                                                          | Обратный отсчёт: там же, вся полоса краснеет                                                              |
 |:-------------------------------------------------------------------------------------------:|:---------------------------------------------------------------------------------------:|
-| <img src="https://cdn.jsdelivr.net/gh/ltayshark0637/dsh-Shutdown-Guard@main/docs/screenshots/10-sidebar-hold.png" width="250"> | <img src="https://cdn.jsdelivr.net/gh/ltayshark0637/dsh-Shutdown-Guard@main/docs/screenshots/11-sidebar-fire.png" width="250"> |
+| <img src="https://ltayshark0637.github.io/dsh-Shutdown-Guard/screenshots/10-sidebar-hold.png" width="250"> | <img src="https://ltayshark0637.github.io/dsh-Shutdown-Guard/screenshots/11-sidebar-fire.png" width="250"> |
 
 По умолчанию карточка закреплена именно в этом месте боковой панели; кнопка в её заголовке открывает карточку как отдельное плавающее окно, которое остаётся на виду при переключении сессий (см. «Прочее» ниже).
 
@@ -104,7 +104,7 @@
 
 - **Вертикальное сворачивание**: в свёрнутом виде остаются только заголовок и статус; нажмите на заголовок, чтобы развернуть.
 
-  <img src="https://cdn.jsdelivr.net/gh/ltayshark0637/dsh-Shutdown-Guard@main/docs/screenshots/16-folded.png" width="250" align="right" alt="Свёрнутое состояние">
+  <img src="https://ltayshark0637.github.io/dsh-Shutdown-Guard/screenshots/16-folded.png" width="250" align="right" alt="Свёрнутое состояние">
 
 - **Адаптация к теме**: у карточки собственная палитра `--dsp-*`, светлые и тёмные цвета выбираются автоматически по яркости поверхности хоста; можно также принудительно задать тёмную / светлую / Claude Style. Страница настроек всегда следует теме хоста.
 
@@ -118,7 +118,7 @@
 
 | Тёмная                                                                                          | Светлая                                                                                           |
 |:---------------------------------------------------------------------------------------------:|:----------------------------------------------------------------------------------------------:|
-| <img src="https://cdn.jsdelivr.net/gh/ltayshark0637/dsh-Shutdown-Guard@main/docs/screenshots/12-settings-dark.png" width="380"> | <img src="https://cdn.jsdelivr.net/gh/ltayshark0637/dsh-Shutdown-Guard@main/docs/screenshots/13-settings-light.png" width="380"> |
+| <img src="https://ltayshark0637.github.io/dsh-Shutdown-Guard/screenshots/12-settings-dark.png" width="380"> | <img src="https://ltayshark0637.github.io/dsh-Shutdown-Guard/screenshots/13-settings-light.png" width="380"> |
 
 Четыре вкладки: **Оформление** / **Охрана** / **Уведомления** / **Состояние**. Открывается на «Оформлении», все переключатели действуют сразу.
 
@@ -131,7 +131,7 @@
 
 | Светлая карточка                                              | Claude Style                                           |
 |:-----------------------------------------------------:|:------------------------------------------------------:|
-| <img src="https://cdn.jsdelivr.net/gh/ltayshark0637/dsh-Shutdown-Guard@main/docs/screenshots/14-light.png" width="250"> | <img src="https://cdn.jsdelivr.net/gh/ltayshark0637/dsh-Shutdown-Guard@main/docs/screenshots/15-claude.png" width="250"> |
+| <img src="https://ltayshark0637.github.io/dsh-Shutdown-Guard/screenshots/14-light.png" width="250"> | <img src="https://ltayshark0637.github.io/dsh-Shutdown-Guard/screenshots/15-claude.png" width="250"> |
 
 Карточка не наследует палитру хоста, у неё своя; страница настроек следует теме хоста. Для Claude Style в этой строке плагин заранее не нужен: без dsh-claude-style карточка берёт встроенную похожую палитру (терракота), а под строкой темы появляется серая пояснительная строка; после установки плагина цвета подхватываются у него, и пояснение исчезает. Если плагин стоит, но у него выставлено `palette: host`, берётся наша янтарная палитра — не терракота.
 
