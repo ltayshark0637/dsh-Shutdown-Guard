@@ -1,5 +1,7 @@
 # 架构与判定
 
+> English version: [ARCHITECTURE.en.md](ARCHITECTURE.en.md)
+
 这份文档写给维护者：状态怎么流转、五道闸门怎么判、阻断与重试怎么配合、窗口页为什么必须跟卡片同源。
 面向使用者的说明在 [README](../README.md)。
 
@@ -64,7 +66,11 @@ off ──武装──▶ armed ──有后台任务──▶ hold ──任务
 
 缺任何一条都不关，并把原因写进卡片与设置页「状态」标签（`data/events.log` 里有完整流水）。
 
-`marginSec`（默认 5 秒）是给 `shutdown /t` 留的余量，不参与判定。
+`marginSec`（默认 5 秒）**不参与五道判定**，也与任何系统定时器无关：所有动作都是 inline，命令严格在倒计时结束那一刻发出。它决定的是「卡片还要不要把倒计时态多显示一会儿」——`fired` 状态在 `countdownSec + marginSec + 5` 秒后才置上，那 5 秒是固定值。
+
+这段停留期里点「取消关机」，命令已经出了进程、无法撤回，事件日志会记一条「动作已发出，无法撤回」。
+
+所以 `marginSec` 的作用是给「已发出」这件事留出被看见的时间，不是给命令留缓冲；调大它只会让卡片更晚跳到「已下发」。
 
 ## 4. 阻断态
 
@@ -135,7 +141,7 @@ lib/          源码真相：宿主、卡片、i18n
 cordis.patch.yml  出厂 patch
 test/         断言（host.test.mjs / client.test.cjs）
 scripts/      截图、演示页、图标、发布辅助
-docs/         面向维护者的文档（本文件、CONFIG、DEVELOPING、BETA）
+docs/         面向维护者的文档：ARCHITECTURE、CONFIG、DEVELOPING、BETA、RELEASE-NOTES-STYLE；前四篇另有 `.en.md` 英文版（RELEASE-NOTES-STYLE 只有中文）
 data/         运行时数据（config.json / ui.json / events.log / scripts/），不提交
 ```
 

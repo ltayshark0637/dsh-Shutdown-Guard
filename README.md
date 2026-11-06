@@ -85,7 +85,9 @@ A：Windows 已完整验证。macOS 与 Linux 已实现，但尚未在真机实�
 
 ## 更多
 
-技术细节单独成文：[架构与判定](https://github.com/ltayshark0637/dsh-Shutdown-Guard/blob/main/docs/ARCHITECTURE.md) · [配置字段](https://github.com/ltayshark0637/dsh-Shutdown-Guard/blob/main/docs/CONFIG.md) · [本地开发](https://github.com/ltayshark0637/dsh-Shutdown-Guard/blob/main/docs/DEVELOPING.md)
+技术细节单独成文：[架构与判定](https://github.com/ltayshark0637/dsh-Shutdown-Guard/blob/main/docs/ARCHITECTURE.md) · [配置字段](https://github.com/ltayshark0637/dsh-Shutdown-Guard/blob/main/docs/CONFIG.md) · [本地开发](https://github.com/ltayshark0637/dsh-Shutdown-Guard/blob/main/docs/DEVELOPING.md) · [内测指南](https://github.com/ltayshark0637/dsh-Shutdown-Guard/blob/main/docs/BETA.md)
+
+英文版：[ARCHITECTURE.en.md](https://github.com/ltayshark0637/dsh-Shutdown-Guard/blob/main/docs/ARCHITECTURE.en.md) · [CONFIG.en.md](https://github.com/ltayshark0637/dsh-Shutdown-Guard/blob/main/docs/CONFIG.en.md) · [DEVELOPING.en.md](https://github.com/ltayshark0637/dsh-Shutdown-Guard/blob/main/docs/DEVELOPING.en.md) · [BETA.en.md](https://github.com/ltayshark0637/dsh-Shutdown-Guard/blob/main/docs/BETA.en.md)
 
 ## 许可
 

@@ -85,7 +85,7 @@ dsh plugin --profile web add github:ltayshark0637/dsh-Shutdown-Guard
 
 ## Подробнее
 
-Технические детали вынесены в отдельные файлы (на китайском): [архитектура и условия](https://github.com/ltayshark0637/dsh-Shutdown-Guard/blob/main/docs/ARCHITECTURE.md) · [ключи конфигурации](https://github.com/ltayshark0637/dsh-Shutdown-Guard/blob/main/docs/CONFIG.md) · [локальная разработка](https://github.com/ltayshark0637/dsh-Shutdown-Guard/blob/main/docs/DEVELOPING.md)
+Технические детали вынесены в отдельные файлы (на английском): [архитектура и условия](https://github.com/ltayshark0637/dsh-Shutdown-Guard/blob/main/docs/ARCHITECTURE.en.md) · [ключи конфигурации](https://github.com/ltayshark0637/dsh-Shutdown-Guard/blob/main/docs/CONFIG.en.md) · [локальная разработка](https://github.com/ltayshark0637/dsh-Shutdown-Guard/blob/main/docs/DEVELOPING.en.md) · [гид по бете](https://github.com/ltayshark0637/dsh-Shutdown-Guard/blob/main/docs/BETA.en.md)
 
 ## Лицензия
 

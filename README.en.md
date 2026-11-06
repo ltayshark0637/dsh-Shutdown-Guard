@@ -85,7 +85,7 @@ A: Windows is fully verified. macOS and Linux are implemented but have not been 
 
 ## More
 
-The technical details live in their own files, written in Chinese: [architecture and gating](https://github.com/ltayshark0637/dsh-Shutdown-Guard/blob/main/docs/ARCHITECTURE.md) · [configuration keys](https://github.com/ltayshark0637/dsh-Shutdown-Guard/blob/main/docs/CONFIG.md) · [local development](https://github.com/ltayshark0637/dsh-Shutdown-Guard/blob/main/docs/DEVELOPING.md)
+The technical details live in their own files: [architecture and gating](https://github.com/ltayshark0637/dsh-Shutdown-Guard/blob/main/docs/ARCHITECTURE.en.md) · [configuration keys](https://github.com/ltayshark0637/dsh-Shutdown-Guard/blob/main/docs/CONFIG.en.md) · [local development](https://github.com/ltayshark0637/dsh-Shutdown-Guard/blob/main/docs/DEVELOPING.en.md) · [beta testing guide](https://github.com/ltayshark0637/dsh-Shutdown-Guard/blob/main/docs/BETA.en.md)
 
 ## License
 

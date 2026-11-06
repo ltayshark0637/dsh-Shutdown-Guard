@@ -45,7 +45,7 @@ Common assertion names and what they hold:
 | `lib/i18n.mjs` | Three-language message catalog and language resolution (`LANGS`, `resolveLang`) |
 | `test/` | The two assertion scripts |
 | `scripts/` | Screenshots, demo page, icons, release helpers (not runtime) |
-| `docs/` | Maintainer docs (this file, CONFIG, ARCHITECTURE) and screenshot output |
+| `docs/` | Maintainer docs: ARCHITECTURE, CONFIG, DEVELOPING, BETA, RELEASE-NOTES-STYLE (the first four also ship an `.en.md` translation; RELEASE-NOTES-STYLE is Chinese only), plus the `screenshots/` output |
 | `data/` | Runtime data: `config.json`, `events.log`, `ui.json` — never committed |
 
 ## 4. The three language key sets must stay level

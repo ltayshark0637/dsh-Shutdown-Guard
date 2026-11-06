@@ -1,5 +1,7 @@
 # v1.6.1-beta.1 测试指南
 
+> English version: [BETA.en.md](BETA.en.md)
+
 ## 1. 这是什么版本
 
 `1.6.1-beta.1` 是**测试版**，第一次把「上传脚本、到点执行」这条能力放出来。

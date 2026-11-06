@@ -1,5 +1,7 @@
 # 本地开发
 
+> English version: [DEVELOPING.en.md](DEVELOPING.en.md)
+
 ## 1. 没有构建步骤
 
 源码就是运行时代码：`lib/index.mjs` 是 ESM，由 DSH 直接 `import`；`lib/client.js` 是一个自包含的 bundle，宿主在启动时把它编进模块图。
@@ -43,7 +45,7 @@ node test/client.test.cjs    # 客户端 bundle smoke，用假 React 跑真 clie
 | `lib/i18n.mjs` | 三语文案目录与语言解析（`LANGS`、`resolveLang`） |
 | `test/` | 两条断言脚本 |
 | `scripts/` | 截图、演示页、图标、发布辅助（不是运行时） |
-| `docs/` | 面向维护者的文档（本文件、CONFIG、ARCHITECTURE）与截图产物 |
+| `docs/` | 面向维护者的文档：ARCHITECTURE、CONFIG、DEVELOPING、BETA、RELEASE-NOTES-STYLE（前四篇另有 `.en.md` 英文版；RELEASE-NOTES-STYLE 只有中文），以及 `screenshots/` 产物 |
 | `data/` | 运行时数据：`config.json`、`events.log`、`ui.json` —— 不提交 |
 
 ## 4. 三语键集必须齐平

@@ -36,7 +36,7 @@ The settings page never bypasses layer 2: every change it makes goes through the
 | `customEnabled` | bool | `false` | whether custom profiles may be used |
 | `lastCustomProfileId` | string \| null | `null` | the profile to return to when re-enabled |
 | `language` | enum `auto` / `zh` / `en` / `ru` | `auto` | UI language; `auto` follows the system |
-| `parked` | object \| null | `null` | the halted scene, see section 5; the only **runtime state** written into the config file |
+| `parked` | object \| null | `null` | the halted scene, see `### parked` below in this section; the only **runtime state** written into the config file |
 | `profiles` | array | one `default` | each entry is a behavioural snapshot |
 
 UI appearance (card style / theme / folding / floating-window compact mode) is **not** in this file; see section 7.
@@ -72,7 +72,7 @@ Each profile stores its own copy; they do not affect one another.
 | Key | Type | Default | Notes |
 | --- | --- | --- | --- |
 | `countdownSec` | number 10–600 | `60` | seconds of countdown before shutdown. **locked to 60 on the default profile** |
-| `marginSec` | number 0–60 | `5` | extra headroom left for `shutdown /t`. **locked to 5 on the default profile** |
+| `marginSec` | number 0–60 | `5` | how much longer the card keeps showing the countdown after the command has gone out (plus a fixed 5 seconds); it does not move the moment the command fires and has nothing to do with system timers, see ARCHITECTURE section 3. **locked to 5 on the default profile** |
 | `onlyOnSuccess` | bool | `true` | skip when any session in the batch reported an error. **locked to `true` on the default profile** |
 | `blockOnJobs` | bool | `true` | skip while background jobs are running. **locked to `true` on the default profile** |
 | `afkAutoAnswer` | bool | `true` | answer questions and do error recovery on the user's behalf while armed. **locked to `true` on the default profile** |

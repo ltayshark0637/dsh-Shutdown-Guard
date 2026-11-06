@@ -1,5 +1,7 @@
 # 配置字段
 
+> English version: [CONFIG.en.md](CONFIG.en.md)
+
 面向维护者与想手改配置的人。使用者视角的设置说明在 [README](../README.md)。
 判定逻辑与重试的动机见 [ARCHITECTURE](./ARCHITECTURE.md)。
 
@@ -34,7 +36,7 @@
 | `customEnabled` | bool | `false` | 是否允许使用自定义 profile |
 | `lastCustomProfileId` | string \| null | `null` | 关掉再打开时要回到的那份 |
 | `language` | 枚举 `auto` / `zh` / `en` / `ru` | `auto` | 界面语言，`auto` 跟随系统 |
-| `parked` | 对象 \| null | `null` | 熔断现场，见第 5 节；唯一写进配置文件的**运行时状态** |
+| `parked` | 对象 \| null | `null` | 熔断现场，见本节下面的 `### parked`；唯一写进配置文件的**运行时状态** |
 | `profiles` | 数组 | 一份 `default` | 每份是一个行为快照 |
 
 界面外观（卡片样式 / 主题 / 折叠 / 悬浮窗简洁模式）**不在**这个文件里，见第 7 节。
@@ -70,7 +72,7 @@
 | 键 | 类型 | 默认 | 说明 |
 | --- | --- | --- | --- |
 | `countdownSec` | 数字 10–600 | `60` | 关机前倒计时秒数。**默认 profile 锁定为 60** |
-| `marginSec` | 数字 0–60 | `5` | 给 `shutdown /t` 留的额外余量。**默认 profile 锁定为 5** |
+| `marginSec` | 数字 0–60 | `5` | 命令发出后、卡片切到「已下发」前的额外停留秒数（另加固定 5 秒）；不改变命令发出的时刻，与系统定时器无关，见 ARCHITECTURE 第 3 节。**默认 profile 锁定为 5** |
 | `onlyOnSuccess` | bool | `true` | 本批次有会话报错就跳过。**默认 profile 锁定为 `true`** |
 | `blockOnJobs` | bool | `true` | 有运行中后台任务就跳过。**默认 profile 锁定为 `true`** |
 | `afkAutoAnswer` | bool | `true` | 武装期间替用户回答提问、做错误恢复。**默认 profile 锁定为 `true`** |

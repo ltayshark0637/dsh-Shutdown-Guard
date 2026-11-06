@@ -66,7 +66,11 @@ While in `blocked` nothing is dispatched at all; in every other case all five mu
 
 If any one of them is missing, nothing shuts down, and the reason is written into the card and the "Status" tab of the settings page (`data/events.log` holds the full stream).
 
-`marginSec` (default 5 seconds) is the headroom left for `shutdown /t`; it takes no part in the decision.
+`marginSec` (default 5 seconds) **takes no part in the five gates**, and has nothing to do with system timers: every action is inline, so the command fires exactly at the end of the countdown. What it decides is how long the card keeps showing the countdown — the `fired` state is only set at `countdownSec + marginSec + 5` seconds, and that 5 is a fixed constant.
+
+Clicking "cancel shutdown" during that window cannot take the command back: it has already left the process, and the event log records "action already ran, cannot be undone".
+
+So `marginSec` is the time given to "it already ran" to be seen, not a buffer for the command itself; raising it only makes the card jump to "done" later.
 
 ## 4. Blocked state
 
@@ -137,7 +141,7 @@ lib/          source of truth: host, card, i18n
 cordis.patch.yml  factory patch
 test/         assertions (host.test.mjs / client.test.cjs)
 scripts/      screenshots, demo page, icons, release helpers
-docs/         maintainer docs (this file, CONFIG, DEVELOPING, BETA)
+docs/         maintainer docs: ARCHITECTURE, CONFIG, DEVELOPING, BETA, RELEASE-NOTES-STYLE; the first four also ship an `.en.md` translation (RELEASE-NOTES-STYLE is Chinese only)
 data/         runtime data (config.json / ui.json / events.log / scripts/), never committed
 ```
 
