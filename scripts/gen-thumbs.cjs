@@ -10,6 +10,10 @@
 // Output: assets/variant-{a,b,c}-{zh,en,ru}-{light,dark}.png          (400 wide, transparent)
 //         _ops/variant-thumbs.txt                                     (3 comment lines + 18 "<key> <base64>")
 //
+// The `thumb-*.png` / `thumb-*.html` inputs are intermediate: delete them after
+// the run, do not commit them. `docs/screenshots/` is the README picture folder,
+// and a stray 2x render there reads like a picture that is meant to ship.
+//
 // Why 400 wide and an indexed palette: the settings panel draws the picture at
 // `width:100%` inside a ~210 CSS px slot, so a 2x screen wants ~420 device
 // pixels. 200 wide was upscaled 2.1x and looked soft, and the 4 KB budget forced
