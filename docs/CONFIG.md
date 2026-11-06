@@ -119,6 +119,59 @@
 非 win32 上所有可解析的命令一律报 `'unknown'`，不是 `true`。
 重测时如果**当前选中的动作**掉成不可用，宿主只打标记（`/state.actionReady === false`、卡片与设置页给出提示），**不改用户选的动作**。
 
+### 自定义命令怎么写
+
+**最要紧的一条：它是「参数列表」，不是脚本。** 设置页那个多行文本框里**一行就是一个参数**，第一行是程序，第二行起每行一个参数。
+
+```
+shutdown
+/s
+/t
+60
+```
+
+多行**不等于**多条命令 —— 上面是「执行 `shutdown`，传三个参数 `/s`、`/t`、`60`」，只做一件事。想连做几件事，得靠解释器（见下文 `cmd /c` 的例子）。
+
+**上限**：最多 16 行，每行最多 256 字符。尾部空行会被去掉；含 NUL 的整条拒绝；超限**整条拒绝**并报错，不会偷偷截断成一半的命令。
+
+**不经 shell**（`subprocess.spawn({ argv })`）。因此下列东西全部**不生效**，会原样当成参数传过去或直接失效：
+
+- 管道 `|`、重定向 `>` / `>>`、串联 `&&` / `&` / `;`
+- 变量展开 `%USERPROFILE%`、`$HOME`
+- 通配符 `*.log`
+- 命令替换、子 shell
+
+**引号不需要，也不该加。** 没有 shell 在解析引号，写了引号它会成为参数的一部分。路径带空格就整行原样写：
+
+```
+C:\Program Files\Some Tool\foo.exe
+--quiet
+```
+
+`.bat` / `.ps1` **不能直接填**：Windows 的 `CreateProcess` 不执行脚本文件。必须显式写解释器 —— `cmd` + `/c` + 路径，或 `powershell` + `-File` + 路径。
+
+**工作目录是盘符根 `/`，不是插件目录、也不是你的项目目录**（`spawn` 里写死 `cwd: '/'`）。这是真实行为，不是保守建议：**相对路径几乎必然找不到文件，一律写绝对路径。**
+
+**执行时机**：`custom` 是 `inline` 动作，在**倒计时结束那一刻**执行一次。倒计时内取消 → 一条都不发；**一旦发出去就撤不回**。作为对比，Windows 上的内置 `shutdown` / `restart` 是 `defer`（`shutdown /t <秒>`），`shutdown /a` 能真的撤销。
+
+**输出**：stdout 与 stderr 各截 4096 字节，退出码与报错写进事件流，设置页「状态」标签里能看到。
+
+#### Windows 例子
+
+单元格里的**每一行 = 文本框里的一行 = 一个参数**。
+
+| 想干什么 | 逐行怎么填 |
+| --- | --- |
+| 延迟 60 秒关机 | `shutdown`<br>`/s`<br>`/t`<br>`60` |
+| 立刻重启 | `shutdown`<br>`/r`<br>`/t`<br>`0` |
+| 注销当前用户 | `logoff` |
+| 跑一个 .bat | `cmd`<br>`/c`<br>`C:\tools\after-batch.bat` |
+| 跑一个 .ps1 | `powershell`<br>`-NoProfile`<br>`-ExecutionPolicy`<br>`Bypass`<br>`-File`<br>`C:\tools\after-batch.ps1` |
+| 带空格的路径的 exe | `C:\Program Files\Some Tool\foo.exe`<br>`--quiet` |
+| 先杀进程再关机 | `cmd`<br>`/c`<br>`taskkill /f /im foo.exe & shutdown /s /t 0` |
+
+最后一行说明一下：`cmd` 的第 3 个参数是**一整条字符串**，`&` 交给 `cmd` 去解释 —— 这正是「要 shell 就显式写解释器」的用法。同理，要 PowerShell 的管道就写 `powershell` + `-Command` + 整条脚本，而不是在参数里直接写 `|`。
+
 ## 5. 端点
 
 前缀 `/api/dsh-shutdown-guard`，仅本机可用。
