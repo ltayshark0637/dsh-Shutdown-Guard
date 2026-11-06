@@ -985,4 +985,324 @@ assert.strictEqual(routes.size, 0, 'disposer removes HTTP routes')
   calls.push('profile-prune-ok')
 }
 
+// 35-47. v1.6.1 action layer: capability reporting, defer/inline cancellation,
+// custom argv validation, the halt coupling and the persisted `parked` state.
+// A fresh store keeps these tests independent of the profile mutations above.
+{
+  const fs = await import('node:fs')
+  const pathMod = await import('node:path')
+  const { fileURLToPath } = await import('node:url')
+  const here = pathMod.dirname(fileURLToPath(import.meta.url))
+  const cfgFile = pathMod.join(here, '..', 'data', 'config.json')
+  const uiFile = pathMod.join(here, '..', 'data', 'ui.json')
+  try { fs.unlinkSync(cfgFile) } catch { /* fresh start */ }
+  try { fs.unlinkSync(uiFile) } catch { /* fresh start */ }
+  const readCfg = () => JSON.parse(fs.readFileSync(cfgFile, 'utf8'))
+  const stateNow = async () => JSON.parse((await request('GET', '/api/dsh-shutdown-guard/state')).body)
+  const eventsNow = async () => JSON.parse((await request('GET', '/api/dsh-shutdown-guard/events?limit=300')).body).events
+  const postState = async (suffix, payload) => {
+    const r = await request('POST', '/api/dsh-shutdown-guard' + suffix, 'http://127.0.0.1:43129', payload)
+    return { status: r.status, body: JSON.parse(r.body) }
+  }
+  let mount = apply(ctx, { countdownSec: 10, marginSec: 5, onlyOnSuccess: true, language: 'zh' })
+  await flush()
+  await postState('/config', { createProfile: {} })
+  await postState('/config', { customEnabled: true, activeProfileId: 'c1' })
+  await postState('/config', { updateProfile: { id: 'c1', patch: { countdownSec: 30 } } })
+
+  // 35. The capability map covers every action id the profile accepts. `custom`
+  // has no table row but still reports why it cannot run while argv is empty.
+  let st = await stateNow()
+  assert.deepStrictEqual(
+    Object.keys(st.actions).sort(),
+    ['custom', 'hibernate', 'lock', 'restart', 'restart-dsh', 'shutdown', 'signout', 'sleep'],
+    'every action id is reported',
+  )
+  for (const id of Object.keys(st.actions)) {
+    assert.ok(Object.hasOwn(st.actions[id], 'available'), `${id} reports availability`)
+    assert.ok(Object.hasOwn(st.actions[id], 'reason'), `${id} reports a reason slot`)
+    assert.ok(st.actions[id].available === true || st.actions[id].available === false || st.actions[id].available === 'unknown', `${id} uses the tri-state`)
+    assert.ok(st.actions[id].reason === null || typeof st.actions[id].reason === 'string', `${id} reason is prose-free`)
+  }
+  assert.strictEqual(st.actions['restart-dsh'].available, false, 'DSH cannot restart itself')
+  assert.strictEqual(st.actions['restart-dsh'].reason, 'no-host-restart', 'the reason is machine-readable')
+  assert.strictEqual(st.actions.custom.available, false, 'custom without argv is unavailable')
+  assert.strictEqual(st.actions.custom.reason, 'no-custom-command', 'custom explains the empty argv')
+  assert.strictEqual(st.actionReady, true, 'the selected shutdown action is usable')
+  calls.push('capability-report-ok')
+
+  // 36. `'unknown'` is not `false`: on a platform whose OS may still veto the
+  // command, the UI must let the user arm and report the sent command afterwards.
+  // The probe is the only public way to reach that state, so the platform is
+  // spoofed just for the recheck, then restored before anything runs.
+  const realPlatform = process.platform
+  Object.defineProperty(process, 'platform', { value: 'linux' })
+  await postState('/config', { recheck: true })
+  Object.defineProperty(process, 'platform', { value: realPlatform })
+  st = await stateNow()
+  assert.strictEqual(st.actions.sleep.available, 'unknown', 'a veto-capable platform reports unknown')
+  assert.notStrictEqual(st.actions.sleep.available, false, 'unknown is not treated as unavailable')
+  await postState('/config', { updateProfile: { id: 'c1', patch: { action: 'sleep' } } })
+  await postState('/arm')
+  let n = spawns.length
+  statusHandler({ agent: rootAgent, status: 'idle' })
+  await flush()
+  st = await stateNow()
+  assert.strictEqual(st.state, 'countdown', 'an unknown action can still be armed')
+  assert.strictEqual(spawns.length, n, 'inline sleep sends nothing during the countdown')
+  await postState('/cancel')
+  calls.push('actions-tri-state-ok')
+
+  // 37. win32 shutdown is deferred to the OS: arming hands it `/s /t N`, and only
+  // cancelling hands it `/a`; the local reset must not spawn anything else.
+  await postState('/disarm')
+  await postState('/config', { updateProfile: { id: 'c1', patch: { action: 'shutdown' } } })
+  await postState('/arm')
+  n = spawns.length
+  statusHandler({ agent: rootAgent, status: 'idle' })
+  await flush()
+  assert.strictEqual(spawns.length, n + 1, 'defer arm sends one command')
+  assert.deepStrictEqual(spawns[n].slice(1, 3), ['/s', '/t'], 'defer arm asks the OS for a delay')
+  assert.match(spawns[n][3], /^\d+$/, 'the delay is the countdown plus margin')
+  await postState('/cancel')
+  await flush()
+  assert.strictEqual(spawns.length, n + 2, 'defer cancel sends the undo')
+  assert.deepStrictEqual(spawns[n + 1].slice(1), ['/a'], 'defer cancel is shutdown /a')
+  const afterDefer = spawns.length
+  await flush()
+  assert.strictEqual(spawns.length, afterDefer, 'no later spawn after a defer cancel')
+  calls.push('defer-cancel-ok')
+
+  // 38. An inline action is not handed to the OS at arm time, so cancelling in
+  // the countdown must leave the spawn log completely untouched.
+  await postState('/disarm')
+  await postState('/config', { updateProfile: { id: 'c1', patch: { action: 'lock' } } })
+  n = spawns.length
+  await postState('/arm')
+  statusHandler({ agent: rootAgent, status: 'idle' })
+  await flush()
+  assert.strictEqual((await stateNow()).state, 'countdown', 'inline action entered the countdown')
+  assert.strictEqual(spawns.length, n, 'arming an inline action sends nothing')
+  await postState('/cancel')
+  await flush()
+  assert.strictEqual(spawns.length, n, 'cancelling an inline action sends nothing')
+  calls.push('inline-cancel-sends-nothing-ok')
+
+  // 39. Inline fires exactly at the deadline timer, with the row's argv.
+  await postState('/disarm')
+  await postState('/arm')
+  const beforeIds = new Set(timers.keys())
+  statusHandler({ agent: rootAgent, status: 'idle' })
+  await flush()
+  const fresh = [...timers.keys()].filter((id) => !beforeIds.has(id))
+  assert.ok(fresh.length >= 2, 'the arm registered the action timer and the fired timer')
+  assert.strictEqual(spawns.length, n, 'still nothing before the deadline')
+  timers.get(fresh[0])()
+  await flush()
+  assert.strictEqual(spawns.length, n + 1, 'the deadline sends exactly one command')
+  assert.deepStrictEqual(spawns[n].slice(1), ['user32.dll,LockWorkStation'], 'the inline row argv is used')
+  st = await stateNow()
+  assert.strictEqual(st.state, 'countdown', 'the fired timer has not run yet')
+  assert.strictEqual(st.lastAction.action, 'lock', 'the last action names what ran')
+  assert.deepStrictEqual(st.lastAction.argv, ['rundll32', 'user32.dll,LockWorkStation'], 'lastAction records the argv')
+  timers.get(fresh[1])()
+  await flush()
+  assert.strictEqual((await stateNow()).state, 'fired')
+  calls.push('inline-fires-at-deadline-ok')
+
+  // 40. Past the deadline the command is out: cancel cannot undo it, so it must
+  // not spawn again, and the state reset is the design doc's §1.4 reset — not a
+  // claim that nothing was sent.
+  const beforeCancel = spawns.length
+  const eventsLen = (await eventsNow()).length
+  await postState('/cancel')
+  await flush()
+  st = await stateNow()
+  assert.strictEqual(spawns.length, beforeCancel, 'a post-deadline cancel never spawns')
+  assert.strictEqual(st.state, 'idle', 'the process state resets (design §1.4)')
+  assert.strictEqual(st.lastAction.action, 'lock', 'the sent action is still recorded')
+  assert.ok(Array.isArray(st.lastAction.argv) && st.lastAction.argv.length > 0, 'the sent argv is still recorded')
+  calls.push('cancel-after-deadline-ok')
+
+  // 41. …but the event must say "already ran", not "cancelled". Keys only: the
+  // copy is the settings page's job.
+  {
+    const after = await eventsNow()
+    const added = after.slice(eventsLen)
+    assert.ok(added.length > 0, 'the cancel recorded an event')
+    assert.strictEqual(added[added.length - 1].key, 'log.actionAlreadyRan', 'the newest event is the honest one')
+    assert.ok(!added.some((e) => e.key === 'log.cancelledArmed' || e.key === 'log.cancelledDisarmed'), 'no cancelled event for an action that already ran')
+  }
+  calls.push('cancel-after-deadline-copy-ok')
+
+  // 42. Custom argv validation: limit, entry length, type and empty entries are
+  // rejected rather than silently trimmed; a usable argv round-trips verbatim.
+  await postState('/disarm')
+  let r = await postState('/config', { updateProfile: { id: 'c1', patch: { customArgv: Array.from({ length: 17 }, (_, i) => 'a' + i) } } })
+  assert.strictEqual(r.status, 400, 'more than 16 entries is rejected')
+  assert.match(String(r.body.error || ''), /at most 16/, 'the rejection explains the limit')
+  r = await postState('/config', { updateProfile: { id: 'c1', patch: { customArgv: ['a'.repeat(257)] } } })
+  assert.strictEqual(r.status, 400, 'an entry longer than 256 chars is rejected')
+  r = await postState('/config', { updateProfile: { id: 'c1', patch: { customArgv: [123] } } })
+  assert.strictEqual(r.status, 400, 'a non-string entry is rejected')
+  r = await postState('/config', { updateProfile: { id: 'c1', patch: { customArgv: ['', ''] } } })
+  assert.strictEqual(r.status, 400, 'empty entries are rejected')
+  r = await postState('/config', { updateProfile: { id: 'c1', patch: { action: 'custom' } } })
+  assert.strictEqual(r.status, 400, 'custom needs a command')
+  assert.match(String(r.body.error || ''), /customArgv/, 'the rejection names customArgv')
+  const legal = ['C:\\Windows\\System32\\cmd.exe', '/c', 'echo hi']
+  r = await postState('/config', { updateProfile: { id: 'c1', patch: { customArgv: legal } } })
+  assert.strictEqual(r.status, 200, 'a legal custom argv is accepted')
+  assert.deepStrictEqual(r.body.profiles.find((p) => p.id === 'c1').customArgv, legal, 'it is stored verbatim')
+  assert.deepStrictEqual(readCfg().profiles.find((p) => p.id === 'c1').customArgv, legal, 'it reaches the config file')
+  calls.push('custom-argv-validate-ok')
+
+  // 43. The parent gate may force the effective value to false, but the stored
+  // choice must survive so flipping the parent back restores the user's value.
+  await postState('/config', { updateProfile: { id: 'c1', patch: { onlyOnSuccess: false, shutdownOnHalt: true } } })
+  st = await stateNow()
+  assert.strictEqual(st.shutdownOnHaltEffective, false, 'the parent gate forces the effective value off')
+  assert.strictEqual(readCfg().profiles.find((p) => p.id === 'c1').shutdownOnHalt, true, 'the stored value is not rewritten')
+  await postState('/config', { updateProfile: { id: 'c1', patch: { onlyOnSuccess: true } } })
+  st = await stateNow()
+  assert.strictEqual(st.shutdownOnHaltEffective, true, 'turning the parent back on restores the choice')
+  assert.strictEqual(readCfg().profiles.find((p) => p.id === 'c1').shutdownOnHalt, true, 'and the stored value is still there')
+  calls.push('halt-effective-not-written-ok')
+
+  // 44. A halted batch is parked on disk (v3) and restored on the next boot
+  // without replaying the failure as a fresh event.
+  await postState('/disarm')
+  await postState('/config', { updateProfile: { id: 'c1', patch: { onlyOnSuccess: true, shutdownOnHalt: true, action: 'shutdown' } } })
+  errorHandler({ agent: rootAgent, error: { code: 'QUOTA' } })
+  await flush()
+  st = await stateNow()
+  assert.strictEqual(st.blockedLevel, 'halted', 'QUOTA halts the batch')
+  assert.ok(st.parkedAt > 0, 'the halt carries a timestamp')
+  let disk = readCfg()
+  assert.strictEqual(disk.version, 3, 'the store is written as v3')
+  assert.strictEqual(disk.parked.code, 'QUOTA', 'the halt code is persisted')
+  assert.strictEqual(disk.parked.level, 'halted', 'only a halted block is persisted')
+  const parkedAt = disk.parked.at
+  const blockedBefore = (await eventsNow()).filter((e) => e.key === 'log.blockedSelfHealFailed').length
+  const totalBefore = (await eventsNow()).length
+  mount()
+  mount = apply(ctx, { countdownSec: 10, marginSec: 5, onlyOnSuccess: true, language: 'zh' })
+  await flush()
+  st = await stateNow()
+  assert.strictEqual(st.blockedLevel, 'halted', 'the halt survives a restart')
+  assert.strictEqual(st.parkedAt, parkedAt, 'the original halt timestamp is restored')
+  const addedEvents = (await eventsNow()).slice(totalBefore)
+  assert.ok(!addedEvents.some((e) => /blocked|halt|parked/i.test(String(e.key))), 'restoring parked does not replay the failure')
+  assert.strictEqual((await eventsNow()).filter((e) => e.key === 'log.blockedSelfHealFailed').length, blockedBefore, 'no duplicate halt event')
+  await postState('/arm')
+  await postState('/disarm')
+  calls.push('parked-persist-ok')
+
+  // 45. A provider-side wait is not parked: its retry timer is the recovery, and
+  // persisting it would turn "retry in 20s" into "wait forever after a restart".
+  errorHandler({ agent: rootAgent, error: { code: 'RATE_LIMIT' } })
+  await flush()
+  st = await stateNow()
+  assert.strictEqual(st.blockedLevel, 'waiting', 'RATE_LIMIT parks the batch in memory')
+  assert.strictEqual(readCfg().parked, null, 'a waiting block never reaches the config file')
+  await postState('/disarm')
+  calls.push('parked-only-halted-ok')
+
+  // 46. Four writers clear the park; four unrelated settings must not. Each
+  // clear is its own scenario so a single broken path cannot hide behind another.
+  const halt = async () => {
+    errorHandler({ agent: rootAgent, error: { code: 'QUOTA' } })
+    await flush()
+  }
+  // armed
+  await halt()
+  assert.strictEqual(readCfg().parked.code, 'QUOTA', 'precondition: parked')
+  await postState('/arm')
+  assert.strictEqual(readCfg().parked, null, 'arming clears the park')
+  await postState('/disarm')
+  // disarm
+  await postState('/arm')
+  await halt()
+  await postState('/disarm')
+  assert.strictEqual(readCfg().parked, null, 'disarming clears the park')
+  // success turn (new activity)
+  await halt()
+  statusHandler({ agent: rootAgent, status: 'running' })
+  await flush()
+  assert.strictEqual(readCfg().parked, null, 'a successful turn clears the park')
+  // shutdownOnHalt fires
+  await postState('/config', { updateProfile: { id: 'c1', patch: { onlyOnSuccess: true, afkAutoAnswer: false, shutdownOnHalt: true } } })
+  await postState('/arm')
+  await halt()
+  statusHandler({ agent: rootAgent, status: 'idle' })
+  await flush()
+  st = await stateNow()
+  assert.strictEqual(st.state, 'countdown', 'shutdownOnHalt lets the halted batch shut down')
+  assert.strictEqual(st.blockedLevel, null, 'the halt is cleared when the countdown starts')
+  assert.strictEqual(readCfg().parked, null, 'the park is cleared on disk too')
+  await postState('/cancel')
+  await postState('/disarm')
+  await postState('/config', { updateProfile: { id: 'c1', patch: { onlyOnSuccess: true, afkAutoAnswer: true } } })
+  // restart
+  await halt()
+  mount()
+  mount = apply(ctx, { countdownSec: 10, marginSec: 5, onlyOnSuccess: true, language: 'zh' })
+  await flush()
+  assert.strictEqual((await stateNow()).blockedLevel, 'halted', 'a restart does not clear the park')
+  assert.strictEqual(readCfg().parked.code, 'QUOTA', 'and leaves it on disk')
+  // profile switch
+  await postState('/config', { activeProfileId: 'default' })
+  assert.strictEqual(readCfg().parked.code, 'QUOTA', 'switching profile does not clear the park')
+  await postState('/config', { activeProfileId: 'c1' })
+  // language
+  await postState('/config', { language: 'en' })
+  assert.strictEqual(readCfg().parked.code, 'QUOTA', 'changing language does not clear the park')
+  await postState('/config', { language: 'zh' })
+  // appearance
+  await postState('/ui', { theme: 'claude' })
+  assert.strictEqual(readCfg().parked.code, 'QUOTA', 'changing appearance does not clear the park')
+  await postState('/ui', { theme: 'auto' })
+  await postState('/arm')
+  await postState('/disarm')
+  assert.strictEqual(readCfg().parked, null, 'cleanup: the park is gone before the next scenario')
+  calls.push('parked-clear-ok')
+
+  // 47. halted + shutdownOnHalt must actually reach the countdown and clear the
+  // block; the parent gate stays on, so the halted branch must skip the errored
+  // gate for this batch without erasing the error set used by later batches.
+  await postState('/config', { updateProfile: { id: 'c1', patch: { onlyOnSuccess: true, afkAutoAnswer: false, shutdownOnHalt: true, action: 'shutdown' } } })
+  await postState('/arm')
+  await halt()
+  assert.strictEqual((await stateNow()).blockedLevel, 'halted', 'precondition: halted')
+  n = spawns.length
+  statusHandler({ agent: rootAgent, status: 'idle' })
+  await flush()
+  st = await stateNow()
+  assert.strictEqual(st.state, 'countdown', 'the halted batch still shuts down')
+  assert.strictEqual(st.blockedLevel, null, 'the block is cleared at the countdown')
+  assert.strictEqual(spawns.length, n + 1, 'the deferred shutdown was handed to the OS')
+  await postState('/cancel')
+  await postState('/disarm')
+  calls.push('halt-fires-ok')
+
+  // 48. The mother switch is a hard gate: with onlyOnSuccess off, the effective
+  // value is forced off and a halt stays parked, but the stored user choice must
+  // keep its true value so turning the mother switch back on restores it.
+  await postState('/disarm')
+  await postState('/config', { updateProfile: { id: 'c1', patch: { onlyOnSuccess: false, shutdownOnHalt: true, action: 'shutdown' } } })
+  await postState('/arm')
+  n = spawns.length
+  await halt()
+  st = await stateNow()
+  assert.strictEqual(st.blockedLevel, 'halted', 'the halt is reported while the mother gate is off')
+  assert.strictEqual(st.shutdownOnHaltEffective, false, 'the mother gate forces the effective value off')
+  assert.strictEqual(st.state, 'idle', 'the halted batch is not armed')
+  assert.strictEqual(spawns.length, n, 'nothing is sent while the effective value is off')
+  assert.strictEqual(readCfg().profiles.find((p) => p.id === 'c1').shutdownOnHalt, true, 'the stored choice is untouched')
+  await postState('/disarm')
+  calls.push('halt-blocked-when-mother-off-ok')
+
+  mount()
+}
+
 console.log('PASS: ' + calls.join(', '))
