@@ -78,11 +78,11 @@ const sRow = (titleKey, ctl, descKey) => `<div class="dsp-srow">
   }</div>${ctl}</div>`
 
 const sSwitch = (on) => `<span class="dsp-switch${on ? ' on' : ''}" aria-hidden="true"><i></i></span>`
-const sSeg = (keys, onIndex) => `<span class="dsp-seg">${keys.map((k, i) =>
+const sSeg = (keys, onIndex, kind) => `<span class="dsp-seg"${kind ? ` data-seg="${kind}"` : ''}>${keys.map((k, i) =>
   `<button class="dsp-segbtn${i === onIndex ? ' on' : ''}" type="button" data-i18n="${k}">${t(k)}</button>`).join('')}</span>`
 const sLink = (key) => `<span class="dsp-slink" data-i18n="${key}">${t(key)}</span>`
 const sVCard = (v, labelKey) => `<button class="dsp-vcard${v === 'a' ? ' on' : ''}" type="button" data-vcard="${v}">
-    <span class="dsp-thumb"><img class="dsp-thumb-img" data-thumb="${v}" src="../assets/variant-${v}-zh-dark.png" alt="" decoding="async"></span>
+    <span class="dsp-thumb"><img class="dsp-thumb-img" data-thumb="${v}" src="assets/variant-${v}-zh-dark.png" alt="" decoding="async"></span>
     <span class="dsp-vcard-label" data-i18n="${labelKey}">${t(labelKey)}</span></button>`
 
 const settingsDemo = `<div class="sect full">
@@ -102,10 +102,10 @@ const settingsDemo = `<div class="sect full">
 
     <div class="dsp-tabpanel" data-pane="look">
       <div class="dsp-cards">${sVCard('a', 's.look.a')}${sVCard('b', 's.look.b')}${sVCard('c', 's.look.c')}</div>
-      ${sRow('s.look.theme', sSeg(['s.theme.auto', 's.theme.dark', 's.theme.light', 's.theme.claude'], 0))}
+      ${sRow('s.look.theme', sSeg(['s.theme.auto', 's.theme.dark', 's.theme.light', 's.theme.claude'], 0, 'theme'))}
       ${sRow('s.look.fold', sSwitch(false), 's.look.foldDesc')}
       ${sRow('s.look.compact', sSwitch(true), 's.look.compactDesc')}
-      ${sRow('s.look.lang', sSeg(['s.lang.auto', 's.lang.zh', 's.lang.en', 's.lang.ru'], 0))}
+      ${sRow('s.look.lang', sSeg(['s.lang.auto', 's.lang.zh', 's.lang.en', 's.lang.ru'], 0, 'lang'))}
     </div>
 
     <div class="dsp-tabpanel" data-pane="watch" hidden>

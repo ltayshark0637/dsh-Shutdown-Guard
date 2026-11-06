@@ -931,6 +931,20 @@ h1 em { font-style: normal; color: #f0a83a }
   --dsw-specific-selector: rgba(232, 230, 227, .10);
   --dsw-alias-button-primary-fill: #f5a623;
 }
+/* The theme row in the mock is live: choosing the light theme repaints the panel
+   and swaps the thumbnails to the light renders, exactly like the product does. */
+.setWrap[data-lum="light"] {
+  border-color: rgba(20, 20, 20, .12);
+  background: #ffffff;
+  color: #1c1e22;
+  --dsw-alias-bg-layer-1: #ffffff;
+  --dsw-alias-bg-overlay: #f1f1ef;
+  --dsw-alias-label-primary: #1c1e22;
+  --dsw-alias-label-secondary: #5f6368;
+  --dsw-alias-label-tertiary: #8a8f98;
+  --dsw-alias-border-l2: rgba(20, 20, 20, .14);
+  --dsw-specific-selector: rgba(20, 20, 20, .06);
+}
 .setWrap .dsp-tabs::before {
   --tab-x: 2px;
   --tab-y: 2px;

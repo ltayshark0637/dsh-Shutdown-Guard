@@ -937,6 +937,20 @@ h1 em { font-style: normal; color: #f0a83a }
   --dsw-specific-selector: rgba(232, 230, 227, .10);
   --dsw-alias-button-primary-fill: #f5a623;
 }
+/* The theme row in the mock is live: choosing the light theme repaints the panel
+   and swaps the thumbnails to the light renders, exactly like the product does. */
+.setWrap[data-lum="light"] {
+  border-color: rgba(20, 20, 20, .12);
+  background: #ffffff;
+  color: #1c1e22;
+  --dsw-alias-bg-layer-1: #ffffff;
+  --dsw-alias-bg-overlay: #f1f1ef;
+  --dsw-alias-label-primary: #1c1e22;
+  --dsw-alias-label-secondary: #5f6368;
+  --dsw-alias-label-tertiary: #8a8f98;
+  --dsw-alias-border-l2: rgba(20, 20, 20, .14);
+  --dsw-specific-selector: rgba(20, 20, 20, .06);
+}
 .setWrap .dsp-tabs::before {
   --tab-x: 2px;
   --tab-y: 2px;
@@ -1376,20 +1390,20 @@ transition:transform .24s cubic-bezier(.22,.61,.36,1),width .24s cubic-bezier(.2
 
     <div class="dsp-tabpanel" data-pane="look">
       <div class="dsp-cards"><button class="dsp-vcard on" type="button" data-vcard="a">
-    <span class="dsp-thumb"><img class="dsp-thumb-img" data-thumb="a" src="../assets/variant-a-zh-dark.png" alt="" decoding="async"></span>
+    <span class="dsp-thumb"><img class="dsp-thumb-img" data-thumb="a" src="assets/variant-a-zh-dark.png" alt="" decoding="async"></span>
     <span class="dsp-vcard-label" data-i18n="s.look.a">极简</span></button><button class="dsp-vcard" type="button" data-vcard="b">
-    <span class="dsp-thumb"><img class="dsp-thumb-img" data-thumb="b" src="../assets/variant-b-zh-dark.png" alt="" decoding="async"></span>
+    <span class="dsp-thumb"><img class="dsp-thumb-img" data-thumb="b" src="assets/variant-b-zh-dark.png" alt="" decoding="async"></span>
     <span class="dsp-vcard-label" data-i18n="s.look.b">雷达</span></button><button class="dsp-vcard" type="button" data-vcard="c">
-    <span class="dsp-thumb"><img class="dsp-thumb-img" data-thumb="c" src="../assets/variant-c-zh-dark.png" alt="" decoding="async"></span>
+    <span class="dsp-thumb"><img class="dsp-thumb-img" data-thumb="c" src="assets/variant-c-zh-dark.png" alt="" decoding="async"></span>
     <span class="dsp-vcard-label" data-i18n="s.look.c">终端</span></button></div>
       <div class="dsp-srow">
-  <div class="dsp-srow-text"><span class="dsp-stitle" data-i18n="s.look.theme">主题</span></div><span class="dsp-seg"><button class="dsp-segbtn on" type="button" data-i18n="s.theme.auto">跟随</button><button class="dsp-segbtn" type="button" data-i18n="s.theme.dark">深色</button><button class="dsp-segbtn" type="button" data-i18n="s.theme.light">浅色</button><button class="dsp-segbtn" type="button" data-i18n="s.theme.claude">Claude Style</button></span></div>
+  <div class="dsp-srow-text"><span class="dsp-stitle" data-i18n="s.look.theme">主题</span></div><span class="dsp-seg" data-seg="theme"><button class="dsp-segbtn on" type="button" data-i18n="s.theme.auto">跟随</button><button class="dsp-segbtn" type="button" data-i18n="s.theme.dark">深色</button><button class="dsp-segbtn" type="button" data-i18n="s.theme.light">浅色</button><button class="dsp-segbtn" type="button" data-i18n="s.theme.claude">Claude Style</button></span></div>
       <div class="dsp-srow">
   <div class="dsp-srow-text"><span class="dsp-stitle" data-i18n="s.look.fold">默认折叠</span><span class="dsp-sdesc" data-i18n="s.look.foldDesc">折叠后只保留标题和状态。</span></div><span class="dsp-switch" aria-hidden="true"><i></i></span></div>
       <div class="dsp-srow">
   <div class="dsp-srow-text"><span class="dsp-stitle" data-i18n="s.look.compact">悬浮窗简洁模式</span><span class="dsp-sdesc" data-i18n="s.look.compactDesc">悬浮窗里隐去底部统计与事件，只留卡片。</span></div><span class="dsp-switch on" aria-hidden="true"><i></i></span></div>
       <div class="dsp-srow">
-  <div class="dsp-srow-text"><span class="dsp-stitle" data-i18n="s.look.lang">语言</span></div><span class="dsp-seg"><button class="dsp-segbtn on" type="button" data-i18n="s.lang.auto">跟随系统</button><button class="dsp-segbtn" type="button" data-i18n="s.lang.zh">中文</button><button class="dsp-segbtn" type="button" data-i18n="s.lang.en">English</button><button class="dsp-segbtn" type="button" data-i18n="s.lang.ru">Русский</button></span></div>
+  <div class="dsp-srow-text"><span class="dsp-stitle" data-i18n="s.look.lang">语言</span></div><span class="dsp-seg" data-seg="lang"><button class="dsp-segbtn on" type="button" data-i18n="s.lang.auto">跟随系统</button><button class="dsp-segbtn" type="button" data-i18n="s.lang.zh">中文</button><button class="dsp-segbtn" type="button" data-i18n="s.lang.en">English</button><button class="dsp-segbtn" type="button" data-i18n="s.lang.ru">Русский</button></span></div>
     </div>
 
     <div class="dsp-tabpanel" data-pane="watch" hidden>
@@ -2495,6 +2509,11 @@ transition:transform .24s cubic-bezier(.22,.61,.36,1),width .24s cubic-bezier(.2
   var I18N = typeof window !== 'undefined' ? window.DEMO_I18N : null
   var LANG = I18N ? I18N.currentLang() : 'zh'
 
+  // Which of the two rendered backgrounds the settings mock previews. The page
+  // itself is dark, so "跟随" and "Claude Style" both resolve to dark here, the
+  // same way the card resolves the theme it is painted with.
+  var LUM = 'dark'
+
   function T(key, params) {
     return I18N ? I18N.dt(LANG, key, params) : key
   }
@@ -3261,13 +3280,46 @@ transition:transform .24s cubic-bezier(.22,.61,.36,1),width .24s cubic-bezier(.2
       })
     }
 
-    // The settings mock is static, but its thumbnails are per-language files:
-    // variant-<v>-<lang>-dark.png, the same 18 renders the panel inlines.
+    // The settings mock is static, but its thumbnails are per-language and
+    // per-background files: variant-<v>-<lang>-<light|dark>.png — the same 18
+    // renders the panel inlines, copied next to demo.html under docs/assets/
+    // because GitHub Pages serves docs/ as the site root: a parent-relative path
+    // would resolve above the site and 404.
     function syncThumbs() {
       var imgs = document.querySelectorAll('img[data-thumb]')
       for (var i = 0; i < imgs.length; i++) {
-        imgs[i].src = '../assets/variant-' + imgs[i].getAttribute('data-thumb') + '-' + LANG + '-dark.png'
+        imgs[i].src = 'assets/variant-' + imgs[i].getAttribute('data-thumb') + '-' + LANG + '-' + LUM + '.png'
       }
+    }
+
+    // The theme and language rows in the mock are live: the product's real panel
+    // re-renders the thumbnails when either changes, so the tour does too. The
+    // mock cannot repaint its whole surface (its colours come from the page), but
+    // the light/dark thumbnails and the copy do follow.
+    function wireMockSegs() {
+      var wrap = document.querySelector('.setWrap')
+      if (!wrap) return
+      wrap.addEventListener('click', function (e) {
+        var btn = e.target.closest('.dsp-segbtn')
+        if (!btn || !wrap.contains(btn)) return
+        var seg = btn.parentNode
+        if (!seg || !seg.getAttribute) return
+        var kind = seg.getAttribute('data-seg')
+        var key = btn.getAttribute('data-i18n')
+        var siblings = seg.querySelectorAll('.dsp-segbtn')
+        for (var i = 0; i < siblings.length; i++) siblings[i].classList.remove('on')
+        btn.classList.add('on')
+        if (kind === 'theme') {
+          LUM = key === 's.theme.light' ? 'light' : 'dark'
+          wrap.setAttribute('data-lum', LUM)
+          syncThumbs()
+          return
+        }
+        if (kind === 'lang' && I18N) {
+          var next = key === 's.lang.zh' ? 'zh' : key === 's.lang.en' ? 'en' : key === 's.lang.ru' ? 'ru' : null
+          if (next && next !== LANG) I18N.setLang(next)
+        }
+      })
     }
 
     function wireSettingsTabs() {
@@ -3306,6 +3358,7 @@ transition:transform .24s cubic-bezier(.22,.61,.36,1),width .24s cubic-bezier(.2
     fillSidebars()
     syncThumbs()
     wireSettingsTabs()
+    wireMockSegs()
 
     state = { variant: 'A', view: 'off', blocked: null, jobs: 0, agent: 0, agentTotal: 0, sec: 0, phase: 'idle', btnHint: false }
     paint()

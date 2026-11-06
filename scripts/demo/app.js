@@ -11,6 +11,11 @@
   var I18N = typeof window !== 'undefined' ? window.DEMO_I18N : null
   var LANG = I18N ? I18N.currentLang() : 'zh'
 
+  // Which of the two rendered backgrounds the settings mock previews. The page
+  // itself is dark, so "跟随" and "Claude Style" both resolve to dark here, the
+  // same way the card resolves the theme it is painted with.
+  var LUM = 'dark'
+
   function T(key, params) {
     return I18N ? I18N.dt(LANG, key, params) : key
   }
@@ -777,13 +782,46 @@
       })
     }
 
-    // The settings mock is static, but its thumbnails are per-language files:
-    // variant-<v>-<lang>-dark.png, the same 18 renders the panel inlines.
+    // The settings mock is static, but its thumbnails are per-language and
+    // per-background files: variant-<v>-<lang>-<light|dark>.png — the same 18
+    // renders the panel inlines, copied next to demo.html under docs/assets/
+    // because GitHub Pages serves docs/ as the site root: a parent-relative path
+    // would resolve above the site and 404.
     function syncThumbs() {
       var imgs = document.querySelectorAll('img[data-thumb]')
       for (var i = 0; i < imgs.length; i++) {
-        imgs[i].src = '../assets/variant-' + imgs[i].getAttribute('data-thumb') + '-' + LANG + '-dark.png'
+        imgs[i].src = 'assets/variant-' + imgs[i].getAttribute('data-thumb') + '-' + LANG + '-' + LUM + '.png'
       }
+    }
+
+    // The theme and language rows in the mock are live: the product's real panel
+    // re-renders the thumbnails when either changes, so the tour does too. The
+    // mock cannot repaint its whole surface (its colours come from the page), but
+    // the light/dark thumbnails and the copy do follow.
+    function wireMockSegs() {
+      var wrap = document.querySelector('.setWrap')
+      if (!wrap) return
+      wrap.addEventListener('click', function (e) {
+        var btn = e.target.closest('.dsp-segbtn')
+        if (!btn || !wrap.contains(btn)) return
+        var seg = btn.parentNode
+        if (!seg || !seg.getAttribute) return
+        var kind = seg.getAttribute('data-seg')
+        var key = btn.getAttribute('data-i18n')
+        var siblings = seg.querySelectorAll('.dsp-segbtn')
+        for (var i = 0; i < siblings.length; i++) siblings[i].classList.remove('on')
+        btn.classList.add('on')
+        if (kind === 'theme') {
+          LUM = key === 's.theme.light' ? 'light' : 'dark'
+          wrap.setAttribute('data-lum', LUM)
+          syncThumbs()
+          return
+        }
+        if (kind === 'lang' && I18N) {
+          var next = key === 's.lang.zh' ? 'zh' : key === 's.lang.en' ? 'en' : key === 's.lang.ru' ? 'ru' : null
+          if (next && next !== LANG) I18N.setLang(next)
+        }
+      })
     }
 
     function wireSettingsTabs() {
@@ -822,6 +860,7 @@
     fillSidebars()
     syncThumbs()
     wireSettingsTabs()
+    wireMockSegs()
 
     state = { variant: 'A', view: 'off', blocked: null, jobs: 0, agent: 0, agentTotal: 0, sec: 0, phase: 'idle', btnHint: false }
     paint()
