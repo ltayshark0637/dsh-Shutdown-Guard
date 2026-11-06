@@ -1,12 +1,12 @@
 # Shutdown Guard · Выключение после завершения задач
 [中文](README.md) · [English](README.en.md) · **Русский**
 
+Стабильная `v1.6.0` · бета `v1.6.1-beta.1` (закрытая бета) · [История изменений](https://github.com/ltayshark0637/dsh-Shutdown-Guard/blob/main/CHANGELOG.md)
+
 <p align="center"><img src="https://ltayshark0637.github.io/dsh-Shutdown-Guard/screenshots/banner.png" width="880" alt="Shutdown Guard — выключение после завершения всех задач, ночная карточка на боковой панели"></p>
 
-[![version](https://img.shields.io/badge/version-1.6.0-2ea44f)](CHANGELOG.md)
-[![demo](https://img.shields.io/badge/%E2%96%B6-%D0%B4%D0%B5%D0%BC%D0%BE-d97757)](https://ltayshark0637.github.io/dsh-Shutdown-Guard/demo.html)
-[![DSH](https://img.shields.io/badge/DSH-%E2%89%A50.1.5--rc.1-4a90d9)](https://github.com/deepseek-ai)
-[![license](https://img.shields.io/badge/license-MIT-blue)](LICENSE)
+[![version](https://img.shields.io/badge/version-1.6.0-2ea44f)](https://github.com/ltayshark0637/dsh-Shutdown-Guard/blob/main/CHANGELOG.md) [![DSH](https://img.shields.io/badge/DSH-%E2%89%A50.1.5--rc.1-4a90d9)](https://github.com/deepseek-ai)
+[![demo](https://img.shields.io/badge/%E2%96%B6-%D0%B4%D0%B5%D0%BC%D0%BE-d97757)](https://ltayshark0637.github.io/dsh-Shutdown-Guard/demo.html) [![license](https://img.shields.io/badge/license-MIT-blue)](LICENSE)
 [![dshbase: проверено установкой](https://dshbase.com/badges/dsh-shutdown-guard.svg)](https://dshbase.com/plugins/dsh-shutdown-guard/) [![awesome-dsh-plugin: в каталоге](https://awesome-dsh-plugin.com/badge.svg)](https://awesome-dsh-plugin.com/p/ltayshark0637/dsh-Shutdown-Guard/)
 
 Добавляет в боковую панель DeepSeek Harness карточку «выключить, когда все задачи готовы» — сразу под «Центром навыков» и над списком сессий, в реальном времени следуя за состоянием задач.
@@ -21,6 +21,12 @@
 
 ```bash
 dsh plugin --profile web add dsh-shutdown-guard
+```
+
+Для беты нужна явная версия; без неё ставится стабильная `1.6.0`:
+
+```bash
+dsh plugin --profile web add dsh-shutdown-guard@1.6.1-beta.1
 ```
 
 Или напрямую с GitHub:
@@ -74,7 +80,8 @@ dsh plugin --profile web add github:ltayshark0637/dsh-Shutdown-Guard
 **В: Поменял настройку, ничего не произошло.**
 О: И хост, и клиентский бандл загружаются только при старте DSH; HMR для локально подключённых плагинов не работает.
 
-<!-- TODO(platform): заполнить, когда появится кросс-платформенная реализация -->
+**В: Поддерживаются ли macOS и Linux?**
+О: Windows проверен полностью. macOS и Linux реализованы, но на реальных машинах пока не тестировались — сейчас они в **закрытой бете**.
 
 ## Подробнее
 

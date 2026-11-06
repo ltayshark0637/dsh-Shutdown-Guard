@@ -1,12 +1,12 @@
 # Shutdown Guard · 任务完成后关机
 **中文** · [English](README.en.md) · [Русский](README.ru.md)
 
+稳定版 `v1.6.0` · 开发版 `v1.6.1-beta.1`（内测）· [更新记录](https://github.com/ltayshark0637/dsh-Shutdown-Guard/blob/main/CHANGELOG.md)
+
 <p align="center"><img src="https://ltayshark0637.github.io/dsh-Shutdown-Guard/screenshots/banner.png" width="880" alt="Shutdown Guard — 任务完成后自动关机，侧边栏守夜卡片"></p>
 
-[![version](https://img.shields.io/badge/version-1.6.0-2ea44f)](CHANGELOG.md)
-[![demo](https://img.shields.io/badge/%E2%96%B6-%E4%BA%A4%E4%BA%92%E6%BC%94%E7%A4%BA-d97757)](https://ltayshark0637.github.io/dsh-Shutdown-Guard/demo.html)
-[![DSH](https://img.shields.io/badge/DSH-%E2%89%A50.1.5--rc.1-4a90d9)](https://github.com/deepseek-ai)
-[![license](https://img.shields.io/badge/license-MIT-blue)](LICENSE)
+[![version](https://img.shields.io/badge/version-1.6.0-2ea44f)](https://github.com/ltayshark0637/dsh-Shutdown-Guard/blob/main/CHANGELOG.md) [![DSH](https://img.shields.io/badge/DSH-%E2%89%A50.1.5--rc.1-4a90d9)](https://github.com/deepseek-ai)
+[![demo](https://img.shields.io/badge/%E2%96%B6-%E4%BA%A4%E4%BA%92%E6%BC%94%E7%A4%BA-d97757)](https://ltayshark0637.github.io/dsh-Shutdown-Guard/demo.html) [![license](https://img.shields.io/badge/license-MIT-blue)](LICENSE)
 [![dshbase 实装验证](https://dshbase.com/badges/dsh-shutdown-guard.svg)](https://dshbase.com/plugins/dsh-shutdown-guard/) [![awesome-dsh-plugin 收录](https://awesome-dsh-plugin.com/badge.svg)](https://awesome-dsh-plugin.com/p/ltayshark0637/dsh-Shutdown-Guard/)
 
 为 DeepSeek Harness 的侧边栏加一张「所有任务完成后自动关机」的卡片，就在「技能中心」下方、会话列表上方，随任务状态实时变化。
@@ -21,6 +21,12 @@
 
 ```bash
 dsh plugin --profile web add dsh-shutdown-guard
+```
+
+内测版要显式写版本号，不带版本号装到的仍是稳定版 `1.6.0`：
+
+```bash
+dsh plugin --profile web add dsh-shutdown-guard@1.6.1-beta.1
 ```
 
 或者直接从 GitHub 装：
@@ -74,7 +80,8 @@ A：能。点卡片上的「取消关机」即可，取消后这一轮**一条�
 **Q：改了设置没反应？**
 A：服务端和客户端都要重启 DSH 才加载新代码，本机 HMR 对本地链接插件不生效。
 
-<!-- TODO(platform): 等 10 号设计稿定稿后填 -->
+**Q：支持 macOS 和 Linux 吗？**
+A：Windows 已完整验证。macOS 与 Linux 已实现，但尚未在真机实测，**目前处于 Beta 内测阶段**。
 
 ## 更多
 

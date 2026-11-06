@@ -1,12 +1,12 @@
 # Shutdown Guard · Shut down when tasks finish
 [中文](README.md) · **English** · [Русский](README.ru.md)
 
+Stable `v1.6.0` · beta `v1.6.1-beta.1` (closed beta) · [Changelog](https://github.com/ltayshark0637/dsh-Shutdown-Guard/blob/main/CHANGELOG.md)
+
 <p align="center"><img src="https://ltayshark0637.github.io/dsh-Shutdown-Guard/screenshots/banner.png" width="880" alt="Shutdown Guard — shut down automatically when every task is done, a night-watch card in the sidebar"></p>
 
-[![version](https://img.shields.io/badge/version-1.6.0-2ea44f)](CHANGELOG.md)
-[![demo](https://img.shields.io/badge/%E2%96%B6-interactive%20demo-d97757)](https://ltayshark0637.github.io/dsh-Shutdown-Guard/demo.html)
-[![DSH](https://img.shields.io/badge/DSH-%E2%89%A50.1.5--rc.1-4a90d9)](https://github.com/deepseek-ai)
-[![license](https://img.shields.io/badge/license-MIT-blue)](LICENSE)
+[![version](https://img.shields.io/badge/version-1.6.0-2ea44f)](https://github.com/ltayshark0637/dsh-Shutdown-Guard/blob/main/CHANGELOG.md) [![DSH](https://img.shields.io/badge/DSH-%E2%89%A50.1.5--rc.1-4a90d9)](https://github.com/deepseek-ai)
+[![demo](https://img.shields.io/badge/%E2%96%B6-interactive%20demo-d97757)](https://ltayshark0637.github.io/dsh-Shutdown-Guard/demo.html) [![license](https://img.shields.io/badge/license-MIT-blue)](LICENSE)
 [![dshbase install-tested](https://dshbase.com/badges/dsh-shutdown-guard.svg)](https://dshbase.com/plugins/dsh-shutdown-guard/) [![awesome-dsh-plugin listed](https://awesome-dsh-plugin.com/badge.svg)](https://awesome-dsh-plugin.com/p/ltayshark0637/dsh-Shutdown-Guard/)
 
 Adds a "shut down when every task is done" card to the DeepSeek Harness sidebar — right under Skill Centre and above the session list, following the task state live.
@@ -21,6 +21,12 @@ Published on npm — this is the recommended route:
 
 ```bash
 dsh plugin --profile web add dsh-shutdown-guard
+```
+
+The beta needs an explicit version; without one you get the stable `1.6.0`:
+
+```bash
+dsh plugin --profile web add dsh-shutdown-guard@1.6.1-beta.1
 ```
 
 Or straight from GitHub:
@@ -74,7 +80,8 @@ A: Yes — use the "cancel shutdown" button on the card. Cancelling sends **no c
 **Q: I changed a setting and nothing happened.**
 A: Both the host and the client bundle load only when DSH starts; HMR does not apply to locally linked plugins.
 
-<!-- TODO(platform): fill in once the cross-platform work lands -->
+**Q: Does it support macOS and Linux?**
+A: Windows is fully verified. macOS and Linux are implemented but have not been tested on real hardware yet — they are in the **closed beta** for now.
 
 ## More
 
