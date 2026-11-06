@@ -395,7 +395,15 @@ void (async () => {
     }
   }
 
-  function accentFor(accent, bg, withCanvas) {
+  // Mounts the real bundle against a host page; `palette` is the value of
+  // data-dsh-claude-palette (null = attribute absent). `hostLum` only controls
+  // what the host surface resolves to, which the card reads through
+  // --dsw-alias-bg-layer-1 / detectLum().
+  function mountClient(opts = {}) {
+    const palette = Object.prototype.hasOwnProperty.call(opts, 'palette') ? opts.palette : 'claude'
+    const hostBg = opts.hostBg || (opts.hostLum === 'light' ? '#ffffff' : '#212121')
+    const liveAccent = opts.accent || '#4d6bfe'
+    const withCanvas = opts.withCanvas !== false
     const localRegion = new El('div')
     localRegion.setAttribute('class', 'regionArea')
     const doc = {
@@ -414,16 +422,28 @@ void (async () => {
       addEventListener() {},
       removeEventListener() {},
     }
-    doc.body.setAttribute('data-dsh-claude-palette', 'claude')
+    if (palette !== null) doc.body.setAttribute('data-dsh-claude-palette', palette)
     doc.body.appendChild(localRegion)
 
     const vars = Object.assign({}, CSS_VARS, {
-      '--dsw-alias-bg-layer-1': bg,
-      '--dsw-alias-brand-primary': accent,
+      '--dsw-alias-bg-layer-1': hostBg,
+      '--dsw-alias-brand-primary': liveAccent,
+      '--dsw-alias-border-l1': '#cccccc',
     })
+    // The host's CSS resolves --dsw-alias-bg-layer-1 before the card reads it;
+    // the fake engine has to do the same or detectLum() would see a var() string.
+    const hostRgb = (value) => {
+      const m = /^#([0-9a-f]{6})$/i.exec(String(value))
+      return m
+        ? 'rgb(' + parseInt(m[1].slice(0, 2), 16) + ', ' + parseInt(m[1].slice(2, 4), 16) + ', ' + parseInt(m[1].slice(4, 6), 16) + ')'
+        : String(value)
+    }
     const styleOf = (el) => {
       if (el && el.tagName === 'span') {
         const raw = (el.style && el.style.backgroundColor) || ''
+        if (raw.indexOf('var(--dsw-alias-bg-layer-1') === 0) {
+          return { backgroundColor: hostRgb(hostBg), getPropertyValue() { return '' } }
+        }
         const rgb = RESOLVED.get(raw)
         // Chrome serialises oklch()/color-mix() as authored, so the old rgb
         // parser cannot read them. Hex and named colours come back as rgb().
@@ -433,7 +453,7 @@ void (async () => {
           getPropertyValue() { return '' },
         }
       }
-      return { backgroundColor: bg, getPropertyValue: (n) => vars[n] || '' }
+      return { backgroundColor: hostRgb(hostBg), getPropertyValue: (n) => vars[n] || '' }
     }
     const win = {
       addEventListener() {}, removeEventListener() {}, open() {},
@@ -473,7 +493,16 @@ void (async () => {
     mod.apply({ effect(fn) { fn() }, slots: { inject() {}, register() {} } })
     const card = localRegion.querySelector('.dsp-card')
     assert.ok(card, 'colour sandbox mounts a card')
-    return { accent: card.style.getPropertyValue('--dsp-accent'), errors }
+    return {
+      accent: card.style.getPropertyValue('--dsp-accent'),
+      bg: card.style.getPropertyValue('--dsp-bg'),
+      lum: card.getAttribute('data-lum'),
+      errors,
+    }
+  }
+
+  function accentFor(accent, bg, withCanvas) {
+    return mountClient({ accent, hostBg: bg, withCanvas })
   }
 
   function assertAccent(name, accent, bg, expected, withCanvas = true) {
@@ -503,6 +532,63 @@ void (async () => {
   //    Chrome, and fall back to amber — the degradation this fix bounds.)
   assertAccent('accent-no-canvas', 'rebeccapurple', '#f4f9ff', 'rebeccapurple', false)
   calls.push('accent-no-canvas-probe-ok')
+
+  // 4. Claude Style not installed: a built-in look-alike palette, one per host
+  //    surface. Values from lib/client.js:1452 BUILTIN_CLAUDE_LIGHT and :1461
+  //    BUILTIN_CLAUDE_DARK (terracotta accent #d97757 on #ffffff / #212121).
+  {
+    const light = mountClient({ palette: null, hostLum: 'light' })
+    assert.deepStrictEqual(light.errors, [])
+    assert.strictEqual(light.accent, '#d97757', 'built-in Claude accent (light)')
+    assert.strictEqual(light.bg, '#ffffff', 'built-in Claude surface (light)')
+    assert.strictEqual(light.lum, 'light', 'data-lum follows the built-in light surface')
+
+    const dark = mountClient({ palette: null, hostLum: 'dark' })
+    assert.deepStrictEqual(dark.errors, [])
+    assert.strictEqual(dark.accent, '#d97757', 'built-in Claude accent (dark)')
+    assert.strictEqual(dark.bg, '#212121', 'built-in Claude surface (dark)')
+    assert.strictEqual(dark.lum, 'dark', 'data-lum follows the built-in dark surface')
+    calls.push('builtin-palette-no-attr-ok')
+  }
+
+  // 5. `palette: host` means the plugin is installed but points its names at the
+  //    host's neutral surface: the card must keep its own amber, never paint the
+  //    built-in terracotta look-alike.
+  {
+    const effective = (got) => got.accent || (got.lum === 'light' ? FALLBACK.light : FALLBACK.dark)
+    const light = mountClient({ palette: 'host', hostLum: 'light' })
+    assert.deepStrictEqual(light.errors, [])
+    assert.strictEqual(light.lum, 'light')
+    assert.strictEqual(effective(light), FALLBACK.light, 'host palette falls back to amber on a light surface')
+    assert.notStrictEqual(light.accent, '#d97757', 'host palette is not the built-in Claude palette')
+
+    const dark = mountClient({ palette: 'host', hostLum: 'dark' })
+    assert.deepStrictEqual(dark.errors, [])
+    assert.strictEqual(dark.lum, 'dark')
+    assert.strictEqual(effective(dark), FALLBACK.dark, 'host palette falls back to amber on a dark surface')
+    assert.notStrictEqual(dark.accent, '#d97757', 'host palette is not the built-in Claude palette')
+    calls.push('builtin-palette-not-for-host-ok')
+  }
+
+  // 6. The plugin writes the attribute on every boot; an empty value still means
+  //    installed, so it must not be mistaken for "plugin absent" and repaint the
+  //    built-in palette.
+  {
+    const empty = mountClient({ palette: '', hostLum: 'dark' })
+    assert.deepStrictEqual(empty.errors, [])
+    assert.strictEqual(empty.lum, 'dark', 'an empty palette still borrows the host surface')
+    assert.notStrictEqual(empty.accent, '#d97757', 'empty attribute is installed, not the built-in palette')
+    calls.push('palette-attr-empty-means-installed-ok')
+  }
+
+  // 7. The theme option is named for the plugin it imitates, in every language,
+  //    and the "not installed" note has copy to show.
+  for (const lang of ['zh', 'en', 'ru']) {
+    assert.strictEqual(clientText[lang]['theme.claude'], 'Claude Style', `${lang} names the Claude Style option`)
+    assert.ok(String(clientText[lang]['theme.claudeMissing'] || '').trim().length > 0,
+      `${lang} explains the built-in palette when the plugin is missing`)
+  }
+  calls.push('theme-label-ok')
 
   // --- settings section renders with profiles + events -----------------------
   await settle()

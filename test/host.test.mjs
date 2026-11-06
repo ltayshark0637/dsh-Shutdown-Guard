@@ -636,6 +636,26 @@ assert.ok(res.body.includes("setAttribute('role', 'img')"), 'the dots container 
 assert.ok(!res.body.includes("Number(snap.runningCount) || 0, 'run'"), 'run dots no longer count roots only')
 calls.push('window-radar-parity-ok')
 
+// 25c. Hazard tape: both stripes derive from the accent hue, except for our own
+// amber palette, where the familiar yellow/red pair returns while the card is
+// armed. Count occurrences, not `includes`, so a duplicated literal (the old
+// implementation wrote them twice) cannot slip through.
+{
+  const countOf = (haystack, needle) => haystack.split(needle).length - 1
+  assert.strictEqual(countOf(res.body, '--dsp-tape-a:#f2b13c'), 1, 'the amber tape stripe is declared exactly once')
+  assert.strictEqual(countOf(res.body, '--dsp-tape-b:#e8453c'), 1, 'the red tape stripe is declared exactly once')
+  assert.ok(res.body.includes(':not(.dsp-claude):not([data-state="off"]):not([data-state="blocked"])'),
+    'the yellow/red tape belongs to the non-Claude card while it is armed')
+  assert.ok(res.body.includes('oklch(from var(--dsp-accent)'), 'the stripes follow the accent hue where supported')
+  assert.ok(res.body.includes('color-mix(in oklch, var(--dsp-accent) 76%'), 'the fallback stripes mix toward white/black')
+  assert.ok(res.body.includes('@property --dsp-tape-a'), 'the tape colour is interpolable, so state changes can animate')
+  assert.ok(res.body.includes('prefers-reduced-motion: reduce'), 'reduced-motion users get no tape transition')
+  for (const stale of ['#e08a5f', '#f0b03a', '#b8483a', '#e0483c']) {
+    assert.ok(!res.body.includes(stale), `the old tape literal ${stale} is gone`)
+  }
+  calls.push('window-tape-ok')
+}
+
 // 26. UI preferences live on the host, not in the window's localStorage: both
 // surfaces must agree even when they sit in different storage partitions.
 // Defaults are A / auto / auto plus compact on and every notify kind on; a POST
