@@ -977,12 +977,21 @@ h1 em { font-style: normal; color: #f0a83a }
 .dsp-host{flex:0 0 auto;padding:0 12px 8px 0;min-width:0}
 .dsp-card{--dsp-bg:#1c1e22;--dsp-fg:#f3f4f6;--dsp-muted:#a7abb4;--dsp-line:rgba(255,255,255,.14);
 --dsp-accent:#f0a83a;--dsp-danger:#ef5350;--dsp-track:rgba(255,255,255,.16);
+--dsp-tape-a:color-mix(in oklch, var(--dsp-accent) 76%, #ffffff);--dsp-tape-b:color-mix(in oklch, var(--dsp-accent) 68%, #000000)}
+@supports (color: oklch(from #ffffff calc(l + 0.05) 0.1 30)){
+.dsp-card{--dsp-tape-a:oklch(from var(--dsp-accent) min(calc(l + 0.08), 0.80) min(c, 0.09) h);--dsp-tape-b:oklch(from var(--dsp-accent) calc(l - 0.12) min(c, 0.09) h)}
+}
+.dsp-card:not(.dsp-claude):not([data-state="off"]):not([data-state="blocked"]){
 --dsp-tape-a:#f2b13c;--dsp-tape-b:#e8453c}
+@property --dsp-tape-a{syntax:"<color>";inherits:true;initial-value:#f2b13c}
+@property --dsp-tape-b{syntax:"<color>";inherits:true;initial-value:#e8453c}
+@media (prefers-reduced-motion: reduce){.dsp-card{transition:none}}
 .dsp-card[data-lum="light"]{--dsp-bg:#ffffff;--dsp-fg:#1b2030;--dsp-muted:#5b6472;--dsp-line:rgba(0,0,0,.15);
---dsp-accent:#e08f13;--dsp-danger:#d92d20;--dsp-track:rgba(0,0,0,.13);--dsp-tape-a:#f0b03a;--dsp-tape-b:#e0483c}
+--dsp-accent:#e08f13;--dsp-danger:#d92d20;--dsp-track:rgba(0,0,0,.13)}
 .dsp-card{position:relative;display:flex;flex-direction:column;box-sizing:border-box;width:100%;height:178px;margin:0;padding:10px 12px 0;border-radius:12px;overflow:hidden;
 border:1px solid var(--dsp-line);background:var(--dsp-bg);color:var(--dsp-fg);
-font-family:var(--dsw-font-family, system-ui);overflow:hidden;transition:height .18s ease}
+font-family:var(--dsw-font-family, system-ui);overflow:hidden;
+transition:height .18s ease,--dsp-tape-a 280ms ease,--dsp-tape-b 280ms ease}
 .dsp-card[data-state="off"]{background:color-mix(in srgb, var(--dsp-fg) 2.5%, var(--dsp-bg))}
 .dsp-card[data-state="fire"]{border-color:var(--dsp-danger)}
 .dsp-card.is-folded{height:auto;padding-bottom:8px}
@@ -1272,7 +1281,7 @@ transition:transform .24s cubic-bezier(.22,.61,.36,1),width .24s cubic-bezier(.2
   <div class="sect full">
     <h2 data-i18n="a3.title"><span>03</span>三种外观</h2>
     <div class="strip three" id="show-variants"></div>
-    <p data-i18n="a3.p1">雷达里的圆点按数量增删、不重排：数量变化时，你正在看的那几个点不会跳位置。设置里切换，立即生效，无需重启。</p>
+    <p data-i18n="a3.p1">雷达里的圆点按数量增删、不重排：数量变化时，你正在看的那几个点不会跳位置。设置里切换，立即生效，无需重启。卡片和悬浮窗底部的警示带都跟着状态走：未武装或被阻断时是同色相的深浅两档，从武装开始、到真正执行关机为止是红黄斜纹，280ms 渐变过去、不闪；Claude Style 与 DeepSeek 蓝这两档不切红黄。下面的 04 一节把这两种状态并排放着，可以直接对比。</p>
     <p data-i18n="a3.p2">想自己动手试试？打开 <a href="#try">试一试</a> —— 换外观、掷状态、看日志，都是本地随机的，不联网。</p>
   </div>
 
@@ -1374,7 +1383,7 @@ transition:transform .24s cubic-bezier(.22,.61,.36,1),width .24s cubic-bezier(.2
     <span class="dsp-thumb"><img class="dsp-thumb-img" data-thumb="c" src="../assets/variant-c-zh-dark.png" alt="" decoding="async"></span>
     <span class="dsp-vcard-label" data-i18n="s.look.c">终端</span></button></div>
       <div class="dsp-srow">
-  <div class="dsp-srow-text"><span class="dsp-stitle" data-i18n="s.look.theme">主题</span></div><span class="dsp-seg"><button class="dsp-segbtn on" type="button" data-i18n="s.theme.auto">跟随</button><button class="dsp-segbtn" type="button" data-i18n="s.theme.dark">深色</button><button class="dsp-segbtn" type="button" data-i18n="s.theme.light">浅色</button><button class="dsp-segbtn" type="button" data-i18n="s.theme.claude">Claude</button></span></div>
+  <div class="dsp-srow-text"><span class="dsp-stitle" data-i18n="s.look.theme">主题</span></div><span class="dsp-seg"><button class="dsp-segbtn on" type="button" data-i18n="s.theme.auto">跟随</button><button class="dsp-segbtn" type="button" data-i18n="s.theme.dark">深色</button><button class="dsp-segbtn" type="button" data-i18n="s.theme.light">浅色</button><button class="dsp-segbtn" type="button" data-i18n="s.theme.claude">Claude Style</button></span></div>
       <div class="dsp-srow">
   <div class="dsp-srow-text"><span class="dsp-stitle" data-i18n="s.look.fold">默认折叠</span><span class="dsp-sdesc" data-i18n="s.look.foldDesc">折叠后只保留标题和状态。</span></div><span class="dsp-switch" aria-hidden="true"><i></i></span></div>
       <div class="dsp-srow">
@@ -1630,7 +1639,7 @@ transition:transform .24s cubic-bezier(.22,.61,.36,1),width .24s cubic-bezier(.2
       'a3.alt1': 'A · 极简：大标题 + 一句话，底部警示带',
       'a3.alt2': 'B · 雷达：同心圆 + 扫描光束，任务以圆点呈现',
       'a3.alt3': 'C · 终端：命令行摘要 + 六段判定指示灯',
-      'a3.p1': '雷达里的圆点按数量增删、不重排：数量变化时，你正在看的那几个点不会跳位置。设置里切换，立即生效，无需重启。',
+      'a3.p1': '雷达里的圆点按数量增删、不重排：数量变化时，你正在看的那几个点不会跳位置。设置里切换，立即生效，无需重启。卡片和悬浮窗底部的警示带都跟着状态走：未武装或被阻断时是同色相的深浅两档，从武装开始、到真正执行关机为止是红黄斜纹，280ms 渐变过去、不闪；Claude Style 与 DeepSeek 蓝这两档不切红黄。下面的 04 一节把这两种状态并排放着，可以直接对比。',
       'a3.p2': '想自己动手试试？打开 <a href="#try">试一试</a> —— 换外观、掷状态、看日志，都是本地随机的，不联网。',
 
       'a4.title': '<span>04</span>六种运行状态',
@@ -1775,7 +1784,7 @@ transition:transform .24s cubic-bezier(.22,.61,.36,1),width .24s cubic-bezier(.2
       's.theme.auto': '跟随',
       's.theme.dark': '深色',
       's.theme.light': '浅色',
-      's.theme.claude': 'Claude',
+      's.theme.claude': 'Claude Style',
       's.look.fold': '默认折叠',
       's.look.foldDesc': '折叠后只保留标题和状态。',
       's.look.compact': '悬浮窗简洁模式',
@@ -1879,7 +1888,7 @@ transition:transform .24s cubic-bezier(.22,.61,.36,1),width .24s cubic-bezier(.2
       'a3.alt1': 'A · Minimal: a big status line, one sentence, hazard tape along the bottom',
       'a3.alt2': 'B · Radar: concentric rings and a sweep, tasks shown as dots',
       'a3.alt3': 'C · Terminal: command-line summary plus six decision LEDs',
-      'a3.p1': 'Dots in the radar are added and removed by count, never re-sorted: when the number changes, the dots you are looking at stay put. Switch in settings — it applies immediately, no restart.',
+      'a3.p1': 'Dots in the radar are added and removed by count, never re-sorted: when the number changes, the dots you are looking at stay put. Switch in settings — it applies immediately, no restart. The hazard tape along the card and the floating window follows the state too: two quiet shades of the theme colour while it is off or blocked, the red-and-yellow stripes from arming until the shutdown actually runs, fading over 280 ms instead of flashing; Claude Style and DeepSeek Blue never switch to stripes. Section 04 below shows the two states side by side.',
       'a3.p2': 'Want to try it yourself? Open <a href="#try">Try it</a> — change the look, roll a state, watch the log. All local and random, no network.',
 
       'a4.title': '<span>04</span>Six runtime states',
@@ -2024,7 +2033,7 @@ transition:transform .24s cubic-bezier(.22,.61,.36,1),width .24s cubic-bezier(.2
       's.theme.auto': 'Auto',
       's.theme.dark': 'Dark',
       's.theme.light': 'Light',
-      's.theme.claude': 'Claude',
+      's.theme.claude': 'Claude Style',
       's.look.fold': 'Collapsed by default',
       's.look.foldDesc': 'Keeps just the title and the state.',
       's.look.compact': 'Compact floating window',
@@ -2128,7 +2137,7 @@ transition:transform .24s cubic-bezier(.22,.61,.36,1),width .24s cubic-bezier(.2
       'a3.alt1': 'A · Минимал: крупный заголовок, одна строка, сигнальная лента внизу',
       'a3.alt2': 'B · Радар: концентрические круги и луч сканирования, задачи точками',
       'a3.alt3': 'C · Терминал: сводка командной строки и шесть индикаторов проверок',
-      'a3.p1': 'Точки на радаре добавляются и убираются по количеству, но не пересортировываются: когда число меняется, точки, на которые вы смотрите, остаются на местах. Вид переключается в настройках и применяется сразу, без перезапуска.',
+      'a3.p1': 'Точки на радаре добавляются и убираются по количеству, но не пересортировываются: когда число меняется, точки, на которые вы смотрите, остаются на местах. Вид переключается в настройках и применяется сразу, без перезапуска. Лента по нижнему краю карточки и плавающего окна тоже следует за состоянием: два спокойных оттенка темы, пока карточка выключена или заблокирована, и красно-жёлтые полосы с момента включения режима и до самого выключения; смена за 280 мс, без вспышек. В палитрах Claude Style и DeepSeek Blue полосы не включаются — в разделе 04 эти два состояния стоят рядом.',
       'a3.p2': 'Хотите попробовать сами? Откройте <a href="#try">«Попробовать»</a> — сменить вид, выбросить состояние, посмотреть журнал. Всё считается локально и случайно, без сети.',
 
       'a4.title': '<span>04</span>Шесть рабочих состояний',
@@ -2273,7 +2282,7 @@ transition:transform .24s cubic-bezier(.22,.61,.36,1),width .24s cubic-bezier(.2
       's.theme.auto': 'Как в системе',
       's.theme.dark': 'Тёмная',
       's.theme.light': 'Светлая',
-      's.theme.claude': 'Claude',
+      's.theme.claude': 'Claude Style',
       's.look.fold': 'Свёрнуто по умолчанию',
       's.look.foldDesc': 'Остаются только заголовок и состояние.',
       's.look.compact': 'Компактное плавающее окно',

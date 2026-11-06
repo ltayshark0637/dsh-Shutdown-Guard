@@ -43,11 +43,11 @@ The same look in light and dark; the trilingual captures live in `docs/screensho
 | Minimal (dark)                                                             | Radar (dark)                                                        | Terminal (dark)                                                                             |
 |:------------------------------------------------------------------------------:|:-----------------------------------------------------------------------:|:--------------------------------------------------------------------------------------------:|
 | <img src="https://cdn.jsdelivr.net/gh/ltayshark0637/dsh-Shutdown-Guard@main/docs/screenshots/04-armed-a-en-dark.png" width="250"> | <img src="https://cdn.jsdelivr.net/gh/ltayshark0637/dsh-Shutdown-Guard@main/docs/screenshots/10-armed-b-en-dark.png" width="250"> | <img src="https://cdn.jsdelivr.net/gh/ltayshark0637/dsh-Shutdown-Guard@main/docs/screenshots/16-armed-c-en-dark.png" width="250"> |
-| Large status text + one-line explanation, scrolling red-and-yellow hazard tape at the bottom                                          | Radar + a status line, sessions and background jobs shown as dots                      | Three terminal lines (command, counts, waiting) over six gate indicator lights                                                      |
+| Large status text + one-line explanation, scrolling hazard tape at the bottom (red-and-yellow while standing by)                 | Radar + a status line, sessions and background jobs shown as dots                      | Three terminal lines (command, counts, waiting) over six gate indicator lights                                                      |
 
 Dots in the radar are added and removed, never reordered: when the count changes, the dots you are looking at do not jump.
 
-The hazard tape along the bottom of the card follows the state: while the card is off or blocked it stays in two quiet shades of the theme colour, out of the way; the moment you arm it, the familiar red-and-yellow stripes come back to say it is standing by. The change is a fade, not a flash.
+The hazard tape along the bottom of the card and the floating window follows the state: in the built-in palettes it sits in two quiet shades of the theme colour while the card is off or blocked, and from the moment you arm it until the shutdown actually runs it goes back to the familiar red-and-yellow stripes. The change is a 280 ms fade, not a flash. With Claude Style or DeepSeek Blue the tape never switches to red-and-yellow; it keeps following that theme throughout — the stripes would clash there.
 
 <p align="center"><img src="https://cdn.jsdelivr.net/gh/ltayshark0637/dsh-Shutdown-Guard@main/docs/screenshots/anim-radar.gif" width="330" alt="Radar sweep"></p>
 
@@ -122,7 +122,7 @@ The card is pinned to this sidebar slot by default; the button on the card heade
 
 Four tabs: **Appearance** / **Vigil** / **Notifications** / **Status**. It opens on Appearance, and every switch takes effect immediately.
 
-- **Appearance**: five rows, no group header — the three thumbnail cards (Minimal / Radar / Terminal, the picture following the UI language and the lightness of the surface), theme (follow / dark / light / Claude), collapse by default, compact floating window, UI language.
+- **Appearance**: five rows, no group header — the three thumbnail cards (Minimal / Radar / Terminal, the picture following the UI language and the lightness of the surface), theme (follow / dark / light / Claude Style), collapse by default, compact floating window, UI language.
 - **Vigil**: the "custom profiles" switch sits alone at the top, outside any group; turning it on reveals the **Profiles** group, which lists the default profile and every custom one with switch, make-default, rename and delete, plus **+ New** at the end. Below it, the **Watch behaviour** group puts the four gate rows ahead of AFK: "All sessions idle" is the floor condition, always on and not switchable; "Background jobs finished" blocks background jobs; "skip this round if any session errored" blocks erroring batches; the countdown length is only editable in a custom profile. "AFK auto-answer" comes last and states "replies never select an option for you; turn this off and questions come to you as usual."
 - **Notifications**: one group — a master switch plus four per-kind switches (countdown started / shutting down / first block / block recovered). Arming, disarming and cancelling by hand stay silent.
 - **Status**: one group — current block, why it did not shut down last time, recent events.
@@ -133,7 +133,7 @@ Four tabs: **Appearance** / **Vigil** / **Notifications** / **Status**. It opens
 |:-----------------------------------------------------:|:------------------------------------------------------:|
 | <img src="https://cdn.jsdelivr.net/gh/ltayshark0637/dsh-Shutdown-Guard@main/docs/screenshots/14-light.png" width="250"> | <img src="https://cdn.jsdelivr.net/gh/ltayshark0637/dsh-Shutdown-Guard@main/docs/screenshots/15-claude.png" width="250"> |
 
-The card does not inherit the host palette; it brings its own, while the settings page follows the host theme. The third-party Claude Style theme has a matching palette too.
+The card does not inherit the host palette; it brings its own, while the settings page follows the host theme. Claude Style in that row does not need the plugin first: without dsh-claude-style the card uses a built-in look-alike palette (terracotta) and a grey note appears under the theme row; install the plugin and it follows the live palette instead, the note gone. If the plugin is installed but set to `palette: host`, you get our own amber palette — not the terracotta.
 
 ## Installation
 

@@ -84,7 +84,11 @@ function Trim-Png($path) {
   Move-Item -LiteralPath $tmp -Destination $path -Force
 }
 
-$pages = Get-ChildItem $shots -Filter $Filter | Where-Object { $_.Name -ne 'banner.html' } | Sort-Object Name
+# The filter may be a glob like '*-armed-*', which would also match the PNGs
+# written on a previous run; keep only the HTML pages.
+$pages = Get-ChildItem $shots -Filter $Filter |
+  Where-Object { $_.Extension -eq '.html' -and $_.Name -ne 'banner.html' } |
+  Sort-Object Name
 foreach ($page in $pages) {
   $name = [System.IO.Path]::GetFileNameWithoutExtension($page.Name)
   $png = Join-Path $shots "$name.png"
