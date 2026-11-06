@@ -573,6 +573,7 @@ void (async () => {
   // 6. The plugin writes the attribute on every boot; an empty value still means
   //    installed, so it must not be mistaken for "plugin absent" and repaint the
   //    built-in palette.
+  //    空串属性视为未给出配色，按 host 处理：跟随实时变量会读到空值、产生脏帧。
   {
     const empty = mountClient({ palette: '', hostLum: 'dark' })
     assert.deepStrictEqual(empty.errors, [])
