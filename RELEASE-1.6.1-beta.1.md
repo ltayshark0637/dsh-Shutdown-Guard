@@ -37,7 +37,7 @@
 - **macOS / Linux**：已实现，但**未在真机实测**。已知差异：macOS 没有可靠的锁屏命令行（`displaysleepnow` 只熄屏，⌃⌘Q 需要辅助功能权限）→ 明确报不可用；macOS 没有用户级休眠命令 → 降级为睡眠；Linux 注销会连带结束 DSH 自己。
 - **非 Windows 上的动作探测一律报「未知」**：命令存在也不代表能用，TCC 与 polkit 都可能在执行时否决，所以不谎报「可用」。
 - **beta 自身的限制**：字段名、文案与默认值都可能在小版本内改；升级前请备份 `data/config.json`。
-- **本版体积**：npm 包约 360 kB（未压缩解包约 756 kB），仍是 11 个文件。
+- **本版体积**：npm 包约 361 kB（未压缩解包约 760 kB），仍是 11 个文件。
 
 ## 验证
 
@@ -45,4 +45,4 @@
 
 ---
 
-完整变更记录见 [CHANGELOG.md](CHANGELOG.md)。
+完整变更记录见 [CHANGELOG.md](https://github.com/ltayshark0637/dsh-Shutdown-Guard/blob/main/CHANGELOG.md)。
