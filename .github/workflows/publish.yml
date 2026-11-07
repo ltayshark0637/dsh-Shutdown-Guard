@@ -32,9 +32,8 @@ permissions:
 
 jobs:
   publish:
-    # 插件只在 Windows 上工作：lib/index.mjs 的第 305 行有
-    #   if (process.platform !== 'win32') return
-    # 所以在 Linux runner 上 apply() 会直接退出、测试必然失败。
+    # 插件已支持三平台，但只有 Windows 经过完整验证；macOS / Linux 尚未在真机实测。
+    # runner 仍固定 windows-latest：判据稳定、且本机开发环境就是 Windows。
     runs-on: windows-latest
 
     defaults:
@@ -77,8 +76,18 @@ jobs:
             echo "not a tag ref, skipping"
           fi
 
+      # 预发布版本必须走 beta 这个 dist-tag。
+      # npm publish 不带 --tag 时一律发到 latest，1.6.1-beta.1 会顶掉 1.6.0 成为
+      # 所有人的默认安装版本 —— 这条分支就是防这个的。
       - name: Publish to npm
-        run: npm publish --provenance --access public
+        run: |
+          PKG=$(node -p "require('./package.json').version")
+          DIST_TAG=latest
+          case "$PKG" in
+            *-*) DIST_TAG=beta ;;
+          esac
+          echo "publishing $PKG with dist-tag $DIST_TAG"
+          npm publish --provenance --access public --tag "$DIST_TAG"
 
       # npm 发出去之后再建 Release：发布失败就不该留下一个「已发布」的 Release。
       # github.ref_name 对 tag 触发已经是 "v1.5.1"（含 v），这里直接用，不要再拼 v。
@@ -92,4 +101,6 @@ jobs:
           tag_name: ${{ github.ref_name }}
           generate_release_notes: true
           draft: false
-          prerelease: false
+          # 带连字符的版本号（如 v1.6.1-beta.1）自动标成 Pre-release，
+          # 免得内测版被当成稳定版展示。
+          prerelease: ${{ contains(github.ref_name, '-') }}
