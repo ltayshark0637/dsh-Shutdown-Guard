@@ -26,6 +26,10 @@ npm i -g dsh-shutdown-guard@1.6.0
 
 （本机 PowerShell 若禁止 `npm.ps1`，请用 `npm.cmd`。）
 
+平台：`package.json` 里的 `os` 限制已经删掉，macOS / Linux 现在可以正常 `npm install`（行为上的成熟度见 3.6）。
+
+从 beta.1 升到 beta.2**不需要任何手工迁移**：配置 schema 在 beta.1 已经定稿为 4，beta.2 只改行为、不改配置格式，装上新版本重启 DSH 即可。
+
 ## 3. 这一版要测什么
 
 每条都按「怎么操作 / 期望看到什么 / 不符合时是什么现象」写。测完请按第 5 节反馈。
@@ -75,6 +79,7 @@ npm i -g dsh-shutdown-guard@1.6.0
 - 脚本执行输出 stdout / stderr **各截 4096 字节**，超出部分看不到。
 - 脚本存在插件的可写数据目录（`data/scripts/`），不在 npm 包目录里；升级插件不会带走它们。
 - 从 1.6.0 升上来时 `config.json` 会升到新 schema，旧配置自动迁移；`customArgv` 这类内部试验字段从未随任何版本发布，不参与迁移。
+- beta.1 → beta.2 **没有配置格式变化**：schema 在 beta.1 就定稿为 4，beta.2 只改行为，所以不用改文件、不用重装配置，覆盖安装后重启 DSH 就行。
 
 ## 5. 怎么反馈
 

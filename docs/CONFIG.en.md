@@ -98,6 +98,8 @@ Each profile stores its own copy; they do not affect one another.
 
 Eight ids, **seven usable**; `restart-dsh` is listed but greyed out.
 
+**What is visible by default**: with "custom profiles" off, the action list offers shutdown, restart, sleep and hibernate only; lock, sign out and the custom script are gated by `customEnabled`. Turning it on is what makes the whole custom-script block (file picker, display name, warning and confirmation) appear in the settings page. If a profile still stores `custom` while the switch is off, the top of the dropdown keeps a disabled "Custom script (unavailable)" placeholder; it disappears as soon as the value changes to one of the listed actions — otherwise the dropdown would look blank and say nothing.
+
 | id | win32 | macOS | Linux |
 | --- | --- | --- | --- |
 | `shutdown` | `shutdown /s /t 0` | `osascript` shutdown | `systemctl poweroff` |
@@ -183,6 +185,7 @@ If a re-probe finds that the **currently selected action** has become unavailabl
 
 | Value | When it appears |
 | --- | --- |
+| `no-custom-profile` | "custom profiles" is off, so `lock` / `signout` / `custom` are all unavailable |
 | `no-script` | `action: custom` but no script uploaded yet |
 | `missing-interpreter` | the script is there, but none of `python` / `python3` / `node` / `powershell` can be found |
 | `needs-elevation` | used for built-in actions on non-win32: availability reports `'unknown'` with this reason — the command was found, but TCC / polkit may require authorisation. **This is a conservative label, not a detection**: on non-Windows there is no way to know in advance whether an authorisation prompt will appear, so it is always marked "may require authorisation" |
@@ -193,6 +196,8 @@ If a re-probe finds that the **currently selected action** has become unavailabl
 | `no-session` | kept in the enum; no path currently produces it (an old branch for unavailable sessions) |
 
 The old value `no-custom-command` has been removed (it belonged to the replaced command-line model and was never released).
+
+The boundary of `no-custom-profile`: it is decided by that one switch and says nothing about whether anything is configured. `restart-dsh` is always `no-host-restart` and is **not affected** by it; `custom` with the switch on but no script uploaded reports `no-script` — one says "this action is not open right now", the other says "it is open, but you have not set it up yet", and the two must not be conflated.
 
 ### 4.6 What each of the four script kinds does on Windows
 

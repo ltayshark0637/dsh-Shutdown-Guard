@@ -26,6 +26,10 @@ npm i -g dsh-shutdown-guard@1.6.0
 
 (If the local PowerShell forbids `npm.ps1`, use `npm.cmd`.)
 
+Platform: the `os` restriction in `package.json` has been removed, so macOS and Linux can now `npm install` normally (for behavioural maturity see 3.6).
+
+Upgrading from beta.1 to beta.2 **needs no manual migration**: the config schema was finalised as 4 in beta.1, and beta.2 only changes behaviour, not the config format — install the new version and restart DSH.
+
 ## 3. What to test in this version
 
 Each item is written as "how to act / what you should see / what it looks like when it fails". Report results as described in section 5.
@@ -75,6 +79,7 @@ Each item is written as "how to act / what you should see / what it looks like w
 - Script stdout / stderr are each **truncated to 4096 bytes**; anything beyond that is not visible.
 - Scripts live in the plugin's writable data directory (`data/scripts/`), not in the npm package directory; upgrading the plugin does not take them away.
 - Upgrading from 1.6.0 bumps `config.json` to the new schema and migrates the old config automatically; internal experimental fields such as `customArgv` were never released with any version and take no part in the migration.
+- beta.1 → beta.2 has **no config-format change**: the schema was finalised as 4 in beta.1 and beta.2 only changes behaviour, so there is nothing to edit or migrate — install over the top and restart DSH.
 
 ## 5. How to report
 

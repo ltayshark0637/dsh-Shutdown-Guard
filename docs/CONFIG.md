@@ -98,6 +98,8 @@
 
 八个 id，**七个可用**；`restart-dsh` 列出但置灰。
 
+**默认可见范围**：未开启「自定义配置」时，动作列表只给关机、重启、睡眠、休眠；锁屏、注销、自定义脚本这三项由 `customEnabled` 开关控制。开启后「自定义脚本」整块（选择文件、显示名、警示与确认）才出现在设置页。若某份配置里存的仍是 `custom` 而开关已经被关掉，下拉顶端会留一条禁用的「自定义脚本（不可用）」占位，改成任一在列动作后自动消失 —— 这样不会出现「下拉空白、什么也不显示」的假象。
+
 | id | win32 | macOS | Linux |
 | --- | --- | --- | --- |
 | `shutdown` | `shutdown /s /t 0` | `osascript` 关机 | `systemctl poweroff` |
@@ -183,6 +185,7 @@ profile 里还有一项 `scriptAck: { "sha256": "9f2c…", "at": 1762500100000 }
 
 | 值 | 什么时候出现 |
 | --- | --- |
+| `no-custom-profile` | 未开启「自定义配置」时，`lock` / `signout` / `custom` 这三个动作一律不可用 |
 | `no-script` | `action: custom` 但还没上传脚本 |
 | `missing-interpreter` | 脚本在，但 `python` / `python3` / `node` / `powershell` 一个都找不到 |
 | `needs-elevation` | 内置动作在非 win32 上就用它：可用性报 `'unknown'`、原因给这个 —— 命令找到了，但 TCC / polkit 可能要求授权。**这是保守标注，不是检测**：非 Windows 上无法预知授权弹窗会不会出现，所以一律标为「可能需授权」 |
@@ -193,6 +196,8 @@ profile 里还有一项 `scriptAck: { "sha256": "9f2c…", "at": 1762500100000 }
 | `no-session` | 枚举里保留，当前没有任何路径会产出它（会话不可用的旧分支） |
 
 `no-custom-command` 这个旧值已删除（它属于被替换掉的命令行模型，从未发布过）。
+
+`no-custom-profile` 的边界：它只由那一个开关决定，和「有没有配好」无关。`restart-dsh` 恒为 `no-host-restart`，**不受这条影响**；`custom` 在开关打开之后，如果还没上传脚本，报的是 `no-script` —— 一个说「这个动作现在不开放」，一个说「开放了但你还没准备」，两者不能混为一谈。
 
 ### 4.6 Windows 上四种脚本各是什么效果
 
