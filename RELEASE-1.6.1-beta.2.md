@@ -39,4 +39,4 @@
 
 ---
 
-完整变更记录见 [CHANGELOG.md](CHANGELOG.md)。
+完整变更记录见 [CHANGELOG.md](https://github.com/ltayshark0637/dsh-Shutdown-Guard/blob/main/CHANGELOG.md)。
