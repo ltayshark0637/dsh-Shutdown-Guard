@@ -603,6 +603,70 @@ void (async () => {
   assert.deepStrictEqual(missing, [], 'missing settings labels; got: ' + text.slice(0, 300))
   assert.ok(!text.includes('终端里的 6 个小块'), 'LED legend hidden while variant != C')
 
+  // --- custom-profile rows follow customEnabled in both directions -----------
+  // The settings tree is a plain element tree here, so presence checks walk the
+  // nodes instead of relying on text: the option value and the file input are
+  // the behaviour, while the labels are copy that may change.
+  function walkNodes(node, visit) {
+    if (node == null || node === false) return
+    if (Array.isArray(node)) { for (const child of node) walkNodes(child, visit); return }
+    if (typeof node !== 'object') return
+    visit(node)
+    if (node.children) for (const child of node.children) walkNodes(child, visit)
+  }
+  function settingsTree() {
+    const el = slots['settings.section'].render({})
+    return typeof el.type === 'function' ? el.type({}) : el
+  }
+  function settingsParts(tree) {
+    const options = []
+    let fileInputs = 0
+    let ackRows = 0
+    walkNodes(tree, (n) => {
+      if (n.type === 'option') options.push(n)
+      if (n.type === 'input' && n.props && n.props.type === 'file') fileInputs += 1
+      if (typeof n.props?.className === 'string' && n.props.className.includes('dsp-ackrow')) ackRows += 1
+    })
+    return { options, fileInputs, ackRows }
+  }
+  state.profiles = [{ id: 'default', label: '默认配置', countdownSec: 60, action: 'shutdown' }]
+  state.activeProfileId = 'default'
+
+  state.customEnabled = false
+  await repaint()
+  {
+    const parts = settingsParts(settingsTree())
+    assert.ok(!parts.options.some((o) => o.props.value === 'custom'),
+      'the picker has no custom option while custom profiles are off')
+    assert.strictEqual(parts.fileInputs, 0, 'the script row is not rendered while custom profiles are off')
+    assert.strictEqual(parts.ackRows, 0, 'the script confirmation is not rendered while custom profiles are off')
+  }
+
+  state.customEnabled = true
+  await repaint()
+  {
+    const parts = settingsParts(settingsTree())
+    assert.ok(parts.options.some((o) => o.props.value === 'custom'),
+      'the picker offers custom once custom profiles are on')
+    assert.strictEqual(parts.fileInputs, 1, 'the script row is rendered once custom profiles are on')
+  }
+
+  // Boundary: the feature was turned off while the active profile still stores
+  // action=custom. The picker must keep a disabled placeholder, not silently
+  // rewrite the stored choice to shutdown.
+  state.customEnabled = false
+  state.profiles = [{ id: 'default', label: '默认配置', countdownSec: 60, action: 'custom' }]
+  await repaint()
+  {
+    const parts = settingsParts(settingsTree())
+    const hidden = parts.options[0]
+    assert.ok(hidden && hidden.props.value === 'custom' && hidden.props.disabled === true,
+      'a stored custom action keeps a disabled placeholder option')
+    assert.strictEqual(flat(hidden, []).join(''), clientText.zh['action.custom.off'],
+      'the placeholder explains why custom is unavailable')
+  }
+  calls.push('custom-hidden-without-profiles-ok')
+
   console.log('client bundle smoke: PASS')
   console.log('PASS: ' + calls.join(', '))
 })().catch((err) => { console.error(err); process.exitCode = 1 })

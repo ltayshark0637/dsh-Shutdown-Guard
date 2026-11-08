@@ -1485,6 +1485,62 @@ assert.strictEqual(routes.size, 0, 'disposer removes HTTP routes')
   await postState('/disarm')
   calls.push('halt-blocked-when-mother-off-ok')
 
+  // 49. Custom-profile-only actions vanish while custom profiles are off: not
+  // just the picker (the client hides those rows) but the host map itself, so a
+  // stale client cannot arm them. restart-dsh keeps its own reason: that gate is
+  // older and must not be overwritten by this one.
+  await postState('/disarm')
+  await postState('/config', { customEnabled: false })
+  st = await stateNow()
+  for (const id of ['lock', 'signout', 'custom']) {
+    assert.deepStrictEqual(st.actions[id], { available: false, reason: 'no-custom-profile' },
+      `${id} reports no-custom-profile while custom profiles are off`)
+  }
+  assert.strictEqual(st.actions.shutdown.available, true, 'shutdown needs no custom profile')
+  assert.strictEqual(st.actions['restart-dsh'].reason, 'no-host-restart',
+    'the restart-dsh reason wins over the custom-profile gate')
+  // The default profile keeps action editable, so a stale profile can still say
+  // lock after the feature is switched off. The gate must refuse that arm even
+  // though the profile itself is the default one.
+  await postState('/config', { updateProfile: { id: 'default', patch: { action: 'lock' } } })
+  st = await stateNow()
+  assert.strictEqual(st.activeProfileId, 'default', 'the default profile stays active')
+  assert.strictEqual(st.actionReady, false, 'a gated action is never reported ready')
+  n = spawns.length
+  await postState('/arm')
+  statusHandler({ agent: rootAgent, status: 'idle' })
+  await flush()
+  st = await stateNow()
+  assert.strictEqual(st.state, 'idle', 'arming a gated action stays idle')
+  assert.strictEqual(st.lastSkip && st.lastSkip.key, 'log.actionUnavailable',
+    'the arm refusal keeps the existing unavailable copy')
+  assert.strictEqual(spawns.length, n, 'a gated action sends nothing')
+  await postState('/config', { updateProfile: { id: 'default', patch: { action: 'shutdown' } } })
+  await postState('/disarm')
+  r = await postState('/config', { customEnabled: true })
+  assert.strictEqual(r.status, 200, 'custom profiles can be turned back on')
+  assert.strictEqual(r.body.actions.lock.available, true,
+    'the same response already reports lock as available again')
+  assert.strictEqual(r.body.actions.custom.reason, 'no-script',
+    'custom falls back to no-script once the feature is on')
+  calls.push('no-custom-profile-gate-ok')
+
+  // 50. Enabling the feature must not make an unsaved script mandatory: a
+  // profile can still store action=custom first and be told why it cannot arm.
+  r = await postState('/config', { createProfile: { label: '脚本门' } })
+  assert.strictEqual(r.status, 200, 'a profile can be created for the script gate')
+  const scriptlessId = readCfg().profiles.find((p) => p.label === '脚本门').id
+  r = await postState('/config', { updateProfile: { id: scriptlessId, patch: { action: 'custom' } } })
+  assert.strictEqual(r.status, 200, 'action=custom can be saved without a script')
+  assert.strictEqual(readCfg().profiles.find((p) => p.id === scriptlessId).action, 'custom',
+    'the stored profile keeps action=custom')
+  await postState('/config', { activeProfileId: scriptlessId })
+  st = await stateNow()
+  assert.deepStrictEqual(st.actions.custom, { available: false, reason: 'no-script' },
+    'an empty script gate reports no-script')
+  assert.strictEqual(st.actionReady, false, 'a scriptless custom action is not ready')
+  calls.push('custom-script-still-saveable-ok')
+
   mount()
 }
 
