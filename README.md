@@ -1,7 +1,7 @@
 # Shutdown Guard · 任务完成后关机
 **中文** · [English](README.en.md) · [Русский](README.ru.md)
 
-稳定版 `v1.6.0` · 开发版 `v1.6.1-beta.1`（内测）· [更新记录](https://github.com/ltayshark0637/dsh-Shutdown-Guard/blob/main/CHANGELOG.md)
+稳定版 `v1.6.0` · 开发版 `v1.6.1-beta.2`（内测）· [更新记录](https://github.com/ltayshark0637/dsh-Shutdown-Guard/blob/main/CHANGELOG.md)
 
 <p align="center"><img src="https://ltayshark0637.github.io/dsh-Shutdown-Guard/screenshots/banner.png" width="880" alt="Shutdown Guard — 任务完成后自动关机，侧边栏守夜卡片"></p>
 
