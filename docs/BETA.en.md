@@ -1,10 +1,10 @@
-# Testing guide for v1.6.1-beta.1
+# Testing guide for v1.6.1-beta.2
 
 > Chinese original: [BETA.md](BETA.md)
 
 ## 1. What this version is
 
-`1.6.1-beta.1` is a **beta**, the first to expose the "upload a script, run it at zero" capability.
+`1.6.1-beta.2` is a **beta** that follows beta.1 in getting the "upload a script, run it at zero" capability right. This document covers the current beta, not a historical snapshot.
 
 - **Do not install it on production machines**, and do not use it to test "really shutting the work machine down on time".
 - npm's `latest` is still `1.6.0`; installing the beta requires an explicit version number.
@@ -13,10 +13,12 @@
 ## 2. How to install
 
 ```bash
-npm i -g dsh-shutdown-guard@1.6.1-beta.1
+npm i -g dsh-shutdown-guard@1.6.1-beta.2
 ```
 
 After installing, **fully quit DSH and start it again**. The client bundle is compiled into the module graph only at startup; refreshing the page does not load new code.
+
+If beta.1 is already installed, upgrade to beta.2 first and test against this guide — every item and expected behaviour here describes beta.2.
 
 Rollback:
 
