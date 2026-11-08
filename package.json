@@ -65,8 +65,5 @@
   "engines": {
     "node": ">=22.19"
   },
-  "os": [
-    "win32"
-  ],
   "license": "MIT"
 }
