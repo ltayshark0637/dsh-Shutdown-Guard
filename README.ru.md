@@ -1,7 +1,7 @@
 # Shutdown Guard · Выключение после завершения задач
 [中文](README.md) · [English](README.en.md) · **Русский**
 
-Стабильная `v1.6.0` · бета `v1.6.1-beta.1` (закрытая бета) · [История изменений](https://github.com/ltayshark0637/dsh-Shutdown-Guard/blob/main/CHANGELOG.md)
+Стабильная `v1.6.0` · бета `v1.6.1-beta.2` (закрытая бета) · [История изменений](https://github.com/ltayshark0637/dsh-Shutdown-Guard/blob/main/CHANGELOG.md)
 
 <p align="center"><img src="https://ltayshark0637.github.io/dsh-Shutdown-Guard/screenshots/banner.png" width="880" alt="Shutdown Guard — выключение после завершения всех задач, ночная карточка на боковой панели"></p>
 
@@ -26,7 +26,7 @@ dsh plugin --profile web add dsh-shutdown-guard
 Для беты нужна явная версия; без неё ставится стабильная `1.6.0`:
 
 ```bash
-dsh plugin --profile web add dsh-shutdown-guard@1.6.1-beta.1
+dsh plugin --profile web add dsh-shutdown-guard@1.6.1-beta.2
 ```
 
 Или напрямую с GitHub:

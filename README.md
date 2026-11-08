@@ -27,7 +27,7 @@ dsh plugin --profile web add dsh-shutdown-guard
 内测版要显式写版本号，不带版本号装到的仍是稳定版 `1.6.0`：
 
 ```bash
-dsh plugin --profile web add dsh-shutdown-guard@1.6.1-beta.1
+dsh plugin --profile web add dsh-shutdown-guard@1.6.1-beta.2
 ```
 
 或者直接从 GitHub 装：

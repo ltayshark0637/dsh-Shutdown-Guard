@@ -1,7 +1,7 @@
 # Shutdown Guard · Shut down when tasks finish
 [中文](README.md) · **English** · [Русский](README.ru.md)
 
-Stable `v1.6.0` · beta `v1.6.1-beta.1` (closed beta) · [Changelog](https://github.com/ltayshark0637/dsh-Shutdown-Guard/blob/main/CHANGELOG.md)
+Stable `v1.6.0` · beta `v1.6.1-beta.2` (closed beta) · [Changelog](https://github.com/ltayshark0637/dsh-Shutdown-Guard/blob/main/CHANGELOG.md)
 
 <p align="center"><img src="https://ltayshark0637.github.io/dsh-Shutdown-Guard/screenshots/banner.png" width="880" alt="Shutdown Guard — shut down automatically when every task is done, a night-watch card in the sidebar"></p>
 
@@ -26,7 +26,7 @@ dsh plugin --profile web add dsh-shutdown-guard
 The beta needs an explicit version; without one you get the stable `1.6.0`:
 
 ```bash
-dsh plugin --profile web add dsh-shutdown-guard@1.6.1-beta.1
+dsh plugin --profile web add dsh-shutdown-guard@1.6.1-beta.2
 ```
 
 Or straight from GitHub:
