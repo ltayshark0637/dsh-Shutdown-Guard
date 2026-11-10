@@ -742,6 +742,51 @@ void (async () => {
   }
   calls.push('custom-hidden-without-profiles-ok')
 
+  // The consent checkbox must use the dedicated `ackScript` field when ticked
+  // and `scriptAck: null` in a profile patch when unticked. A stray `patch` or
+  // `ackScript` in the wrong direction is exactly the regression users hit.
+  state.customEnabled = true
+  state.activeProfileId = 'default'
+  state.profiles = [{
+    id: 'default',
+    label: '默认配置',
+    countdownSec: 60,
+    action: 'custom',
+    script: { name: 'ack.cmd', ext: 'cmd', bytes: 12, sha256: 'a'.repeat(64), savedAt: 1 },
+    scriptAck: null,
+  }]
+  await repaint()
+  {
+    let ackBox = null
+    walkNodes(settingsTree(), (n) => {
+      if (n.type === 'input' && n.props && n.props.type === 'checkbox') ackBox = n
+    })
+    assert.ok(ackBox, 'the consent checkbox is rendered for a script')
+    const bodies = []
+    const realFetch = global.fetch
+    global.fetch = async (url, opts) => {
+      if (opts && opts.body) bodies.push(JSON.parse(opts.body))
+      return { ok: true, json: async () => state }
+    }
+    try {
+      ackBox.props.onChange({ target: { checked: true } })
+      await settle()
+      assert.deepStrictEqual(bodies[0], { ackScript: { profileId: 'default' } },
+        'ticking the box sends ackScript only')
+      assert.ok(!('updateProfile' in bodies[0]) && !('patch' in bodies[0]),
+        'ticking never sends a profile patch')
+
+      ackBox.props.onChange({ target: { checked: false } })
+      await settle()
+      assert.deepStrictEqual(bodies[1], { updateProfile: { id: 'default', patch: { scriptAck: null } } },
+        'unticking clears scriptAck through a profile patch')
+      assert.ok(!('ackScript' in bodies[1]), 'unticking never sends ackScript')
+    } finally {
+      global.fetch = realFetch
+    }
+    calls.push('script-ack-payload-ok')
+  }
+
   // 13. A rebuild (here: folding the card) creates a brand-new node with no
   // data-lum. The probe is throttled for 3 s, so without a cached answer the
   // fresh node would show the dark default until the next window. The rebuild

@@ -1601,6 +1601,67 @@ assert.strictEqual(routes.size, 0, 'disposer removes HTTP routes')
   }
   calls.push('catch-up-after-suspended-timer-ok')
 
+  // 52. The consent round trip: the host computes the hash, the ack must carry
+  // exactly that hash, clear is allowed with null, and a client cannot invent an
+  // ack. The script bytes stay put when the consent is withdrawn.
+  await postState('/disarm')
+  await postState('/config', { activeProfileId: 'c1' })
+  await postState('/config', { updateProfile: { id: 'c1', patch: { action: 'custom' } } })
+  const ackBody = '@echo off\r\necho ack\r\n'
+  r = await postState('/config', { putScript: { profileId: 'c1', name: 'ack.cmd', ext: 'cmd', content: ackBody } })
+  assert.strictEqual(r.status, 200, 'the script to acknowledge is uploaded')
+  st = await stateNow()
+  assert.ok(st.script && st.script.sha256, 'the state publishes the script metadata')
+  assert.strictEqual(st.scriptAckOk, false, 'a fresh upload is not acknowledged')
+  assert.strictEqual(st.profiles.find((p) => p.id === 'c1').scriptAck, null,
+    'the stored profile has no ack yet')
+
+  const ackRes = await postState('/config', { ackScript: { profileId: 'c1' } })
+  assert.strictEqual(ackRes.status, 200, 'acknowledging the uploaded script is accepted')
+  st = await stateNow()
+  const ackedProfile = st.profiles.find((p) => p.id === 'c1')
+  assert.ok(ackedProfile.scriptAck && ackedProfile.scriptAck.at, 'the ack is stored with a timestamp')
+  // /state profiles deliberately publish only `{ at }`; the hash stays on disk.
+  assert.strictEqual(readCfg().profiles.find((p) => p.id === 'c1').scriptAck.sha256, st.script.sha256,
+    'the stored ack carries the host-computed hash, not a client value')
+  assert.strictEqual(st.scriptAckOk, true, 'the state agrees the current bytes are acknowledged')
+  await postState('/arm')
+  statusHandler({ agent: rootAgent, status: 'idle' })
+  await flush()
+  assert.strictEqual((await stateNow()).state, 'countdown', 'an acknowledged script can arm')
+
+  await postState('/disarm')
+  const cleared = await postState('/config', { updateProfile: { id: 'c1', patch: { scriptAck: null } } })
+  assert.strictEqual(cleared.status, 200, 'un-ticking the consent box is accepted')
+  st = await stateNow()
+  const clearedProfile = st.profiles.find((p) => p.id === 'c1')
+  assert.strictEqual(clearedProfile.scriptAck, null, 'the ack is cleared')
+  assert.strictEqual(readCfg().profiles.find((p) => p.id === 'c1').scriptAck, null,
+    'the stored ack is cleared too')
+  assert.strictEqual(st.scriptAckOk, false, 'clearing the ack turns the gate off again')
+  assert.strictEqual(clearedProfile.script.sha256, ackedProfile.script.sha256,
+    'clearing the ack does not touch the script metadata')
+  assert.ok(fs.existsSync(pathMod.join(scriptDir, 'c1.cmd')), 'the script bytes stay on disk')
+  n = spawns.length
+  await postState('/arm')
+  statusHandler({ agent: rootAgent, status: 'idle' })
+  await flush()
+  st = await stateNow()
+  assert.strictEqual(st.state, 'idle', 'without an ack the script cannot arm')
+  assert.strictEqual(st.lastSkip && st.lastSkip.key, 'log.actionUnavailable',
+    'the arm refusal says the script is not acknowledged')
+  assert.strictEqual(st.lastSkip.params && st.lastSkip.params.error, 'script-not-acknowledged',
+    'the skip line names the missing acknowledgement')
+  assert.strictEqual(spawns.length, n, 'nothing is sent without an ack')
+
+  const forged = await postState('/config', {
+    updateProfile: { id: 'c1', patch: { scriptAck: { sha256: 'deadbeef' } } },
+  })
+  assert.strictEqual(forged.status, 400, 'a client-invented ack is rejected')
+  assert.strictEqual(readCfg().profiles.find((p) => p.id === 'c1').scriptAck, null,
+    'a rejected ack leaves the stored value untouched')
+  calls.push('script-ack-round-trip-ok')
+
   mount()
 }
 
