@@ -126,10 +126,10 @@ Notes:
 ## 7. Platforms and the failure surface
 
 - **Platforms**: win32, macOS and Linux now all mount through the same path — the action table has a row ready for each platform, and `apply()` keeps only one defensive early return (triggered only when a platform has no `shutdown` row at all; currently unreachable, and `log.platformUnsupported` stays in the message catalog).
-  - **Windows is fully verified**; macOS / Linux are **implemented but not tested on real hardware**.
+  - **Three levels of real-world evidence**: Windows is **fully verified, including real execution**; macOS is **verified for mounting, the action capability table and the `/state` contract** (real M2 hardware, macOS 27.2, DSH Desktop; read-only acceptance 8/8 matched), with **real execution not verified**; Linux is **covered by code and assertions only, with no real-hardware test**.
   - macOS `lock` has no reliable CLI (`displaysleepnow` only blanks the display, and ⌃⌘Q needs accessibility permission), so it reports `unsupported-on-platform` explicitly rather than half-locking; macOS `hibernate` has no user-level command and degrades to `pmset sleepnow`.
   - Linux `signout` uses `loginctl terminate-user`, which also ends DSH itself (DSH runs inside that user session).
-  - On non-win32, every action whose command can be resolved reports availability as `'unknown'`: TCC / polkit may refuse at the last moment, and reporting `true` would be a lie.
+  - On non-win32, every action whose command can be resolved reports availability as `'unknown'`: TCC / polkit may refuse at the last moment, and reporting `true` would be a lie. `actionReadyNow()` only treats `false` as unavailable, so `'unknown'` **is armable** — it means the OS is still the decider, not that something is broken.
 - `app.asar` and the DSH sources are never modified; everything mounts through slots and events.
 - Zero runtime dependencies: the server side uses only `node:fs` / `node:path` / `node:crypto`, and the browser side only `require('react')`.
 - Logging goes through `log(message, kind)`, never `console.log`.

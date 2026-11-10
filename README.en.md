@@ -81,7 +81,13 @@ A: Yes — use the "cancel shutdown" button on the card. Cancelling sends **no c
 A: Both the host and the client bundle load only when DSH starts; HMR does not apply to locally linked plugins.
 
 **Q: Does it support macOS and Linux?**
-A: Windows is fully verified. macOS and Linux are implemented but have not been tested on real hardware yet — they are in the **closed beta** for now.
+A: Per platform, and the distinction matters:
+
+- **Windows**: fully verified, including actually running shutdown / restart / sleep.
+- **macOS**: verified on real hardware (M2 / macOS 27.2 / DSH Desktop) that the plugin mounts, that the action capability table is right, and that `/state` matches the contract; **actual execution** of shutdown / restart / sign out / sleep is **not** verified, and neither is the first-run automation (TCC) prompt.
+- **Linux**: covered by code and assertions only — **no real-hardware test yet**.
+
+On macOS, an action whose command resolves reports `"unknown"` rather than `true`: TCC may refuse at the moment of execution, so claiming `true` during probing would be a lie. `"unknown"` means "you can arm with it, but the OS may still say no" — it is not a fault.
 
 ## More
 

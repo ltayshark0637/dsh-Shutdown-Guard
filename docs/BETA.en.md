@@ -69,7 +69,8 @@ Each item is written as "how to act / what you should see / what it looks like w
 ### 3.6 Three platforms
 
 - **Windows**: fully verified; it is the primary test platform.
-- **macOS / Linux**: **implemented, but not tested on real hardware**. If you have a machine to hand, please also report whether it installs, whether it mounts, and whether the availability decisions in the action area match your expectations.
+- **macOS**: read-only acceptance has been run on real hardware (M2 / macOS 27.2 / DSH Desktop) — mounting, the action capability table and the `/state` contract all matched (8/8). **What is not verified is real execution** (shutdown / restart / sign out / sleep were never triggered), and the first-run automation (TCC) prompt was not covered either. Feedback is still welcome here, especially "what happens when you actually press it".
+- **Linux**: **no real-hardware test yet**; only code and assertions cover it. If you have a machine to hand, please report whether it installs, whether it mounts, and whether the availability decisions in the action area match your expectations.
 
 ## 4. Known limitations (read this before deciding something is a bug)
 
@@ -77,6 +78,7 @@ Each item is written as "how to act / what you should see / what it looks like w
 - Scripts run with **your current user's permissions**; the plugin **does not review** script content and makes no guarantee about its safety.
 - `restart-dsh` is listed but **greyed out**: restarting DSH needs `app.relaunch()` from the Electron main process, which the plugin cannot reach.
 - **macOS lock is unavailable**: it reports "unsupported" explicitly and never half-locks.
+- **On macOS, "available but still unknown" is normal**: an action whose command resolves reports `"unknown"` + `needs-elevation`, because TCC may refuse at the moment of execution. `"unknown"` can be armed, but it is not a promise that it will succeed.
 - **Linux sign-out also ends DSH itself** (DSH runs inside that user session), so using it to test sign-out shuts DSH down along with it.
 - Script stdout / stderr are each **truncated to 4096 bytes**; anything beyond that is not visible.
 - Scripts live in the plugin's writable data directory (`data/scripts/`), not in the npm package directory; upgrading the plugin does not take them away.

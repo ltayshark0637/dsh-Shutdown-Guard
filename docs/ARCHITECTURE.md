@@ -126,10 +126,10 @@ off ──武装──▶ armed ──有后台任务──▶ hold ──任务
 ## 7. 平台与失败面
 
 - **平台**：win32、macOS、Linux 现在都按同一条路径挂载 —— 动作表为每个平台备好一行，`apply()` 里只剩一条防御性早退（某平台连 `shutdown` 行都没有时才触发，目前不可达，`log.platformUnsupported` 保留在文案目录里）。
-  - **Windows 是完整验证过的**；macOS / Linux **已实现但未实测**。
+  - **三档实测程度**：Windows **完整验证，含真实执行**；macOS **已验证挂载、动作能力表与 `/state` 契约**（真机 M2 / macOS 27.2 / DSH Desktop，只读验收 8/8 一致），**真实执行未验证**；Linux **仅代码与断言覆盖，未真机实测**。
   - macOS `lock` 没有可靠 CLI（`displaysleepnow` 只是熄屏，⌃⌘Q 需要辅助功能权限），明确报 `unsupported-on-platform`，不半锁；macOS `hibernate` 没有用户级命令，降级为 `pmset sleepnow`。
   - Linux `signout` 用 `loginctl terminate-user`，会连带结束 DSH 自己（DSH 跑在该用户会话里）。
-  - 非 win32 上凡是能解析到命令的动作，可用性一律报 `'unknown'`：TCC / polkit 可能在最后一刻拒绝，报 `true` 就是撒谎。
+  - 非 win32 上凡是能解析到命令的动作，可用性一律报 `'unknown'`：TCC / polkit 可能在最后一刻拒绝，报 `true` 就是撒谎。`actionReadyNow()` 只把 `false` 当不可用，所以 `'unknown'` **是可武装的** —— 它表示「系统仍是否决方」，不是坏了。
 - 不修改 `app.asar` 与 DSH 源码，全部通过槽位与事件挂载。
 - 零运行时依赖：服务端只用 `node:fs` / `node:path` / `node:crypto`，浏览器侧只 `require('react')`。
 - 日志走 `log(message, kind)`，不用 `console.log`。
