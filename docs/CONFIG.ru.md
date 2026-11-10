@@ -1,7 +1,6 @@
 # Поля конфигурации
 
-> Оригинал на китайском: [CONFIG.md](CONFIG.md)
-> English version: [CONFIG.en.md](CONFIG.en.md)
+> Оригинал на китайском: [CONFIG.md](CONFIG.md) · English version: [CONFIG.en.md](CONFIG.en.md)
 
 Для сопровождающих и для тех, кто хочет править конфигурацию вручную. Пользовательское описание настроек — в [README](../README.md).
 Мотивация логики проверок-шлюзов и повторов — в [ARCHITECTURE](./ARCHITECTURE.md).

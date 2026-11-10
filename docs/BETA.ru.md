@@ -1,7 +1,6 @@
 # Руководство по тестированию v1.6.1-beta.2
 
-> Оригинал на китайском: [BETA.md](BETA.md)
-> English version: [BETA.en.md](BETA.en.md)
+> Оригинал на китайском: [BETA.md](BETA.md) · English version: [BETA.en.md](BETA.en.md)
 
 ## 1. Что это за версия
 

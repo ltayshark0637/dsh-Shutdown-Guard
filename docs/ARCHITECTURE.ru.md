@@ -1,7 +1,6 @@
 # Архитектура и проверки-шлюзы
 
-> Оригинал на китайском: [ARCHITECTURE.md](ARCHITECTURE.md)
-> English version: [ARCHITECTURE.en.md](ARCHITECTURE.en.md)
+> Оригинал на китайском: [ARCHITECTURE.md](ARCHITECTURE.md) · English version: [ARCHITECTURE.en.md](ARCHITECTURE.en.md)
 
 Этот документ — для сопровождающих: как переходят состояния, как решают пять проверок-шлюзов, как сочетаются блокировка и повторные попытки и почему страница плавающего окна обязана оставаться из одного источника с карточкой.
 Руководство для пользователей — в [README](../README.md).
