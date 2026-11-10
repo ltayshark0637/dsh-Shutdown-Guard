@@ -90,6 +90,10 @@ A：Windows 已完整验证。macOS 与 Linux 已实现，但尚未在真机实�
 
 英文版：[ARCHITECTURE.en.md](https://github.com/ltayshark0637/dsh-Shutdown-Guard/blob/main/docs/ARCHITECTURE.en.md) · [CONFIG.en.md](https://github.com/ltayshark0637/dsh-Shutdown-Guard/blob/main/docs/CONFIG.en.md) · [DEVELOPING.en.md](https://github.com/ltayshark0637/dsh-Shutdown-Guard/blob/main/docs/DEVELOPING.en.md) · [BETA.en.md](https://github.com/ltayshark0637/dsh-Shutdown-Guard/blob/main/docs/BETA.en.md)
 
+俄文版：[ARCHITECTURE.ru.md](https://github.com/ltayshark0637/dsh-Shutdown-Guard/blob/main/docs/ARCHITECTURE.ru.md) · [CONFIG.ru.md](https://github.com/ltayshark0637/dsh-Shutdown-Guard/blob/main/docs/CONFIG.ru.md) · [DEVELOPING.ru.md](https://github.com/ltayshark0637/dsh-Shutdown-Guard/blob/main/docs/DEVELOPING.ru.md) · [BETA.ru.md](https://github.com/ltayshark0637/dsh-Shutdown-Guard/blob/main/docs/BETA.ru.md)
+
+贡献指南：[CONTRIBUTING.md](CONTRIBUTING.md)（[English](CONTRIBUTING.en.md) · [Русский](CONTRIBUTING.ru.md)）
+
 ## 许可
 
 [MIT](LICENSE)
