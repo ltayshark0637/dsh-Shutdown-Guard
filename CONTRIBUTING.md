@@ -42,7 +42,7 @@
 
 - Node **≥ 22.19**（`package.json` 的 `engines` 写死了这个下限）。
 - **无第三方依赖**：`npm install` 只是为了跑脚本时依赖树存在，不需要构建步骤，也没有 `dist`。
-- 平台：Windows 已完整验证；macOS / Linux 已实现，但尚未真机实测（见 [`docs/BETA.md`](docs/BETA.md) 的已知限制）。
+- 平台：Windows 已完整验证；macOS 已真机验证「关机」（有应用阻止时会被系统拦下）；Linux 只有代码与断言覆盖（见 [`docs/BETA.md`](docs/BETA.md) 的已知限制）。
 
 ## 5. 跑测试
 

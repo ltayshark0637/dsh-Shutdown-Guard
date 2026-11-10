@@ -26,7 +26,7 @@ dsh plugin --profile web add dsh-shutdown-guard
 内测版要显式写版本号，不带版本号装到的仍是稳定版 `1.6.0`：
 
 ```bash
-dsh plugin --profile web add dsh-shutdown-guard@1.6.1-beta.2
+dsh plugin --profile web add dsh-shutdown-guard@1.6.1-beta.3
 ```
 
 或者直接从 GitHub 装：
@@ -84,7 +84,7 @@ A：服务端和客户端都要重启 DSH 才加载新代码，本机 HMR 对本
 A：分平台说，别只看一句话：
 
 - **Windows**：完整验证，包括真实执行关机 / 重启 / 睡眠。
-- **macOS**：命令已能真正送达系统并触发关机流程（Apple Silicon / macOS 27.2 / DSH Desktop 实测）；若有应用正在阻止关机（终端跑着长命令、编辑器有未保存文档），系统会像手动关机一样拦下。重启、注销、睡眠尚未真机验证。
+- **macOS**：**「关机」已真机验证能真正执行**（Apple Silicon / macOS 27.2 / DSH Desktop，插件 `1.6.1-beta.3`）：插件发出命令 → 系统接受 → 机器实际关机。**前提是没有应用阻止关机** —— 终端跑着前台命令、编辑器有未保存文档时，macOS 会像手动点苹果菜单「关机」一样拦下并等待确认。重启、注销、睡眠、休眠尚未真机验证。
 - **Linux**：只到代码与断言覆盖，**尚未真机实测**。
 
 在 macOS 上，探测阶段报的是 `"unknown"` 而不是 `true`：系统可能在真正执行的那一刻才做决定。`"unknown"` 表示「可以武装，但那一刻由系统拍板」，不是坏了。

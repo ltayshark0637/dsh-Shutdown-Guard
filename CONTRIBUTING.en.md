@@ -42,7 +42,7 @@ The easiest mistake is assuming the copy lives in the i18n file. Three entry poi
 
 - Node **≥ 22.19** (pinned in `package.json` under `engines`).
 - **No third-party dependencies**: `npm install` only exists so the dependency tree is present for scripts; there is no build step and no `dist`.
-- Platforms: Windows is fully verified; macOS and Linux are implemented but not yet tested on real hardware (see the known limitations in [`docs/BETA.en.md`](docs/BETA.en.md)).
+- Platforms: Windows is fully verified; macOS has been verified to shut down on real hardware (the system holds it when an app blocks shutdown); Linux is covered by code and assertions only (see the known limitations in [`docs/BETA.en.md`](docs/BETA.en.md)).
 
 ## 5. Running the tests
 

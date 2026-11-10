@@ -26,7 +26,7 @@ dsh plugin --profile web add dsh-shutdown-guard
 The beta needs an explicit version; without one you get the stable `1.6.0`:
 
 ```bash
-dsh plugin --profile web add dsh-shutdown-guard@1.6.1-beta.2
+dsh plugin --profile web add dsh-shutdown-guard@1.6.1-beta.3
 ```
 
 Or straight from GitHub:
@@ -84,7 +84,7 @@ A: Both the host and the client bundle load only when DSH starts; HMR does not a
 A: Per platform, and the distinction matters:
 
 - **Windows**: fully verified, including actually running shutdown / restart / sleep.
-- **macOS**: the command really reaches the system and starts the shutdown flow (measured on Apple Silicon / macOS 27.2 / DSH Desktop); if an app is blocking shutdown (a long-running command in a terminal, an editor with unsaved changes), the system stops it the same way it stops a manual shutdown. Restart, sign out and sleep have **not** been verified on real hardware yet.
+- **macOS**: **shutdown has been verified on real hardware — it actually shut the machine down** (Apple Silicon / macOS 27.2 / DSH Desktop, plugin `1.6.1-beta.3`): the plugin sent the command, the system accepted it, and the machine powered off. **Provided no app is blocking shutdown** — a terminal running a foreground command or an editor with unsaved changes makes macOS stop it and wait for confirmation, exactly like a manual "Shut Down" from the Apple menu. Restart, sign out, sleep and hibernate have **not** been verified on real hardware yet.
 - **Linux**: covered by code and assertions only — **no real-hardware test yet**.
 
 On macOS, probing reports `"unknown"` rather than `true`: the system may only decide at the moment of execution. `"unknown"` means "you can arm with it, but the OS decides at that moment" — it is not a fault.

@@ -126,8 +126,8 @@ Notes:
 ## 7. Platforms and the failure surface
 
 - **Platforms**: win32, macOS and Linux now all mount through the same path — the action table has a row ready for each platform, and `apply()` keeps only one defensive early return (triggered only when a platform has no `shutdown` row at all; currently unreachable, and `log.platformUnsupported` stays in the message catalog).
-  - **Three levels of real-world evidence**: Windows is **fully verified, including real execution**; on macOS the **whole command path has been exercised on real hardware** (gate → timer/recount → `spawn` → the system accepts the command; Apple Silicon / macOS 27.2 / DSH Desktop) — the system did enter its shutdown flow, and that run was stopped by a still-running terminal holding a foreground process, so the machine did not power off; **restart / sign out / sleep / hibernate have not been verified on real hardware**; Linux is **covered by code and assertions only, with no real-hardware test**.
-  - The macOS interruption is not the plugin's fault: the system first checks whether an app claims to be busy, so a terminal running a foreground command or an editor with unsaved changes makes it wait for confirmation — exactly like a manual "Shut Down" from the Apple menu being stopped. Forcing it unconditionally would need root (`shutdown -h now`), and the plugin deliberately does not touch privilege escalation.
+  - **Three levels of real-world evidence**: Windows is **fully verified, including real execution**; on macOS **shutdown has been verified and the machine actually powered off** (gate → timer/recount → `spawn` → the system accepts the command → power off; Apple Silicon / macOS 27.2 / DSH Desktop), **provided no app is blocking shutdown**; **restart / sign out / sleep / hibernate have not been verified on real hardware**; Linux is **covered by code and assertions only, with no real-hardware test**.
+  - Being stopped on macOS is not the plugin's fault: the system first checks whether an app claims to be busy, so a terminal running a foreground command or an editor with unsaved changes makes it wait for confirmation — exactly like a manual "Shut Down" from the Apple menu being stopped; clear the foreground apps and it shuts down normally. Forcing it unconditionally would need root (`shutdown -h now`), and the plugin deliberately does not touch privilege escalation.
   - macOS `lock` has no reliable CLI (`displaysleepnow` only blanks the display, and ⌃⌘Q needs accessibility permission), so it reports `unsupported-on-platform` explicitly rather than half-locking; macOS `hibernate` has no user-level command and degrades to `pmset sleepnow`.
   - Linux `signout` uses `loginctl terminate-user`, which also ends DSH itself (DSH runs inside that user session).
   - On non-win32, every action whose command can be resolved reports availability as `'unknown'`: TCC / polkit may refuse at the last moment, and reporting `true` would be a lie. `actionReadyNow()` only treats `false` as unavailable, so `'unknown'` **is armable** — it means the OS is still the decider, not that something is broken.
@@ -142,7 +142,7 @@ lib/          source of truth: host, card, i18n
 cordis.patch.yml  factory patch
 test/         assertions (host.test.mjs / client.test.cjs)
 scripts/      screenshots, demo page, icons, release helpers
-docs/         maintainer docs: ARCHITECTURE, CONFIG, DEVELOPING, BETA, RELEASE-NOTES-STYLE; the first four also ship an `.en.md` translation (RELEASE-NOTES-STYLE is Chinese only)
+docs/         maintainer docs: ARCHITECTURE, CONFIG, DEVELOPING, BETA, RELEASE-NOTES-STYLE; the first four ship Chinese, an `.en.md` English version and a `.ru.md` Russian version (RELEASE-NOTES-STYLE is Chinese only)
 data/         runtime data (config.json / ui.json / events.log / scripts/), never committed
 ```
 
