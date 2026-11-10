@@ -126,7 +126,8 @@ off ──武装──▶ armed ──有后台任务──▶ hold ──任务
 ## 7. 平台与失败面
 
 - **平台**：win32、macOS、Linux 现在都按同一条路径挂载 —— 动作表为每个平台备好一行，`apply()` 里只剩一条防御性早退（某平台连 `shutdown` 行都没有时才触发，目前不可达，`log.platformUnsupported` 保留在文案目录里）。
-  - **三档实测程度**：Windows **完整验证，含真实执行**；macOS **已验证挂载、动作能力表与 `/state` 契约**（真机 M2 / macOS 27.2 / DSH Desktop，只读验收 8/8 一致），**真实执行未验证**；Linux **仅代码与断言覆盖，未真机实测**。
+  - **三档实测程度**：Windows **完整验证，含真实执行**；macOS **命令链路已真机走通**（判定闸 → 定时器/补算 → `spawn` → 系统接受指令；Apple Silicon / macOS 27.2 / DSH Desktop）—— 系统确实进入了关机流程，那一次被仍在运行的终端（前台有进程）拦下，最终没关成；**重启 / 注销 / 睡眠 / 休眠尚未真机验证**；Linux **仅代码与断言覆盖，未真机实测**。
+  - macOS 的关机拦下不是插件的问题：系统会先看有没有应用声明「我正在忙」，终端跑着前台命令、编辑器有未保存文档时，系统就等确认，与手动点苹果菜单「关机」被拦是同一种情况。要无条件执行得走 root（`shutdown -h now`），插件刻意不碰提权。
   - macOS `lock` 没有可靠 CLI（`displaysleepnow` 只是熄屏，⌃⌘Q 需要辅助功能权限），明确报 `unsupported-on-platform`，不半锁；macOS `hibernate` 没有用户级命令，降级为 `pmset sleepnow`。
   - Linux `signout` 用 `loginctl terminate-user`，会连带结束 DSH 自己（DSH 跑在该用户会话里）。
   - 非 win32 上凡是能解析到命令的动作，可用性一律报 `'unknown'`：TCC / polkit 可能在最后一刻拒绝，报 `true` 就是撒谎。`actionReadyNow()` 只把 `false` 当不可用，所以 `'unknown'` **是可武装的** —— 它表示「系统仍是否决方」，不是坏了。

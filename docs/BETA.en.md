@@ -16,7 +16,7 @@
 npm i -g dsh-shutdown-guard@1.6.1-beta.2
 ```
 
-After installing, **fully quit DSH and start it again**. The client bundle is compiled into the module graph only at startup; refreshing the page does not load new code.
+After installing, **fully quit DSH and start it again** (on macOS, quit with ⌘Q — closing the window or refreshing the page does not count). The client bundle is compiled into the module graph only at startup, so closing the window or refreshing never loads new code; the same applies after you change code or upgrade the plugin.
 
 If beta.1 is already installed, upgrade to beta.2 first and test against this guide — every item and expected behaviour here describes beta.2.
 
@@ -35,6 +35,8 @@ Upgrading from beta.1 to beta.2 **needs no manual migration**: the config schema
 ## 3. What to test in this version
 
 Each item is written as "how to act / what you should see / what it looks like when it fails". Report results as described in section 5.
+
+**Arm the card first.** The plugin does not start a countdown just because a task finished — the order is "arm the card, then run the work". If you never arm it, nothing happens no matter how long you wait.
 
 ### 3.1 Uploading a script
 
@@ -69,16 +71,17 @@ Each item is written as "how to act / what you should see / what it looks like w
 ### 3.6 Three platforms
 
 - **Windows**: fully verified; it is the primary test platform.
-- **macOS**: read-only acceptance has been run on real hardware (M2 / macOS 27.2 / DSH Desktop) — mounting, the action capability table and the `/state` contract all matched (8/8). **What is not verified is real execution** (shutdown / restart / sign out / sleep were never triggered), and the first-run automation (TCC) prompt was not covered either. Feedback is still welcome here, especially "what happens when you actually press it".
+- **macOS**: the **whole plugin-side path has been exercised on real hardware** (Apple Silicon / macOS 27.2 / DSH Desktop, plugin `1.6.1-beta.3`: arm → task finishes → countdown → command sent → the system accepts it and enters its shutdown flow). That run was then stopped by a still-running terminal holding a foreground process, so the machine did not power off — see the first item in section 4. **Restart, sign out, sleep and hibernate have not been verified on real hardware.**
 - **Linux**: **no real-hardware test yet**; only code and assertions cover it. If you have a machine to hand, please report whether it installs, whether it mounts, and whether the availability decisions in the action area match your expectations.
 
 ## 4. Known limitations (read this before deciding something is a bug)
 
+- **On macOS the shutdown gets stopped by the system**: macOS first checks whether an app claims to be busy. A terminal running a foreground command, or an editor with unsaved documents, makes it hold and wait for confirmation — exactly the same thing that happens when a manual "Shut Down" from the Apple menu is stopped, and not a sign that the plugin failed to send the command. Running it unconditionally would need root (`shutdown -h now`), and the plugin deliberately does not touch privilege escalation. Stop long-running terminal commands before testing.
 - **The countdown is counted by the plugin itself.** If DSH is killed or crashes during the countdown, the action **will not** run. The old version used a system timer (`shutdown /t N`) and would still have shut down in that case. This is a deliberate trade-off: better to miss a shutdown than to shut down wrongly.
 - Scripts run with **your current user's permissions**; the plugin **does not review** script content and makes no guarantee about its safety.
 - `restart-dsh` is listed but **greyed out**: restarting DSH needs `app.relaunch()` from the Electron main process, which the plugin cannot reach.
 - **macOS lock is unavailable**: it reports "unsupported" explicitly and never half-locks.
-- **On macOS, "available but still unknown" is normal**: an action whose command resolves reports `"unknown"` + `needs-elevation`, because TCC may refuse at the moment of execution. `"unknown"` can be armed, but it is not a promise that it will succeed.
+- **On macOS, "available but still unknown" is normal**: an action whose command resolves reports `"unknown"` + `needs-elevation`, because the system may only decide at the moment of execution. `"unknown"` can be armed, but it is not a promise that it will succeed. On real hardware the "command delivered, system entered its shutdown flow" path has been exercised once; **restart / sign out / sleep / hibernate are still unverified**.
 - **Linux sign-out also ends DSH itself** (DSH runs inside that user session), so using it to test sign-out shuts DSH down along with it.
 - Script stdout / stderr are each **truncated to 4096 bytes**; anything beyond that is not visible.
 - Scripts live in the plugin's writable data directory (`data/scripts/`), not in the npm package directory; upgrading the plugin does not take them away.

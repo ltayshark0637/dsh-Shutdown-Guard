@@ -84,10 +84,10 @@ A: Both the host and the client bundle load only when DSH starts; HMR does not a
 A: Per platform, and the distinction matters:
 
 - **Windows**: fully verified, including actually running shutdown / restart / sleep.
-- **macOS**: verified on real hardware (M2 / macOS 27.2 / DSH Desktop) that the plugin mounts, that the action capability table is right, and that `/state` matches the contract; **actual execution** of shutdown / restart / sign out / sleep is **not** verified, and neither is the first-run automation (TCC) prompt.
+- **macOS**: the command really reaches the system and starts the shutdown flow (measured on Apple Silicon / macOS 27.2 / DSH Desktop); if an app is blocking shutdown (a long-running command in a terminal, an editor with unsaved changes), the system stops it the same way it stops a manual shutdown. Restart, sign out and sleep have **not** been verified on real hardware yet.
 - **Linux**: covered by code and assertions only — **no real-hardware test yet**.
 
-On macOS, an action whose command resolves reports `"unknown"` rather than `true`: TCC may refuse at the moment of execution, so claiming `true` during probing would be a lie. `"unknown"` means "you can arm with it, but the OS may still say no" — it is not a fault.
+On macOS, probing reports `"unknown"` rather than `true`: the system may only decide at the moment of execution. `"unknown"` means "you can arm with it, but the OS decides at that moment" — it is not a fault.
 
 ## More
 
