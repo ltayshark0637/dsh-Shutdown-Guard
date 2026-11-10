@@ -1,7 +1,7 @@
+# Локальная разработка
+
 > Оригинал на китайском: [DEVELOPING.md](DEVELOPING.md)
 > English version: [DEVELOPING.en.md](DEVELOPING.en.md)
-
-# Локальная разработка
 
 ## 1. Без шага сборки
 
