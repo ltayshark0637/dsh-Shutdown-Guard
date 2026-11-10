@@ -1,11 +1,12 @@
 # Shutdown Guard · Выключение после завершения задач
 [中文](README.md) · [English](README.en.md) · **Русский**
 
-Стабильная `v1.6.0` · бета `v1.6.1-beta.2` (закрытая бета) · [История изменений](https://github.com/ltayshark0637/dsh-Shutdown-Guard/blob/main/CHANGELOG.md)
+Стабильная `v1.6.0` · бета `v1.6.1-beta.2` · [История изменений](https://github.com/ltayshark0637/dsh-Shutdown-Guard/blob/main/CHANGELOG.md)
 
 <p align="center"><img src="https://ltayshark0637.github.io/dsh-Shutdown-Guard/screenshots/banner.png" width="880" alt="Shutdown Guard — выключение после завершения всех задач, ночная карточка на боковой панели"></p>
 
 [![DSH](https://img.shields.io/badge/DeepSeek-Harness-blue)](https://github.com/deepseek-ai/deepseek-harness) [![Требуемая версия DSH](https://img.shields.io/badge/DSH-%E2%89%A50.1.5--rc.1-4a90d9)](https://github.com/deepseek-ai/deepseek-harness) [![license](https://img.shields.io/npm/l/dsh-shutdown-guard.svg)](LICENSE) [![downloads](https://img.shields.io/npm/dm/dsh-shutdown-guard.svg)](https://www.npmjs.com/package/dsh-shutdown-guard) [![demo](https://img.shields.io/badge/%E2%96%B6-%D0%B8%D0%BD%D1%82%D0%B5%D1%80%D0%B0%D0%BA%D1%82%D0%B8%D0%B2%D0%BD%D0%BE%D0%B5%20%D0%B4%D0%B5%D0%BC%D0%BE-d97757)](https://ltayshark0637.github.io/dsh-Shutdown-Guard/demo.html)
+
 [![npm](https://img.shields.io/badge/npm-dsh--shutdown--guard-CB3837?logo=npm&logoColor=white)](https://www.npmjs.com/package/dsh-shutdown-guard) [![awesome-dsh-plugin: в каталоге](https://awesome-dsh-plugin.com/badge.svg)](https://awesome-dsh-plugin.com/p/ltayshark0637/dsh-Shutdown-Guard/) [![dsh-plugin.org: в каталоге](https://dsh-plugin.org/badges/listed.svg)](https://dsh-plugin.org/plugins/ltayshark0637/dsh-shutdown-guard) [![dpharness: в каталоге](https://img.shields.io/badge/dpharness-%D0%B2%20%D0%BA%D0%B0%D1%82%D0%B0%D0%BB%D0%BE%D0%B3%D0%B5-6f42c1)](https://dpharness.com/plugin/ltayshark0637/dsh-Shutdown-Guard) [![dshbase: проверено установкой](https://dshbase.com/badges/dsh-shutdown-guard.svg)](https://dshbase.com/plugins/dsh-shutdown-guard/) [![dsh.so: проверено запуском](https://cdn.dsh.so/badge/dsh-shutdown-guard.svg)](https://www.dsh.so/artifact/dsh-shutdown-guard/?ref=badge)
 
 Добавляет в боковую панель DeepSeek Harness карточку «выключить, когда все задачи готовы» — сразу под «Центром навыков» и над списком сессий, в реальном времени следуя за состоянием задач.
