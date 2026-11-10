@@ -1,11 +1,11 @@
 # Shutdown Guard · Shut down when tasks finish
-[中文](README.md) · **English** · [Русский](README.ru.md)
+[中文](https://github.com/ltayshark0637/dsh-Shutdown-Guard/blob/main/README.md) · **English** · [Русский](https://github.com/ltayshark0637/dsh-Shutdown-Guard/blob/main/README.ru.md)
 
 Stable `v1.6.0` · beta `v1.6.1-beta.2` · [Changelog](https://github.com/ltayshark0637/dsh-Shutdown-Guard/blob/main/CHANGELOG.md)
 
 <p align="center"><img src="https://ltayshark0637.github.io/dsh-Shutdown-Guard/screenshots/banner.png" width="880" alt="Shutdown Guard — shut down automatically when every task is done, a night-watch card in the sidebar"></p>
 
-[![DSH](https://img.shields.io/badge/DeepSeek-Harness-blue)](https://github.com/deepseek-ai/deepseek-harness) [![DSH requirement](https://img.shields.io/badge/DSH-%E2%89%A50.1.5--rc.1-4a90d9)](https://github.com/deepseek-ai/deepseek-harness) [![license](https://img.shields.io/npm/l/dsh-shutdown-guard.svg)](LICENSE) [![downloads](https://img.shields.io/npm/dm/dsh-shutdown-guard.svg)](https://www.npmjs.com/package/dsh-shutdown-guard) [![demo](https://img.shields.io/badge/%E2%96%B6-interactive%20demo-d97757)](https://ltayshark0637.github.io/dsh-Shutdown-Guard/demo.html)
+[![DSH](https://img.shields.io/badge/DeepSeek-Harness-blue)](https://github.com/deepseek-ai/deepseek-harness) [![DSH requirement](https://img.shields.io/badge/DSH-%E2%89%A50.1.5--rc.1-4a90d9)](https://github.com/deepseek-ai/deepseek-harness) [![license](https://img.shields.io/npm/l/dsh-shutdown-guard.svg)](https://github.com/ltayshark0637/dsh-Shutdown-Guard/blob/main/LICENSE) [![downloads](https://img.shields.io/npm/dm/dsh-shutdown-guard.svg)](https://www.npmjs.com/package/dsh-shutdown-guard) [![demo](https://img.shields.io/badge/%E2%96%B6-interactive%20demo-d97757)](https://ltayshark0637.github.io/dsh-Shutdown-Guard/demo.html)
 
 [![npm](https://img.shields.io/badge/npm-dsh--shutdown--guard-CB3837?logo=npm&logoColor=white)](https://www.npmjs.com/package/dsh-shutdown-guard) [![awesome-dsh-plugin listed](https://awesome-dsh-plugin.com/badge.svg)](https://awesome-dsh-plugin.com/p/ltayshark0637/dsh-Shutdown-Guard/) [![dsh-plugin.org listed](https://dsh-plugin.org/badges/listed.svg)](https://dsh-plugin.org/plugins/ltayshark0637/dsh-shutdown-guard) [![dpharness listed](https://img.shields.io/badge/dpharness-listed-6f42c1)](https://dpharness.com/plugin/ltayshark0637/dsh-Shutdown-Guard) [![dshbase install-tested](https://dshbase.com/badges/dsh-shutdown-guard.svg)](https://dshbase.com/plugins/dsh-shutdown-guard/) [![dsh.so runtime-tested](https://cdn.dsh.so/badge/dsh-shutdown-guard.svg)](https://www.dsh.so/artifact/dsh-shutdown-guard/?ref=badge)
 
@@ -89,8 +89,8 @@ The technical details live in their own files: [architecture and gating](https:/
 
 Also available in [Chinese](https://github.com/ltayshark0637/dsh-Shutdown-Guard/blob/main/docs/ARCHITECTURE.md) and [Russian](https://github.com/ltayshark0637/dsh-Shutdown-Guard/blob/main/docs/ARCHITECTURE.ru.md).
 
-Contributing: [CONTRIBUTING.en.md](CONTRIBUTING.en.md) (also [中文](CONTRIBUTING.md) · [Русский](CONTRIBUTING.ru.md))
+Contributing: [CONTRIBUTING.en.md](https://github.com/ltayshark0637/dsh-Shutdown-Guard/blob/main/CONTRIBUTING.en.md) (also [中文](https://github.com/ltayshark0637/dsh-Shutdown-Guard/blob/main/CONTRIBUTING.md) · [Русский](https://github.com/ltayshark0637/dsh-Shutdown-Guard/blob/main/CONTRIBUTING.ru.md))
 
 ## License
 
-[MIT](LICENSE)
+[MIT](https://github.com/ltayshark0637/dsh-Shutdown-Guard/blob/main/LICENSE)
