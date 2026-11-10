@@ -841,8 +841,9 @@ void (async () => {
       assert.strictEqual(dialog(), null, 'a successful confirmation closes the dialog')
 
       // 5. A confirmed script is shown as such and still lets the user reread
-      // the disclaimer through the same dialog.
-      state.profiles[0].scriptAck = { sha256: 'a'.repeat(64), at: Date.now() }
+      // the disclaimer through the same dialog. The fixture mirrors the real
+      // /state payload: { at, sha256 } — the hash is what the client compares.
+      state.profiles[0].scriptAck = { at: Date.now(), sha256: 'a'.repeat(64) }
       await repaint()
       const viewBtn = findNode('dsp-ackview')
       assert.ok(viewBtn, 'a confirmed script offers the details link')
@@ -860,6 +861,38 @@ void (async () => {
       global.fetch = realFetch
     }
     calls.push('script-ack-payload-ok')
+  }
+
+  // 12a. The real /state ack carries { at, sha256 }. A payload trimmed to `at`
+  // alone (the regression that made "confirmed" vanish after two seconds) must
+  // not be treated as confirmed: the client compares the sha, it never guesses.
+  state.customEnabled = true
+  state.activeProfileId = 'default'
+  state.profiles = [{
+    id: 'default',
+    label: '默认配置',
+    countdownSec: 60,
+    action: 'custom',
+    script: { name: 'ack.cmd', ext: 'cmd', bytes: 12, sha256: 'a'.repeat(64), savedAt: 1 },
+    scriptAck: { at: Date.now() },
+  }]
+  // Let the previous test's optimistic grace (1.4 s) expire so /state is adopted
+  // as-is; otherwise the in-flight config patch would re-add the full ack.
+  await new Promise((resolve) => setTimeout(resolve, 1450))
+  await repaint()
+  {
+    const findNode = (cls) => {
+      let found = null
+      walkNodes(settingsTree(), (n) => {
+        if (!found && n.props && typeof n.props.className === 'string' && n.props.className.split(/\s+/).includes(cls)) found = n
+      })
+      return found
+    }
+    assert.ok(findNode('dsp-ackopen'), 'an ack without the hash is not treated as confirmed')
+    assert.strictEqual(findNode('dsp-ackview'), null, 'the trimmed ack does not render the details link')
+    assert.strictEqual(cardEl().querySelector('.dsp-btn').disabled, true,
+      'the card stays blocked while the ack has no hash')
+    calls.push('script-ack-shape-ok')
   }
 
   // 12. Withdrawing consent is not deleting the script: the dialog's secondary

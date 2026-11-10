@@ -1621,7 +1621,13 @@ assert.strictEqual(routes.size, 0, 'disposer removes HTTP routes')
   st = await stateNow()
   const ackedProfile = st.profiles.find((p) => p.id === 'c1')
   assert.ok(ackedProfile.scriptAck && ackedProfile.scriptAck.at, 'the ack is stored with a timestamp')
-  // /state profiles deliberately publish only `{ at }`; the hash stays on disk.
+  // The client decides "confirmed" by comparing the ack hash with script.sha256,
+  // so /state must publish both fields. Trimming the ack to `{ at }` silently
+  // broke that comparison once; keep this shape pinned.
+  assert.strictEqual(typeof ackedProfile.scriptAck.sha256, 'string',
+    'the state publishes the ack hash for the client to compare')
+  assert.strictEqual(ackedProfile.scriptAck.sha256, st.script.sha256,
+    'the published ack hash is the host-computed script hash')
   assert.strictEqual(readCfg().profiles.find((p) => p.id === 'c1').scriptAck.sha256, st.script.sha256,
     'the stored ack carries the host-computed hash, not a client value')
   assert.strictEqual(st.scriptAckOk, true, 'the state agrees the current bytes are acknowledged')
