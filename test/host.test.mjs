@@ -1541,6 +1541,66 @@ assert.strictEqual(routes.size, 0, 'disposer removes HTTP routes')
   assert.strictEqual(st.actionReady, false, 'a scriptless custom action is not ready')
   calls.push('custom-script-still-saveable-ok')
 
+  // 51. A host that suspends long timers still owes the deadline: every request
+  // recomputes it (catchUp), but the command must leave exactly once and the
+  // fired transition must be logged once. The stub registers no callback, which
+  // is exactly the observed failure mode: HTTP keeps answering, no timer runs.
+  await postState('/disarm')
+  await postState('/config', { activeProfileId: 'c1' })
+  // 10s is the host's floor for countdownSec (normalizeProfile clamps 10..600);
+  // marginSec: 0 keeps the fired transition exactly 5s behind the deadline.
+  r = await postState('/config', {
+    updateProfile: { id: 'c1', patch: { action: 'shutdown', countdownSec: 10, marginSec: 0 } },
+  })
+  assert.strictEqual(r.status, 200, 'the short countdown profile is saved')
+  const realNow = Date.now
+  const realSetTimeout = ctx.setTimeout
+  let fakeNow = realNow()
+  let suspended = 0
+  Date.now = () => fakeNow
+  ctx.setTimeout = () => { suspended++; return () => {} }
+  try {
+    n = spawns.length
+    await postState('/arm')
+    statusHandler({ agent: rootAgent, status: 'idle' })
+    await flush()
+    st = await stateNow()
+    assert.strictEqual(st.state, 'countdown', 'the countdown is running while the timer is suspended')
+    assert.strictEqual(st.lastAction, null, 'nothing has been sent during the countdown')
+    assert.strictEqual(spawns.length, n, 'a suspended deadline timer sends nothing by itself')
+
+    // Past the deadline (countdownSec 10), no timer will ever run: only the
+    // requests can settle it.
+    fakeNow += 11000
+    for (let i = 0; i < 5; i++) await stateNow()
+    await flush()
+    assert.strictEqual(spawns.length, n + 1, 'five catch-up requests send the command exactly once')
+    st = await stateNow()
+    assert.strictEqual(st.lastAction && st.lastAction.action, 'shutdown', 'the catch-up path records the action')
+    assert.ok(Array.isArray(st.lastAction.argv) && st.lastAction.argv.length > 0,
+      'the catch-up path records the argv it sent')
+    assert.strictEqual(st.state, 'countdown', 'the fired state still waits for its own margin')
+
+    const firedBefore = (await eventsNow()).filter((e) => e.key === 'log.fired').length
+    fakeNow += 6000
+    st = await stateNow()
+    assert.strictEqual(st.state, 'fired', 'a suspended fired timer is caught up on the next request')
+    const firedAfter = (await eventsNow()).filter((e) => e.key === 'log.fired').length
+    assert.strictEqual(firedAfter - firedBefore, 1, 'log.fired is written exactly once')
+
+    // The countdown cancel copy is still true: every action is inline, so no
+    // `shutdown /a` is ever claimed (or needed) in any language.
+    for (const code of LANGS) {
+      assert.ok(!t(code, 'log.cancelledArmed').includes('shutdown /a'),
+        `${code} cancel copy does not claim a shutdown /a undo`)
+    }
+  } finally {
+    Date.now = realNow
+    ctx.setTimeout = realSetTimeout
+    await postState('/disarm')
+  }
+  calls.push('catch-up-after-suspended-timer-ok')
+
   mount()
 }
 
