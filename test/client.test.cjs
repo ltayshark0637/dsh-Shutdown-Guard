@@ -75,6 +75,12 @@ class El {
     parseHTML(this._html, this)
   }
   appendChild(child) { child.parentNode = this; this.children.push(child); return child }
+  removeChild(child) {
+    const i = this.children.indexOf(child)
+    if (i >= 0) this.children.splice(i, 1)
+    child.parentNode = null
+    return child
+  }
   insertBefore(child, ref) {
     child.parentNode = this
     const i = ref ? this.children.indexOf(ref) : -1
@@ -101,6 +107,7 @@ class El {
     this._listeners[type] = list.filter((f) => f !== fn)
   }
   getBoundingClientRect() { return { left: 0, top: 0, width: 0, height: 0, right: 0, bottom: 0 } }
+  focus() { try { document.activeElement = this } catch { /* document wiring comes later */ } }
   querySelector(sel) { return descendants(this).find((n) => matchSimple(n, sel)) || null }
   querySelectorAll(sel) { return descendants(this).filter((n) => matchSimple(n, sel)) }
 }
@@ -185,8 +192,13 @@ const document = {
   createElement: (tag) => new El(tag),
   querySelector(sel) { return matchSimple(region, sel) ? region : this.body.querySelector(sel) },
   querySelectorAll(sel) { return this.body.querySelectorAll(sel) },
-  addEventListener() {},
-  removeEventListener() {},
+  _listeners: {},
+  addEventListener(type, fn) { (this._listeners[type] || (this._listeners[type] = [])).push(fn) },
+  removeEventListener(type, fn) {
+    if (!this._listeners[type]) return
+    this._listeners[type] = this._listeners[type].filter((f) => f !== fn)
+  },
+  activeElement: null,
 }
 document.body.appendChild(region)
 
@@ -742,9 +754,9 @@ void (async () => {
   }
   calls.push('custom-hidden-without-profiles-ok')
 
-  // The consent checkbox must use the dedicated `ackScript` field when ticked
-  // and `scriptAck: null` in a profile patch when unticked. A stray `patch` or
-  // `ackScript` in the wrong direction is exactly the regression users hit.
+  // Consent is a full-screen confirmation dialog, not a checkbox. The dialog
+  // must be escapable without sending anything, and only its primary button may
+  // send the dedicated `ackScript` field.
   state.customEnabled = true
   state.activeProfileId = 'default'
   state.profiles = [{
@@ -757,30 +769,93 @@ void (async () => {
   }]
   await repaint()
   {
-    let ackBox = null
-    walkNodes(settingsTree(), (n) => {
-      if (n.type === 'input' && n.props && n.props.type === 'checkbox') ackBox = n
-    })
-    assert.ok(ackBox, 'the consent checkbox is rendered for a script')
+    const findNode = (cls) => {
+      let found = null
+      walkNodes(settingsTree(), (n) => {
+        if (!found && n.props && typeof n.props.className === 'string' && n.props.className.split(/\s+/).includes(cls)) found = n
+      })
+      return found
+    }
+    const dialog = () => document.body.querySelector('[role="dialog"]')
+    const errNode = () => (dialog() ? dialog().querySelector('.dsp-modal-err') : null)
+    const okBtn = () => (dialog() ? dialog().querySelector('.dsp-modal-ok') : null)
+    const esc = () => {
+      for (const fn of (document._listeners.keydown || []).slice()) fn({ key: 'Escape', preventDefault() {} })
+    }
     const bodies = []
     const realFetch = global.fetch
+    let failNext = false
     global.fetch = async (url, opts) => {
       if (opts && opts.body) bodies.push(JSON.parse(opts.body))
+      if (failNext) {
+        const error = 'scriptAck is written by ackScript'
+        return { ok: false, json: async () => ({ error, state: 'idle' }) }
+      }
       return { ok: true, json: async () => state }
     }
     try {
-      ackBox.props.onChange({ target: { checked: true } })
-      await settle()
-      assert.deepStrictEqual(bodies[0], { ackScript: { profileId: 'default' } },
-        'ticking the box sends ackScript only')
-      assert.ok(!('updateProfile' in bodies[0]) && !('patch' in bodies[0]),
-        'ticking never sends a profile patch')
+      const openBtn = findNode('dsp-ackopen')
+      assert.ok(openBtn, 'an unconfirmed script renders the confirm button')
+      assert.strictEqual(findNode('dsp-ackbox'), null, 'no checkbox remains in the script row')
 
-      ackBox.props.onChange({ target: { checked: false } })
+      // 1. Open: the dialog appears and the primary action owns the focus.
+      openBtn.props.onClick({ currentTarget: openBtn })
+      assert.ok(dialog(), 'clicking confirm opens the consent dialog')
+      assert.strictEqual(dialog().getAttribute('aria-modal'), 'true', 'the dialog is modal')
+      assert.strictEqual(document.activeElement, okBtn(), 'the primary action starts focused, not cancel')
+
+      // 2. Esc closes it without any request.
+      esc()
+      assert.strictEqual(dialog(), null, 'Esc closes the dialog')
+      assert.strictEqual(bodies.length, 0, 'Esc never sends a request')
+
+      // 2b. The backdrop does the same.
+      findNode('dsp-ackopen').props.onClick({ currentTarget: findNode('dsp-ackopen') })
+      assert.ok(dialog(), 'the dialog can be opened again')
+      const root = dialog()
+      for (const fn of (root._listeners.mousedown || []).slice()) fn({ target: root })
+      assert.strictEqual(dialog(), null, 'clicking the backdrop closes the dialog')
+      assert.strictEqual(bodies.length, 0, 'the backdrop never sends a request')
+
+      // 3. A failed confirmation keeps the dialog open and turns the primary
+      // action into a retry. Do not pin the wording of the error message.
+      failNext = true
+      findNode('dsp-ackopen').props.onClick({ currentTarget: findNode('dsp-ackopen') })
+      okBtn()._listeners.click[0]({ preventDefault() {} })
       await settle()
-      assert.deepStrictEqual(bodies[1], { updateProfile: { id: 'default', patch: { scriptAck: null } } },
-        'unticking clears scriptAck through a profile patch')
-      assert.ok(!('ackScript' in bodies[1]), 'unticking never sends ackScript')
+      assert.ok(dialog(), 'a failed confirmation leaves the dialog open')
+      assert.ok(errNode() && errNode().textContent.length > 0, 'the dialog shows an error')
+      assert.strictEqual(okBtn().textContent, clientText.zh['set.script.dialog.retry'],
+        'the primary button offers a retry')
+      failNext = false
+      esc()
+
+      // 4. Confirm sends ackScript only, then closes.
+      findNode('dsp-ackopen').props.onClick({ currentTarget: findNode('dsp-ackopen') })
+      okBtn()._listeners.click[0]({ preventDefault() {} })
+      await settle()
+      assert.deepStrictEqual(bodies[bodies.length - 1], { ackScript: { profileId: 'default' } },
+        'confirming sends ackScript only')
+      assert.ok(!('updateProfile' in bodies[bodies.length - 1]) && !('patch' in bodies[bodies.length - 1]),
+        'confirming never sends a profile patch')
+      assert.strictEqual(dialog(), null, 'a successful confirmation closes the dialog')
+
+      // 5. A confirmed script is shown as such and still lets the user reread
+      // the disclaimer through the same dialog.
+      state.profiles[0].scriptAck = { sha256: 'a'.repeat(64), at: Date.now() }
+      await repaint()
+      const viewBtn = findNode('dsp-ackview')
+      assert.ok(viewBtn, 'a confirmed script offers the details link')
+      let status = null
+      walkNodes(settingsTree(), (n) => {
+        if (n.props && typeof n.props.className === 'string' && n.props.className.includes('dsp-ackstatus')) status = n
+      })
+      assert.ok(status, 'the confirmed state is rendered')
+      const confirmedPrefix = clientText.zh['set.script.confirmed'].split('{time}')[0].trim()
+      assert.ok(flat(status, []).join('').includes(confirmedPrefix), 'the row reports the confirmation time')
+      viewBtn.props.onClick({ currentTarget: viewBtn })
+      assert.ok(dialog(), 'the details link reopens the dialog')
+      esc()
     } finally {
       global.fetch = realFetch
     }
