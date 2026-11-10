@@ -1,7 +1,7 @@
 # Shutdown Guard · Shut down when tasks finish
 [中文](https://github.com/ltayshark0637/dsh-Shutdown-Guard/blob/main/README.md) · **English** · [Русский](https://github.com/ltayshark0637/dsh-Shutdown-Guard/blob/main/README.ru.md)
 
-Stable `v1.6.0` · beta `v1.6.1-beta.2` · [Changelog](https://github.com/ltayshark0637/dsh-Shutdown-Guard/blob/main/CHANGELOG.md)
+Stable `v1.6.0` · beta `v1.6.1-beta.3` · [Changelog](https://github.com/ltayshark0637/dsh-Shutdown-Guard/blob/main/CHANGELOG.md)
 
 <p align="center"><img src="https://ltayshark0637.github.io/dsh-Shutdown-Guard/screenshots/banner.png" width="880" alt="Shutdown Guard — shut down automatically when every task is done, a night-watch card in the sidebar"></p>
 
