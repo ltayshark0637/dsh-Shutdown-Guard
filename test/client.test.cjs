@@ -399,6 +399,81 @@ void (async () => {
   // data-dsh-claude-palette (null = attribute absent). `hostLum` only controls
   // what the host surface resolves to, which the card reads through
   // --dsw-alias-bg-layer-1 / detectLum().
+  // Fresh sandbox whose theme comes from localStorage (`auto`) and whose host
+  // surface is light: the point is the card's own data-lum, not Claude Style.
+  function mountAutoClient(hostBg = '#ffffff') {
+    const localRegion = new El('div')
+    localRegion.setAttribute('class', 'regionArea')
+    const doc = {
+      head: new El('head'),
+      body: new El('body'),
+      documentElement: new El('html'),
+      createElement: (tag) => new El(tag),
+      querySelector(sel) { return matchSimple(localRegion, sel) ? localRegion : this.body.querySelector(sel) },
+      querySelectorAll(sel) { return this.body.querySelectorAll(sel) },
+      addEventListener() {},
+      removeEventListener() {},
+    }
+    doc.body.appendChild(localRegion)
+    const hostRgb = (value) => {
+      const m = /^#([0-9a-f]{6})$/i.exec(String(value))
+      return m
+        ? 'rgb(' + parseInt(m[1].slice(0, 2), 16) + ', ' + parseInt(m[1].slice(2, 4), 16) + ', ' + parseInt(m[1].slice(4, 6), 16) + ')'
+        : String(value)
+    }
+    const styleOf = (el) => {
+      if (el && el.tagName === 'span') {
+        const raw = (el.style && el.style.backgroundColor) || ''
+        if (raw.indexOf('var(--dsw-alias-bg-layer-1') === 0) {
+          return { backgroundColor: hostRgb(hostBg), getPropertyValue() { return '' } }
+        }
+      }
+      return { backgroundColor: hostRgb(hostBg), getPropertyValue() { return '' } }
+    }
+    const win = {
+      addEventListener() {}, removeEventListener() {}, open() {},
+      matchMedia: () => ({ matches: false, addEventListener() {}, removeEventListener() {}, addListener() {}, removeListener() {} }),
+      getComputedStyle: styleOf,
+    }
+    let captured = null
+    win.__ModuleLoader__ = { load(opts) { captured = opts } }
+    const sandbox = {
+      window: win,
+      document: doc,
+      getComputedStyle: styleOf,
+      localStorage: {
+        getItem: (key) => (key === 'dsh-shutdown-guard.theme' ? 'auto' : key === 'dsh-shutdown-guard.variant' ? 'B' : null),
+        setItem() {},
+      },
+      fetch: async () => ({
+        ok: true,
+        json: async () => ({ armed: false, state: 'idle', ui: { theme: 'auto', variant: 'B' }, lang: 'zh', language: 'zh' }),
+      }),
+      setInterval: () => 0,
+      clearInterval() {},
+      setTimeout: () => 0,
+      clearTimeout() {},
+      MutationObserver: class { observe() {} disconnect() {} takeRecords() { return [] } },
+      requestAnimationFrame: () => 0,
+      console: { log() {}, warn() {}, error() {} },
+    }
+    vm.createContext(sandbox)
+    vm.runInContext(clientSrc, sandbox)
+    assert.ok(captured && captured.factory, 'auto-theme sandbox loads the client bundle')
+    const react = {
+      createElement: (type, props, ...children) => ({ type, props: props || {}, children }),
+      useSyncExternalStore: (subscribe, get) => { subscribe(() => {}); return get() },
+    }
+    captured.factory(() => react).apply({ effect(fn) { fn() }, slots: { inject() {}, register() {} } })
+    const card = () => localRegion.querySelector('.dsp-card')
+    const click = (sel) => {
+      const el = localRegion.querySelector(sel)
+      assert.ok(el, 'auto-theme card has ' + sel)
+      for (const fn of (el._listeners.click || [])) fn({})
+    }
+    return { card, click }
+  }
+
   function mountClient(opts = {}) {
     const palette = Object.prototype.hasOwnProperty.call(opts, 'palette') ? opts.palette : 'claude'
     const hostBg = opts.hostBg || (opts.hostLum === 'light' ? '#ffffff' : '#212121')
@@ -666,6 +741,23 @@ void (async () => {
       'the placeholder explains why custom is unavailable')
   }
   calls.push('custom-hidden-without-profiles-ok')
+
+  // 13. A rebuild (here: folding the card) creates a brand-new node with no
+  // data-lum. The probe is throttled for 3 s, so without a cached answer the
+  // fresh node would show the dark default until the next window. The rebuild
+  // must carry the light surface over immediately — no clock advance here.
+  {
+    const auto = mountAutoClient('#ffffff')
+    const before = auto.card()
+    assert.strictEqual(before.getAttribute('data-lum'), 'light',
+      'the first paint marks a light host surface')
+    auto.click('.dsp-chead')
+    const after = auto.card()
+    assert.notStrictEqual(after, before, 'folding rebuilds the card node')
+    assert.strictEqual(after.getAttribute('data-lum'), 'light',
+      'the rebuilt card keeps the light surface without waiting for the next probe')
+  }
+  calls.push('surface-kept-across-rebuild-ok')
 
   console.log('client bundle smoke: PASS')
   console.log('PASS: ' + calls.join(', '))
