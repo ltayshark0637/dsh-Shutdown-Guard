@@ -862,6 +862,78 @@ void (async () => {
     calls.push('script-ack-payload-ok')
   }
 
+  // 12. Withdrawing consent is not deleting the script: the dialog's secondary
+  // action clears only `scriptAck`, the row returns to "not confirmed" at once,
+  // and the card goes back to its blocked state while the script itself stays.
+  state.customEnabled = true
+  state.activeProfileId = 'default'
+  state.profiles = [{
+    id: 'default',
+    label: '默认配置',
+    countdownSec: 60,
+    action: 'custom',
+    script: { name: 'ack.cmd', ext: 'cmd', bytes: 12, sha256: 'a'.repeat(64), savedAt: 1 },
+    scriptAck: { sha256: 'a'.repeat(64), at: Date.now() },
+  }]
+  await repaint()
+  {
+    const findNode = (cls) => {
+      let found = null
+      walkNodes(settingsTree(), (n) => {
+        if (!found && n.props && typeof n.props.className === 'string' && n.props.className.split(/\s+/).includes(cls)) found = n
+      })
+      return found
+    }
+    const dialog = () => document.body.querySelector('[role="dialog"]')
+    const bodies = []
+    const realFetch = global.fetch
+    global.fetch = async (url, opts) => {
+      if (opts && opts.body) bodies.push(JSON.parse(opts.body))
+      return { ok: true, json: async () => state }
+    }
+    try {
+      const scriptSha = state.profiles[0].script.sha256
+      const arm = cardEl().querySelector('.dsp-btn')
+      assert.strictEqual(arm.disabled, false, 'an acknowledged custom script lets the card arm')
+
+      const viewBtn = findNode('dsp-ackview')
+      assert.ok(viewBtn, 'the confirmed script offers the details link')
+      viewBtn.props.onClick({ currentTarget: viewBtn })
+      assert.ok(dialog(), 'the details link opens the consent dialog')
+      const withdraw = dialog().querySelector('.dsp-modal-withdraw')
+      const close = dialog().querySelector('.dsp-modal-close')
+      assert.ok(withdraw && close, 'a confirmed script offers withdraw and close')
+      assert.strictEqual(withdraw.textContent, clientText.zh['set.script.dialog.withdraw'],
+        'the secondary action is withdraw, not cancel')
+      assert.strictEqual(close.textContent, clientText.zh['set.script.dialog.close'],
+        'the primary action is close, not confirm')
+      assert.strictEqual(dialog().querySelector('.dsp-modal-ok'), null,
+        'a confirmed script no longer offers the acknowledge action')
+
+      withdraw._listeners.click[0]({ preventDefault() {} })
+      await settle()
+      assert.deepStrictEqual(bodies[bodies.length - 1],
+        { updateProfile: { id: 'default', patch: { scriptAck: null } } },
+        'withdrawing clears only the acknowledgement')
+      assert.ok(!('ackScript' in bodies[bodies.length - 1]),
+        'withdrawing never re-sends ackScript')
+      assert.strictEqual(dialog(), null, 'a successful withdrawal closes the dialog')
+
+      await repaint()
+      assert.ok(findNode('dsp-ackopen'), 'the row immediately returns to the confirm button')
+      const status = findNode('dsp-ackstatus')
+      assert.ok(!status || !status.props.className.includes('is-ok'),
+        'the row no longer reports a confirmed state')
+      assert.strictEqual(state.profiles[0].script.sha256, scriptSha,
+        'withdrawing keeps the script intact')
+      assert.strictEqual(cardEl().querySelector('.dsp-btn').disabled, true,
+        'the card returns to the blocked state until it is confirmed again')
+    } finally {
+      global.fetch = realFetch
+    }
+    calls.push('script-withdraw-keeps-script-ok')
+  }
+
   // 13. A rebuild (here: folding the card) creates a brand-new node with no
   // data-lum. The probe is throttled for 3 s, so without a cached answer the
   // fresh node would show the dark default until the next window. The rebuild
