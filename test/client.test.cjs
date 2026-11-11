@@ -759,9 +759,11 @@ void (async () => {
   // its own verb that never deletes the script. The fixture mirrors the real
   // /state payload: top-level `scripts[]` plus the compatibility projection.
   const LIB_SHA = 'a'.repeat(64)
+  // The fixture mirrors the real /state entry, including the runnability pair
+  // the host now reports per script.
   const libScript = (over) => Object.assign({
     id: 's1', name: 'ack.cmd', ext: 'cmd', bytes: 12, sha256: LIB_SHA,
-    savedAt: 1, ackOk: false, ackAt: null, usedBy: 1,
+    savedAt: 1, ackOk: false, ackAt: null, usedBy: 1, runnable: true, reason: null,
   }, over || {})
   const libProfile = (sc) => ({
     id: 'default', label: '默认配置', countdownSec: 60, action: 'custom',
@@ -984,6 +986,84 @@ void (async () => {
     assert.strictEqual(cardEl().querySelector('.dsp-btn').disabled, true,
       'the card stays blocked while the ack has no hash')
     calls.push('script-ack-shape-ok')
+  }
+
+  // 12b. The dot is a state, not a decoration: filled blue means the script this
+  // profile runs, hollow blue means acknowledged and safe to switch to, yellow
+  // means not confirmed yet, grey means the host says it cannot run here. A grey
+  // row must refuse to select, because arming it would only fail at the deadline.
+  {
+    const findAll = (cls) => {
+      const out = []
+      walkNodes(settingsTree(), (n) => {
+        if (n.props && typeof n.props.className === 'string'
+          && n.props.className.split(/\s+/).includes(cls)) out.push(n)
+      })
+      return out
+    }
+    const dotClasses = () => findAll('dsp-libdot').map(
+      (n) => n.props.className.split(/\s+/).filter((c) => c.indexOf('is-') === 0).join('+'))
+
+    setLib([libScript({ ackOk: false })])
+    await repaint()
+    assert.deepStrictEqual(dotClasses(), ['is-need'], 'an unconfirmed script shows the yellow dot')
+
+    setLib([libScript({ ackOk: true, ackAt: Date.now() })])
+    await repaint()
+    assert.deepStrictEqual(dotClasses(), ['is-use'], 'the selected, confirmed script shows the filled blue dot')
+
+    setLib([
+      libScript({ id: 's1', name: 'run.cmd', ackOk: true, ackAt: Date.now() }),
+      libScript({ id: 's2', name: 'other.ps1', ext: 'ps1', ackOk: true, ackAt: Date.now() }),
+    ])
+    await repaint()
+    assert.deepStrictEqual(dotClasses(), ['is-use', 'is-ready'],
+      'a confirmed script that is not selected shows the hollow blue dot')
+
+    setLib([libScript({ ackOk: true, ackAt: Date.now(), runnable: false, reason: 'file-missing' })])
+    await repaint()
+    assert.deepStrictEqual(dotClasses(), ['is-na'], 'a script the host cannot run shows the grey dot')
+    {
+      const row = findAll('dsp-librow')[0]
+      assert.ok(row.props.className.includes('is-na'), 'the grey row is marked so it can be styled')
+      assert.strictEqual(row.props['aria-disabled'], 'true', 'the grey row is disabled for assistive tech')
+      assert.ok(flat(row, []).join('').includes(clientText.zh['set.script.na.file']),
+        'the grey row says why it cannot run instead of showing a confirmation pill')
+      const bodies = []
+      const realFetch2 = global.fetch
+      global.fetch = async (url, opts) => {
+        bodies.push(opts && opts.body ? JSON.parse(opts.body) : null)
+        return { ok: true, status: 200, json: async () => ({ ok: true, state }) }
+      }
+      try {
+        row.props.onClick({ preventDefault() {}, stopPropagation() {} })
+        row.props.onKeyDown({ key: 'Enter', preventDefault() {}, stopPropagation() {} })
+        await settle()
+      } finally {
+        global.fetch = realFetch2
+      }
+      assert.ok(!bodies.some((b) => b && b.selectScript),
+        'clicking a script that cannot run never asks the host to select it')
+    }
+    calls.push('script-dot-states-ok')
+  }
+
+  // 12c. "Confirmed" reads as one colour everywhere: the gate band and its
+  // button use the same blue as the dot, so a successful confirmation cannot
+  // look like the green success state used elsewhere on the page.
+  {
+    const src = fs.readFileSync(path.join(__dirname, '..', 'lib', 'client.js'), 'utf8')
+    assert.ok(!/\.dsp-gate\.is-ok\{[^}]*#2e7d32/.test(src),
+      'the confirmed gate band no longer paints itself green')
+    assert.ok(!/\.dsp-gatebtn\.is-ok\{[^}]*#2e7d32/.test(src),
+      'the confirmed gate button no longer paints itself green')
+    assert.ok(/\.dsp-gate\.is-ok\{[^}]*var\(--s-use\)/.test(src),
+      'the confirmed gate band takes the shared blue token')
+    assert.ok(/\.dsp-libpill\.is-ok\{[^}]*var\(--s-use\)/.test(src),
+      'the confirmed pill takes the shared blue token')
+    assert.ok(/--s-use:#2a63c4/.test(src) && /--s-use:#6fa5f2/.test(src),
+      'the blue token is defined for both light and dark surfaces')
+    calls.push('gate-ack-blue-ok')
   }
 
   // 12. Withdrawing consent is not deleting the script: the gate's withdraw
