@@ -1848,10 +1848,56 @@ assert.strictEqual(routes.size, 0, 'disposer removes HTTP routes')
   await flush()
   st = await stateNow()
   assert.strictEqual(st.state, 'idle', 'a profile without a script cannot arm')
-  assert.strictEqual(st.lastSkip.params.error, 'script-not-acknowledged',
-    'the arm refusal names the missing consent')
+  assert.strictEqual(st.lastSkip.params.error, 'no-script',
+    'the arm refusal names the missing script, not a missing consent')
   assert.strictEqual(spawns.length, spawnsBefore, 'nothing is sent with no script')
   calls.push('script-delete-ok')
+
+  // 53e-bis. Selecting no script is not the same as deleting one: the library
+  // entry survives, but arming still has to say the profile has no script.
+  await postState('/config', { updateProfile: { id: 'p1', patch: { countdownSec: 10 } } })
+  r = await postState('/config', { selectScript: { profileId: 'p1', scriptId: null } })
+  assert.strictEqual(r.status, 200, 'a profile can select no script')
+  await postState('/config', { activeProfileId: 'p1' })
+  st = await stateNow()
+  assert.strictEqual(st.profiles.find((p) => p.id === 'p1').scriptId, null,
+    'the profile has no script selected')
+  assert.ok(st.scripts.some((s) => s.id === otherId), 'the other library entry still exists')
+  assert.ok(fs.existsSync(pathMod.join(scriptsDir, otherId + '.ps1')),
+    'the unselected entry keeps its file')
+  const unselectedSpawns = spawns.length
+  await postState('/arm')
+  statusHandler({ agent: rootAgent, status: 'idle' })
+  await flush()
+  st = await stateNow()
+  assert.strictEqual(st.state, 'idle', 'a profile with no script selected cannot arm')
+  assert.strictEqual(st.lastSkip.params.error, 'no-script',
+    'an unselected script is reported as no-script, not as unconfirmed')
+  assert.strictEqual(st.actions.custom.reason, 'no-script',
+    'the action report agrees with the arm refusal')
+  assert.strictEqual(spawns.length, unselectedSpawns, 'nothing is sent without a selected script')
+  calls.push('arm-without-script-ok')
+
+  // 53e-ter. A file that still exists but no longer hashes to the acknowledged
+  // bytes is a consent failure, not a missing script.
+  const otherFile = pathMod.join(scriptsDir, otherId + '.ps1')
+  const otherBytes = fs.readFileSync(otherFile, 'utf8')
+  r = await postState('/config', { selectScript: { profileId: 'p1', scriptId: otherId } })
+  assert.strictEqual(r.status, 200, 'the surviving entry can be selected again')
+  r = await postState('/config', { ackScript: { scriptId: otherId } })
+  assert.strictEqual(r.status, 200, 'the surviving entry can be acknowledged')
+  fs.writeFileSync(otherFile, otherBytes + 'Write-Output tampered\r\n')
+  const tamperedSpawns = spawns.length
+  await postState('/arm')
+  statusHandler({ agent: rootAgent, status: 'idle' })
+  await flush()
+  st = await stateNow()
+  assert.strictEqual(st.state, 'idle', 'a tampered script cannot arm')
+  assert.strictEqual(st.lastSkip.params.error, 'script-not-acknowledged',
+    'a changed file is reported as unconfirmed, not as missing')
+  assert.strictEqual(spawns.length, tamperedSpawns, 'nothing is sent with changed bytes')
+  fs.writeFileSync(otherFile, otherBytes)
+  calls.push('script-bytes-mismatch-ok')
 
   // 53f. The published state is self-consistent: every profile projection can be
   // matched back to a library entry by id and hash, and every hash is sha256.
