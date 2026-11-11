@@ -683,9 +683,9 @@ void (async () => {
   const element = slots['settings.section'].render({})
   const rendered = typeof element.type === 'function' ? element.type({}) : element
   const text = flat(rendered, []).join(' | ')
-  // 「判定与关机」这个组标题随结构变更不再渲染（四行并进了「守夜行为」），所以从
+  // 「判定与执行」这个组标题随结构变更不再渲染（四行并进了「守夜行为」），所以从
   // 清单里删的是标题，不是行：下面四行必须继续在清单里。
-  const missing = ['外观', 'AFK 自动回答', '自定义配置', '选择配置', '会话都停下来', '后台任务跑完', '有会话报错就跳过这一轮', '倒计时时长', '状态', '上次为什么没关机', '事件日志']
+  const missing = ['外观', 'AFK 自动回答', '自定义配置', '选择配置', '会话都停下来', '后台任务跑完', '有会话报错就跳过这一轮', '倒计时时长', '状态', '上次为什么没执行', '事件日志']
     .filter((n) => !text.includes(n))
   assert.deepStrictEqual(missing, [], 'missing settings labels; got: ' + text.slice(0, 300))
   assert.ok(!text.includes('终端里的 6 个小块'), 'LED legend hidden while variant != C')
@@ -1011,7 +1011,18 @@ void (async () => {
 
     setLib([libScript({ ackOk: false })])
     await repaint()
-    assert.deepStrictEqual(dotClasses(), ['is-need'], 'an unconfirmed script shows the yellow dot')
+    assert.deepStrictEqual(dotClasses(), ['is-need'],
+      'the selected but unconfirmed script shows the filled yellow dot')
+
+    // Yellow follows the same two densities as blue: filled for the row in use,
+    // hollow for another unconfirmed row.
+    setLib([
+      libScript({ ackOk: false }),
+      libScript({ id: 's2', name: 'other.ps1', ext: 'ps1', ackOk: false }),
+    ])
+    await repaint()
+    assert.deepStrictEqual(dotClasses(), ['is-need', 'is-need-open'],
+      'an unconfirmed script that is not selected shows the hollow yellow dot')
 
     setLib([libScript({ ackOk: true, ackAt: Date.now() })])
     await repaint()

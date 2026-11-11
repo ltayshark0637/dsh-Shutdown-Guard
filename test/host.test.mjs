@@ -681,6 +681,54 @@ calls.push('window-radar-parity-ok')
   calls.push('window-tape-ok')
 }
 
+// 25d. The window's copy follows the action, not the name of the plugin. It has
+// its own table (a separate document cannot read the client bundle), so assert
+// the mechanism rather than the literal words: every title/cancel/fired string
+// takes an {action}, and the terminal command line is painted from /state.
+// A profile that runs "lock" must not print "shutdown --when idle".
+{
+  const countOf = (haystack, needle) => haystack.split(needle).length - 1
+  assert.ok(res.body.includes("cardTitle: '任务完成后{action}'"), 'the window title interpolates the action')
+  assert.strictEqual(countOf(res.body, 'btnCancel: '), 3, 'every language cancels the action it runs')
+  assert.ok(res.body.includes("bigFired: '已{action}'"), 'the fired headline names the action that ran')
+  assert.strictEqual(countOf(res.body, 'termCmd: '), 3, 'every language carries the command template')
+  assert.ok(res.body.includes('<span class="dsp-cmdtext"></span>'),
+    'the terminal line is a paint target, not a hard-coded shutdown')
+  assert.ok(!res.body.includes('&gt;</span>shutdown --when idle'),
+    'the old hard-coded terminal command is gone')
+  assert.ok(res.body.includes("snap.activeActionLabel"), 'the window reads the label the host computed')
+  assert.ok(res.body.includes('ACTION_COMMANDS'), 'the command table mirrors the client bundle')
+  assert.ok(res.body.includes("signoff"), 'the table covers the actions the host can actually run')
+  calls.push('window-action-copy-ok')
+}
+
+// 25e. /state carries the action twice on purpose: an id for the window's
+// decorative command line and a localised label for its text. The label has to
+// follow the profile, not the plugin: a hard-coded "关机" would pass a weaker
+// check, so compare the label across two different actions.
+{
+  const cfg = 'http://127.0.0.1:43129'
+  const read = async () => JSON.parse((await request('GET', '/api/dsh-shutdown-guard/state')).body)
+  const activeId = (await read()).activeProfileId
+  const setAction = (action) =>
+    request('POST', '/api/dsh-shutdown-guard/config', cfg, { updateProfile: { id: activeId, patch: { action } } })
+
+  await setAction('sleep')
+  const sleeping = await read()
+  assert.strictEqual(sleeping.activeAction, 'sleep', '/state reports the active action id')
+  assert.ok(sleeping.activeActionLabel && !/[{}]/.test(sleeping.activeActionLabel),
+    'the label is already rendered, with no {action} left in it')
+
+  await setAction('shutdown')
+  const done = await read()
+  assert.strictEqual(done.activeAction, 'shutdown', 'the id follows a later switch')
+  assert.notStrictEqual(done.activeActionLabel, sleeping.activeActionLabel,
+    'the label follows the action, not a hard-coded word')
+  assert.notStrictEqual(done.activeActionLabel, done.activeAction,
+    'the label is a translated name, not the raw id')
+  calls.push('state-active-action-ok')
+}
+
 // 26. UI preferences live on the host, not in the window's localStorage: both
 // surfaces must agree even when they sit in different storage partitions.
 // Defaults are A / auto / auto plus compact on and every notify kind on; a POST
