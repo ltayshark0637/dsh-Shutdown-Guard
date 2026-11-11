@@ -1064,6 +1064,36 @@ void (async () => {
     calls.push('script-dot-states-ok')
   }
 
+  // 12b. The row pill is a status word, not a timestamp: at 11px a date wraps
+  // the row and buries the answer to "can this run?". The exact confirmation
+  // time stays in the gate below the list, and it now always carries the year
+  // — a confirmation is durable, "3/14 14:32" could be any spring.
+  {
+    const ACK_AT = Date.UTC(2021, 2, 14, 6, 32)
+    setLib([libScript({ ackOk: true, ackAt: ACK_AT })])
+    await repaint()
+    const findNode = (cls) => {
+      let found = null
+      walkNodes(settingsTree(), (n) => {
+        if (!found && n.props && typeof n.props.className === 'string'
+          && n.props.className.split(/\s+/).includes(cls)) found = n
+      })
+      return found
+    }
+    const pillText = flat(findNode('dsp-libpill'), []).join('')
+    assert.strictEqual(pillText, '✓ ' + clientText.zh['set.script.confirmedShort'],
+      'the library row states the status alone, without a time')
+    assert.ok(!pillText.includes('2021') && !pillText.includes(':'),
+      'the row pill carries neither a year nor a clock time')
+
+    const gateText = flat(findNode('dsp-gatetext'), []).join('')
+    assert.ok(gateText.includes('2021'),
+      'the selected-script gate still dates the confirmation, year included')
+    assert.ok(gateText.includes(clientText.zh['set.script.confirmed'].split('{time}')[0].trim()),
+      'the gate keeps the full confirmed phrasing')
+    calls.push('script-pill-no-time-ok')
+  }
+
   // 12c. "Confirmed" reads as one colour everywhere: the gate band and its
   // button use the same blue as the dot, so a successful confirmation cannot
   // look like the green success state used elsewhere on the page.
