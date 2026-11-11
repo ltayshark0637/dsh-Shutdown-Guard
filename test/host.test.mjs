@@ -1717,7 +1717,7 @@ assert.strictEqual(routes.size, 0, 'disposer removes HTTP routes')
   assert.strictEqual(st.scripts.length, 1, 'byte-identical legacy scripts share a single entry')
   const entryId = entry.id
   assert.deepStrictEqual(Object.keys(entry).sort(),
-    ['ackAt', 'ackOk', 'bytes', 'ext', 'id', 'name', 'savedAt', 'sha256', 'usedBy'],
+    ['ackAt', 'ackOk', 'bytes', 'ext', 'id', 'name', 'reason', 'runnable', 'savedAt', 'sha256', 'usedBy'],
     'a library entry has exactly the published shape')
   assert.strictEqual(entry.ext, 'ps1', 'the shared extension is kept')
   assert.strictEqual(entry.bytes, Buffer.byteLength(SAMPLES.shared.content), 'the byte count is kept')
@@ -1917,6 +1917,52 @@ assert.strictEqual(routes.size, 0, 'disposer removes HTTP routes')
       `profile ${p.id} ack mirrors the entry`)
   }
   calls.push('script-state-contract-ok')
+
+  // 53g. Every library entry says whether it can run on this machine, so the
+  // client can grey out what would fail at the deadline instead of letting the
+  // user pick it and learn only from a refusal.
+  const realLibResolve = subprocess.resolveExecutable
+  st = await stateNow()
+  const psEntry = st.scripts.find((s) => s.ext === 'ps1')
+  assert.strictEqual(psEntry.runnable, true, 'a script whose interpreter resolves is runnable')
+  assert.strictEqual(psEntry.reason, null, 'a runnable script carries no reason')
+  r = await postState('/config', { putScript: { profileId: 'p1', name: 'probe.py', ext: 'py', content: 'print(1)\n' } })
+  assert.strictEqual(r.status, 200, 'a .py script joins the library')
+  const probePyId = r.body.scriptId
+  await flush()
+  st = await stateNow()
+  let libEntry = st.scripts.find((s) => s.id === probePyId)
+  assert.ok(libEntry, 'the .py entry is published')
+  assert.strictEqual(typeof libEntry.runnable, 'boolean', 'runnable is always a boolean')
+  fs.unlinkSync(pathMod.join(scriptsDir, libEntry.id + '.py'))
+  await postState('/config', { recheck: true })
+  await flush()
+  st = await stateNow()
+  libEntry = st.scripts.find((s) => s.id === probePyId)
+  assert.deepStrictEqual([libEntry.runnable, libEntry.reason], [false, 'file-missing'],
+    'a vanished file is reported as file-missing, not as a missing interpreter')
+  r = await postState('/config', { putScript: { profileId: 'p1', name: 'probe.py', ext: 'py', content: 'print(1)\n' } })
+  assert.strictEqual(r.status, 200, 'the same bytes can be uploaded again')
+  assert.strictEqual(r.body.scriptId, probePyId, 're-uploading the original bytes heals the entry instead of duplicating it')
+  const noPy = probePyId
+  subprocess.resolveExecutable = async (name) => {
+    if (name === 'python' || name === 'python3') return ''
+    return realLibResolve(name)
+  }
+  await postState('/config', { recheck: true })
+  await flush()
+  st = await stateNow()
+  libEntry = st.scripts.find((s) => s.id === noPy)
+  assert.deepStrictEqual([libEntry.runnable, libEntry.reason], [false, 'missing-interpreter'],
+    'a missing interpreter is named on the entry itself')
+  subprocess.resolveExecutable = realLibResolve
+  await postState('/config', { recheck: true })
+  await flush()
+  st = await stateNow()
+  assert.strictEqual(typeof st.scripts.find((s) => s.id === noPy).runnable, 'boolean',
+    'the entry recovers once the interpreter is back')
+  assert.strictEqual(psEntry.runnable, true, 'one bad entry does not grey out the others')
+  calls.push('script-runnable-ok')
 
   mount()
 }
