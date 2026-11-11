@@ -91,11 +91,9 @@ dsh plugin --profile web add github:ltayshark0637/dsh-Shutdown-Guard
 
 ## Подробнее
 
-Технические детали вынесены в отдельные файлы: [архитектура и условия](https://github.com/ltayshark0637/dsh-Shutdown-Guard/blob/main/docs/ARCHITECTURE.ru.md) · [ключи конфигурации](https://github.com/ltayshark0637/dsh-Shutdown-Guard/blob/main/docs/CONFIG.ru.md) · [локальная разработка](https://github.com/ltayshark0637/dsh-Shutdown-Guard/blob/main/docs/DEVELOPING.ru.md) · [гид по бете](https://github.com/ltayshark0637/dsh-Shutdown-Guard/blob/main/docs/BETA.ru.md)
+Технические детали вынесены в отдельные файлы: [архитектура и условия](https://github.com/ltayshark0637/dsh-Shutdown-Guard/blob/main/docs/ARCHITECTURE.ru.md) · [ключи конфигурации](https://github.com/ltayshark0637/dsh-Shutdown-Guard/blob/main/docs/CONFIG.ru.md) · [локальная разработка](https://github.com/ltayshark0637/dsh-Shutdown-Guard/blob/main/docs/DEVELOPING.ru.md) · [гид по бете](https://github.com/ltayshark0637/dsh-Shutdown-Guard/blob/main/docs/BETA.ru.md) · [как участвовать](https://github.com/ltayshark0637/dsh-Shutdown-Guard/blob/main/CONTRIBUTING.ru.md)
 
 Есть также [китайская](https://github.com/ltayshark0637/dsh-Shutdown-Guard/blob/main/docs/ARCHITECTURE.md) и [английская](https://github.com/ltayshark0637/dsh-Shutdown-Guard/blob/main/docs/ARCHITECTURE.en.md) версии.
-
-Как участвовать: [CONTRIBUTING.ru.md](https://github.com/ltayshark0637/dsh-Shutdown-Guard/blob/main/CONTRIBUTING.ru.md) (также [中文](https://github.com/ltayshark0637/dsh-Shutdown-Guard/blob/main/CONTRIBUTING.md) · [English](https://github.com/ltayshark0637/dsh-Shutdown-Guard/blob/main/CONTRIBUTING.en.md))
 
 ## Лицензия
 

@@ -91,11 +91,9 @@ On macOS, probing reports `"unknown"` rather than `true`: the system may only de
 
 ## More
 
-The technical details live in their own files: [architecture and gating](https://github.com/ltayshark0637/dsh-Shutdown-Guard/blob/main/docs/ARCHITECTURE.en.md) · [configuration keys](https://github.com/ltayshark0637/dsh-Shutdown-Guard/blob/main/docs/CONFIG.en.md) · [local development](https://github.com/ltayshark0637/dsh-Shutdown-Guard/blob/main/docs/DEVELOPING.en.md) · [beta testing guide](https://github.com/ltayshark0637/dsh-Shutdown-Guard/blob/main/docs/BETA.en.md)
+The technical details live in their own files: [architecture and gating](https://github.com/ltayshark0637/dsh-Shutdown-Guard/blob/main/docs/ARCHITECTURE.en.md) · [configuration keys](https://github.com/ltayshark0637/dsh-Shutdown-Guard/blob/main/docs/CONFIG.en.md) · [local development](https://github.com/ltayshark0637/dsh-Shutdown-Guard/blob/main/docs/DEVELOPING.en.md) · [beta testing guide](https://github.com/ltayshark0637/dsh-Shutdown-Guard/blob/main/docs/BETA.en.md) · [contributing guide](https://github.com/ltayshark0637/dsh-Shutdown-Guard/blob/main/CONTRIBUTING.en.md)
 
 Also available in [Chinese](https://github.com/ltayshark0637/dsh-Shutdown-Guard/blob/main/docs/ARCHITECTURE.md) and [Russian](https://github.com/ltayshark0637/dsh-Shutdown-Guard/blob/main/docs/ARCHITECTURE.ru.md).
-
-Contributing: [CONTRIBUTING.en.md](https://github.com/ltayshark0637/dsh-Shutdown-Guard/blob/main/CONTRIBUTING.en.md) (also [中文](https://github.com/ltayshark0637/dsh-Shutdown-Guard/blob/main/CONTRIBUTING.md) · [Русский](https://github.com/ltayshark0637/dsh-Shutdown-Guard/blob/main/CONTRIBUTING.ru.md))
 
 ## License
 

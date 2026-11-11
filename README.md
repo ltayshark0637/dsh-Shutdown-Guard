@@ -91,13 +91,11 @@ A：分平台说，别只看一句话：
 
 ## 更多
 
-技术细节单独成文：[架构与判定](https://github.com/ltayshark0637/dsh-Shutdown-Guard/blob/main/docs/ARCHITECTURE.md) · [配置字段](https://github.com/ltayshark0637/dsh-Shutdown-Guard/blob/main/docs/CONFIG.md) · [本地开发](https://github.com/ltayshark0637/dsh-Shutdown-Guard/blob/main/docs/DEVELOPING.md) · [内测指南](https://github.com/ltayshark0637/dsh-Shutdown-Guard/blob/main/docs/BETA.md)
+技术细节单独成文：[架构与判定](https://github.com/ltayshark0637/dsh-Shutdown-Guard/blob/main/docs/ARCHITECTURE.md) · [配置字段](https://github.com/ltayshark0637/dsh-Shutdown-Guard/blob/main/docs/CONFIG.md) · [本地开发](https://github.com/ltayshark0637/dsh-Shutdown-Guard/blob/main/docs/DEVELOPING.md) · [内测指南](https://github.com/ltayshark0637/dsh-Shutdown-Guard/blob/main/docs/BETA.md) · [贡献指南](https://github.com/ltayshark0637/dsh-Shutdown-Guard/blob/main/CONTRIBUTING.md)
 
-英文版：[ARCHITECTURE.en.md](https://github.com/ltayshark0637/dsh-Shutdown-Guard/blob/main/docs/ARCHITECTURE.en.md) · [CONFIG.en.md](https://github.com/ltayshark0637/dsh-Shutdown-Guard/blob/main/docs/CONFIG.en.md) · [DEVELOPING.en.md](https://github.com/ltayshark0637/dsh-Shutdown-Guard/blob/main/docs/DEVELOPING.en.md) · [BETA.en.md](https://github.com/ltayshark0637/dsh-Shutdown-Guard/blob/main/docs/BETA.en.md)
+英文版：[ARCHITECTURE.en.md](https://github.com/ltayshark0637/dsh-Shutdown-Guard/blob/main/docs/ARCHITECTURE.en.md) · [CONFIG.en.md](https://github.com/ltayshark0637/dsh-Shutdown-Guard/blob/main/docs/CONFIG.en.md) · [DEVELOPING.en.md](https://github.com/ltayshark0637/dsh-Shutdown-Guard/blob/main/docs/DEVELOPING.en.md) · [BETA.en.md](https://github.com/ltayshark0637/dsh-Shutdown-Guard/blob/main/docs/BETA.en.md) · [CONTRIBUTING.en.md](https://github.com/ltayshark0637/dsh-Shutdown-Guard/blob/main/CONTRIBUTING.en.md)
 
-俄文版：[ARCHITECTURE.ru.md](https://github.com/ltayshark0637/dsh-Shutdown-Guard/blob/main/docs/ARCHITECTURE.ru.md) · [CONFIG.ru.md](https://github.com/ltayshark0637/dsh-Shutdown-Guard/blob/main/docs/CONFIG.ru.md) · [DEVELOPING.ru.md](https://github.com/ltayshark0637/dsh-Shutdown-Guard/blob/main/docs/DEVELOPING.ru.md) · [BETA.ru.md](https://github.com/ltayshark0637/dsh-Shutdown-Guard/blob/main/docs/BETA.ru.md)
-
-贡献指南：[CONTRIBUTING.md](https://github.com/ltayshark0637/dsh-Shutdown-Guard/blob/main/CONTRIBUTING.md)（[English](https://github.com/ltayshark0637/dsh-Shutdown-Guard/blob/main/CONTRIBUTING.en.md) · [Русский](https://github.com/ltayshark0637/dsh-Shutdown-Guard/blob/main/CONTRIBUTING.ru.md)）
+俄文版：[ARCHITECTURE.ru.md](https://github.com/ltayshark0637/dsh-Shutdown-Guard/blob/main/docs/ARCHITECTURE.ru.md) · [CONFIG.ru.md](https://github.com/ltayshark0637/dsh-Shutdown-Guard/blob/main/docs/CONFIG.ru.md) · [DEVELOPING.ru.md](https://github.com/ltayshark0637/dsh-Shutdown-Guard/blob/main/docs/DEVELOPING.ru.md) · [BETA.ru.md](https://github.com/ltayshark0637/dsh-Shutdown-Guard/blob/main/docs/BETA.ru.md) · [CONTRIBUTING.ru.md](https://github.com/ltayshark0637/dsh-Shutdown-Guard/blob/main/CONTRIBUTING.ru.md)
 
 ## 许可
 
