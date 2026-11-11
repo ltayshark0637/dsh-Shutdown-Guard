@@ -1175,6 +1175,67 @@ void (async () => {
     calls.push('script-withdraw-keeps-script-ok')
   }
 
+  // 12d. A profile row is a radio, not a label beside some buttons: clicking it
+  // switches the active profile, which is the whole reason the list exists. The
+  // controls inside the row ("set as default" / rename / delete) must not fire
+  // the switch as a side effect — one click, one decision.
+  setLib([libScript()])
+  state.profiles = [
+    { id: 'default', label: '默认配置', countdownSec: 60, action: 'custom', scriptId: 's1' },
+    { id: 'p2', label: '夜里跑批', countdownSec: 120, action: 'custom', scriptId: 's1' },
+  ]
+  state.activeProfileId = 'default'
+  await repaint()
+  {
+    const rows = []
+    walkNodes(settingsTree(), (n) => {
+      if (n.props && typeof n.props.className === 'string'
+        && n.props.className.split(/\s+/).includes('dsp-srow-prof')) rows.push(n)
+    })
+    assert.strictEqual(rows.length, 2, 'both profiles render as rows')
+    assert.strictEqual(rows[0].props.role, 'radio', 'a profile row announces itself as a radio')
+    assert.strictEqual(rows[0].props['aria-checked'], 'true', 'the active row is checked')
+    assert.strictEqual(rows[1].props['aria-checked'], 'false', 'an inactive row is not checked')
+
+    const bodies = []
+    const realFetch = global.fetch
+    global.fetch = async (url, opts) => {
+      const body = opts && opts.body ? JSON.parse(opts.body) : null
+      bodies.push(body)
+      if (body && typeof body.activeProfileId === 'string') state.activeProfileId = body.activeProfileId
+      return { ok: true, status: 200, json: async () => ({ ok: true, state }) }
+    }
+    try {
+      rows[1].props.onClick({ preventDefault() {}, stopPropagation() {} })
+      await settle()
+      assert.deepStrictEqual(bodies[bodies.length - 1], { activeProfileId: 'p2' },
+        'clicking a row switches the active profile')
+      assert.ok(!bodies.some((b) => b && b.setDefault),
+        'switching is not the same verb as making the profile the default')
+
+      // The controls inside the row swallow their own clicks, so pressing
+      // "delete" cannot also switch the profile out from under the pointer.
+      const actions = []
+      walkNodes(rows[1], (n) => {
+        if (n.props && typeof n.props.className === 'string'
+          && n.props.className.split(/\s+/).includes('dsp-prof-actions')) actions.push(n)
+      })
+      assert.strictEqual(actions.length, 1, 'the row groups its controls')
+      let stopped = false
+      actions[0].props.onClick({ stopPropagation() { stopped = true } })
+      assert.strictEqual(stopped, true, 'a click inside the controls never reaches the row')
+
+      bodies.length = 0
+      rows[1].props.onKeyDown({ key: 'Enter', preventDefault() {}, stopPropagation() {} })
+      await settle()
+      assert.deepStrictEqual(bodies[bodies.length - 1], { activeProfileId: 'p2' },
+        'Enter on a row switches it, for keyboard users')
+    } finally {
+      global.fetch = realFetch
+    }
+    calls.push('profile-row-switch-ok')
+  }
+
   // 13. A rebuild (here: folding the card) creates a brand-new node with no
   // data-lum. The probe is throttled for 3 s, so without a cached answer the
   // fresh node would show the dark default until the next window. The rebuild
