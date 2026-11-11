@@ -27,6 +27,18 @@
 
 `/state` 同时返回 `ui`（variant / theme / lang），窗口页每秒读它重绘，所以设置一改，窗口跟着变，不需要刷新。
 
+`/state` 里脚本相关的字段分两类：权威的在顶层，兼容投影挂在每份 profile 上。
+
+| 字段 | 形状 | 说明 |
+| --- | --- | --- |
+| `scripts` | `[{ id, name, ext, bytes, sha256, savedAt, ackOk, ackAt, usedBy }]` | 全局脚本库的元数据。**永不含正文**；`usedBy` 是当前有多少份 profile 指向它 |
+| `script` | `{ name, ext, bytes, sha256, savedAt } \| null` | 当前 profile 选中那条的元数据 |
+| `scriptAckOk` | bool | 当前选中那条是否「确认过、且磁盘上的字节仍然一致」 |
+| `profiles[].script` | 同上 / `null` | **兼容投影**：按该 profile 的 `scriptId` 从库里拼出来，便于设置页渲染单行 |
+| `profiles[].scriptAck` | `{ sha256, at } \| null` | 同上，兼容投影 |
+
+字节本身只在磁盘：`<DATA_DIR>/scripts/<scriptId>.<ext>`，文件名由宿主按 id 生成，所以配置里写不进任意路径。
+
 ## 2. 六种运行状态
 
 | 状态 | 含义 | 卡片**标签** |
@@ -54,7 +66,7 @@ off ──武装──▶ armed ──有后台任务──▶ hold ──任务
 
 ## 3. 五道判定闸
 
-处于 `blocked` 时直接不下发；其余情况必须五条同时成立才执行动作（默认 `shutdown`，也可能是重启 / 睡眠 / 注销 / 用户上传的脚本）：
+处于 `blocked` 时直接不下发；其余情况必须五条同时成立才执行动作（默认 `shutdown`，也可能是重启 / 睡眠 / 注销 / 从脚本库里选中的脚本）：
 
 | # | 闸门 | 字段 | 默认 |
 | --- | --- | --- | --- |
@@ -146,6 +158,6 @@ docs/         面向维护者的文档：ARCHITECTURE、CONFIG、DEVELOPING、BE
 data/         运行时数据（config.json / ui.json / events.log / scripts/），不提交
 ```
 
-`data/scripts/` 放用户上传的执行脚本，文件名是 `<profileId>.<ext>`，由宿主生成。它**必须在包外**：npm 包目录在升级时被整体替换、安装后通常不可写，脚本放进去会在下一次升级时消失。脚本正文不进 `config.json`，配置里只留 `sha256`、大小、显示名这些元数据。
+`data/scripts/` 放全局脚本库里那些文件的正文，文件名是 `<scriptId>.<ext>`，由宿主生成。它**必须在包外**：npm 包目录在升级时被整体替换、安装后通常不可写，脚本放进去会在下一次升级时消失。脚本正文不进 `config.json`，库里只留 `sha256`、大小、显示名这些元数据。
 
 `preview/` 是设计过程稿，不是当前实现；`docs/screenshots/` 是脚本产物。

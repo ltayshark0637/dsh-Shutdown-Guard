@@ -19,25 +19,61 @@
 
 ```json
 {
-  "version": 4,
+  "version": 5,
   "activeProfileId": "default",
   "customEnabled": false,
   "lastCustomProfileId": null,
   "language": "auto",
   "parked": null,
+  "scriptSeq": 2,
+  "scripts": [ { "id": "s1", "…": "…" } ],
   "profiles": [ { "id": "default", "…": "…" } ]
 }
 ```
 
 | 顶层键 | 类型 | 默认 | 说明 |
 | --- | --- | --- | --- |
-| `version` | 数字 | `4` | schema 版本；v1.6.1 从 2 升到 4（3 是开发期过渡形状，从未发布） |
+| `version` | 数字 | `5` | schema 版本；v1.6.1 从 2 到 4，脚本库把它推到 5 |
 | `activeProfileId` | string | `default` | 当前生效的 profile id |
 | `customEnabled` | bool | `false` | 是否允许使用自定义 profile |
 | `lastCustomProfileId` | string \| null | `null` | 关掉再打开时要回到的那份 |
 | `language` | 枚举 `auto` / `zh` / `en` / `ru` | `auto` | 界面语言，`auto` 跟随系统 |
 | `parked` | 对象 \| null | `null` | 熔断现场，见本节下面的 `### parked`；唯一写进配置文件的**运行时状态** |
+| `scriptSeq` | 数字 | `0` | 脚本 id 的发号器，只增不减；删掉的 id 不会被复用 |
+| `scripts` | 数组 | `[]` | **全局共享**的脚本库，每项只存元数据，见 `### scripts[]` |
 | `profiles` | 数组 | 一份 `default` | 每份是一个行为快照 |
+
+### `scripts[]`：全局脚本库
+
+脚本从「每份配置一个字段」变成了**顶层共享库**：一份文件在库里只有一条记录，任意多份 profile 通过 `scriptId` 指向它；确认一次，所有指向它的 profile 都算确认过。
+
+```json
+{
+  "id": "s1",
+  "name": "收工清理",
+  "ext": "ps1",
+  "file": "s1.ps1",
+  "bytes": 412,
+  "sha256": "9f2c…",
+  "savedAt": 1762500000000,
+  "ack": { "sha256": "9f2c…", "at": 1762500100000 }
+}
+```
+
+| 键 | 类型 | 说明 |
+| --- | --- | --- |
+| `id` | `s1` / `s2` … | 由 `scriptSeq` 发号，永不复用；读回时必须是 `^s[1-9][0-9]*$`，否则整条丢弃 |
+| `name` | string | 显示名，1–40 字符；只影响界面，不参与拼路径 |
+| `ext` | 枚举 `js` / `cmd` / `bat` / `py` / `ps1` | 决定用哪个解释器 |
+| `file` | string | **必须**正好是 `<id>.<ext>`，否则整条丢弃 —— 手改配置不能把运行器指向任意路径 |
+| `bytes` | 数字 | 文件字节数，仅用于显示 |
+| `sha256` | 64 位十六进制 | 入库时的内容哈希，也是确认挂靠的东西 |
+| `savedAt` | 数字 | 入库时间戳 |
+| `ack` | 对象 \| null | `{ sha256, at }`；`sha256` 与记录不一致时读回即丢弃（视为没确认） |
+
+- 正文**只**在磁盘：`<DATA_DIR>/scripts/<scriptId>.<ext>`，不进 `config.json`、事件日志或 `/state`。
+- 文件被删、被手改成别的字节，记录本身不会自动消失：前者让 `custom` 报 `no-script`，后者让 `custom` 报 `script-not-acknowledged`（见 4.5）。
+- 一份 profile 只记 `scriptId`（`null` = 没选脚本）；`script` / `scriptAck` 这两个旧字段**已经不存在**，写它们会被 400 拒绝（见 4.1）。
 
 界面外观（卡片样式 / 主题 / 折叠 / 悬浮窗简洁模式）**不在**这个文件里，见第 7 节。
 
@@ -86,13 +122,13 @@
 | 键 | 类型 | 默认 | 说明 |
 | --- | --- | --- | --- |
 | `action` | 枚举（8 个 id） | `shutdown` | 任务完成后执行什么动作，见第 4 节 |
-| `script` | 对象 \| null | `null` | 上传脚本的元数据（`name` / `ext` / `file` / `bytes` / `sha256` / `savedAt`）；正文在磁盘上，不在配置里 |
-| `scriptAck` | 对象 \| null | `null` | 用户对**这一份**脚本的确认：`{ sha256, at }` |
+| `scriptId` | string \| null | `null` | 指向顶层 `scripts[]` 里的一条；脚本正文与确认都在那条记录上 |
 | `shutdownOnHalt` | bool | `true` | 熔断（`halted`）之后是否仍执行动作 |
 
-- `script` 与 `scriptAck` 只在 `action: custom` 时有意义；`scriptAck.sha256` 必须等于 `script.sha256`，否则拒绝武装（`script-not-acknowledged`），细节见 4.3。
+- `scriptId` 只在 `action: custom` 时有意义；指向的条目不存在会被读成 `null`（`no-script`），细节见 4.3。
 - `shutdownOnHalt: false` 表示「熔断后不动作」；默认 `true` 与旧行为一致（熔断只是不再等条件，不改变动作本身）。
-- 这四项都进 `PROFILE_PATCH_FIELDS`，因此可以按 profile 分别设。注意 `shutdownOnHalt` **不在**默认 profile 的锁定字段里（锁定的是 `countdownSec`、`marginSec`、`onlyOnSuccess`、`blockOnJobs`、`afkAutoAnswer`），所以默认 profile 也能改它。
+- 这几项都进 `PROFILE_PATCH_FIELDS`，因此可以按 profile 分别设。注意 `shutdownOnHalt` **不在**默认 profile 的锁定字段里（锁定的是 `countdownSec`、`marginSec`、`onlyOnSuccess`、`blockOnJobs`、`afkAutoAnswer`），所以默认 profile 也能改它。
+- `script` 与 `scriptAck` **不再是 profile 字段**：v5 之前它们存在过，迁移时被搬进脚本库（见第 8 节）；现在通过 `patch` 写这两个键一律 400。
 
 ## 4. `action`：到点做什么
 
@@ -116,36 +152,40 @@
 - 未知 `action` 回落 `shutdown`：配置写坏也不会出现「武装着却没有任何动作」的状态。
 - **`restart-dsh` 为什么置灰**：重启 DSH 要走 `app.relaunch()`，那是 Electron 主进程的能力，插件没有路径够到它；`process.exit()` 会跳过宿主清理、可能损坏正在跑的会话，所以刻意不做。保留这个 id 是为了让配置文件可读、将来宿主开放接口时直接点亮。
 
-### 4.1 自定义动作 = 上传一个脚本文件
+### 4.1 自定义动作 = 从脚本库挑一个文件
 
-`custom` 不再填命令行，**而是上传文件**：
+`custom` 不填命令行，执行的是**脚本库**里的一条。库是全局的：一次上传只有一条记录，很多份 profile 可以各自指向它。
 
 ```http
 POST /config
-{ "putScript": { "profileId": "p1", "name": "收工清理", "ext": "ps1", "content": "<脚本正文>" } }
+{ "putScript": { "name": "收工清理", "ext": "ps1", "content": "<脚本正文>" } }
 ```
 
 | 字段 | 约束 |
 | --- | --- |
-| `profileId` | 必须是已存在的 profile |
 | `name` | 显示名，去空白后 1–40 字符；随便叫什么都不会变成路径 |
 | `ext` | 白名单 `js` / `cmd` / `bat` / `py` / `ps1`，其余 400 |
 | `content` | UTF-8 文本，**上限 256 KiB**（按字节算，不是字符）；超限 400 |
+| `profileId` | **可选**。给了就顺手把这条选给该 profile，并把它的 `action` 设成 `custom`；不给就只是入库 |
 
-- 成功后该 profile 的 `action` **强制设为 `custom`** —— 上传脚本的意图就是用它。
-- 删除脚本：把 `script` 置 `null`（`{"profileId":"p1","patch":{"script":null}}`）。
-- 存储位置：`<DATA_DIR>/scripts/<profileId>.<ext>`。**不在 npm 包目录**：包目录在升级时会被整体替换、安装后通常不可写；`DATA_DIR` 才是插件的可写目录（`config.json`、`events.log` 也在这里）。
-- 文件名由**宿主**生成，用户输入不参与拼路径，规避路径穿越；每个 profile 只留一份，换文件即覆盖。
+- **去重**：同 `sha256` 且同 `ext` 的库条目会被复用，响应里带 `reused: true`，**不覆盖**已有条目的 `name`（重复上传不能悄悄给别人改名字）。
+- 条目存在但磁盘文件被手改过/删掉了，重传同样的内容会**修复文件**而不是再存一份。
+- 存储位置：`<DATA_DIR>/scripts/<scriptId>.<ext>`。**不在 npm 包目录**：包目录在升级时会被整体替换、安装后通常不可写；`DATA_DIR` 才是插件的可写目录（`config.json`、`events.log` 也在这里）。
+- 文件名由**宿主**生成（`<scriptId>.<ext>`），用户输入不参与拼路径，规避路径穿越。
 - 脚本正文**永不**进 `config.json`、事件日志或 `/state` —— 这些地方只有元数据。
 - 整个请求体上限 **1 MiB**（`BODY_LIMIT`）：`/config` 以前只带小补丁时是 8 KiB，脚本走 JSON 文本、转义后体积约翻倍，所以放宽了；超过会直接断开连接而不是返回 413。
 
-脚本在 profile 里的形状：
+库的其余操作都在 `POST /config` 上，一次请求里只处理一个键：
 
-```json
-"script": { "name": "收工清理", "ext": "ps1", "file": "p1.ps1", "bytes": 412, "sha256": "9f2c…", "savedAt": 1762500000000 }
-```
+| 键 | 请求体 | 行为 |
+| --- | --- | --- |
+| `selectScript` | `{ profileId, scriptId }` | 把某条选给该 profile（`scriptId: null` = 取消选择）；选了就会把 `action` 设成 `custom`，未知 id 报 400 `unknown script` |
+| `renameScript` | `{ scriptId, name }` | 只改显示名，1–40 字符；不影响 `sha256`，确认继续有效 |
+| `deleteScript` | `{ scriptId }` | 删条目与磁盘文件；**允许删还有 profile 在用的**，那些 profile 退回没选脚本，响应里 `affected` 是受影响的 profile 数 |
+| `ackScript` | `{ scriptId }` | 记下「我确认过这份内容」，`ack` 由宿主按当前 `sha256` 重算写入 |
+| `unackScript` | `{ scriptId }` | 撤回确认 |
 
-没有脚本时为 `null`。
+条目的形状见第 2 节 `### scripts[]`。profile 里只存 `scriptId`。
 
 ### 4.2 执行映射
 
@@ -158,12 +198,14 @@ POST /config
 
 解释器探测复用动作能力探测（`subprocess.resolveExecutable`），结果落进 `/state.actions.custom`。缺解释器或没有脚本时，动作区显示不可用并给出原因，武装会被拒。
 
-### 4.3 确认绑定到脚本内容
+### 4.3 确认挂在库里那一条的字节上
 
-profile 里还有一项 `scriptAck: { "sha256": "9f2c…", "at": 1762500100000 } | null`。
+确认属于库条目（`scripts[].ack`），不属于 profile：
 
-- **武装前必须满足 `scriptAck.sha256 === script.sha256`**，否则拒绝武装，原因是 `script-not-acknowledged`。
-- 脚本内容一变（重新上传、换了文件），`sha256` 就变，**此前的确认自动失效**，必须重新勾选。只改显示名不影响 `sha256`，确认继续有效。
+- **武装前必须满足 `ack.sha256 === 该条目的 sha256`**，否则拒绝武装，原因 `script-not-acknowledged`。
+- 条目内容一变（重新上传成不同字节），`sha256` 就变，**此前的确认自动失效**，必须重新确认。只改显示名不影响 `sha256`，确认继续有效。
+- 如果磁盘上的文件被手改，字节与记录的 `sha256` 对不上，同样报 `script-not-acknowledged` —— 确认的是内容，不是文件名。
+- 确认一次，所有指向这条的 profile 都算确认过；撤回一次，它们全都失去确认。
 - 这条防的是「确认过一次，之后把文件换成别的」—— 只勾一次终身有效的确认，等于没有确认。
 
 ### 4.4 能力探测与三态
@@ -186,12 +228,12 @@ profile 里还有一项 `scriptAck: { "sha256": "9f2c…", "at": 1762500100000 }
 | 值 | 什么时候出现 |
 | --- | --- |
 | `no-custom-profile` | 未开启「自定义配置」时，`lock` / `signout` / `custom` 这三个动作一律不可用 |
-| `no-script` | `action: custom` 但还没上传脚本 |
+| `no-script` | `action: custom` 但没选脚本，或选中的条目文件已经被删掉 |
 | `missing-interpreter` | 脚本在，但 `python` / `python3` / `node` / `powershell` 一个都找不到 |
 | `needs-elevation` | 内置动作在非 win32 上就用它：可用性报 `'unknown'`、原因给这个 —— 命令找到了，但 TCC / polkit 可能要求授权。**这是保守标注，不是检测**：非 Windows 上无法预知授权弹窗会不会出现，所以一律标为「可能需授权」 |
 | `unsupported-on-platform` | 本平台没有诚实的做法（macOS 的 `lock`） |
 | `no-host-restart` | `restart-dsh`：够不着 Electron 的 `app.relaunch()` |
-| `script-not-acknowledged` | 脚本的 `sha256` 与 `scriptAck` 不一致，需重新确认 |
+| `script-not-acknowledged` | 没确认过，或确认的字节与当前不一致 —— 包括磁盘文件被手改成别的字节 |
 | `no-cli` | 探测阶段找不到可执行文件（`argvReachable` 的失败值；macOS 的图标/路径问题也落这里） |
 | `no-session` | 枚举里保留，当前没有任何路径会产出它（会话不可用的旧分支） |
 
@@ -226,7 +268,7 @@ profile 里还有一项 `scriptAck: { "sha256": "9f2c…", "at": 1762500100000 }
 
 `/config` 与 `/ui` 是同一条 HTTP 服务上的两个写入口，分工按「行为 / 外观」切，因为两层数据存在不同的文件里、也由不同的界面消费：
 
-- `/config` 写 `data/config.json`。接受 `customEnabled`、`activeProfileId`、`language`、`profileId` + `patch`（以及顶层的 `afkAutoAnswer`），另有 `putScript` 上传脚本与 `recheck:true` 重测动作能力（见 4.1、4.4）。
+- `/config` 写 `data/config.json`。接受 `customEnabled`、`activeProfileId`、`language`、`profileId` + `patch`（以及顶层的 `afkAutoAnswer`），另有脚本库一族键：`putScript`、`selectScript`、`renameScript`、`deleteScript`、`ackScript`、`unackScript`（见 4.1），以及 `recheck:true` 重测动作能力（见 4.4）。
 - `/ui` 写 `data/ui.json`。接受 `variant`（`A`/`B`/`C`）、`theme`（`auto`/`dark`/`light`/`claude`）、`lang`（`auto`/`zh`/`en`/`ru`）、`compact`（布尔）。
 - `/ui` 拒绝 `notify`：通知是行为不是外观，返回 `400 {"error": "notify belongs to the active profile; use /config updateProfile"}`。
 
@@ -238,7 +280,14 @@ profile 里还有一项 `scriptAck: { "sha256": "9f2c…", "at": 1762500100000 }
 
 `<field>` 取值：`countdownSec`、`marginSec`、`onlyOnSuccess`、`blockOnJobs`、`afkAutoAnswer`。要改这些，先新建一份自定义 profile。
 
-其他错误：非法语言 `400 unknown language`、未知 profile `400 unknown profile`、非本机 Origin 的 POST `403`、非 POST 方法 `405`。
+其他错误：非法语言 `400 unknown language`、未知 profile `400 unknown profile`、未知脚本 `400 unknown script`、非本机 Origin 的 POST `403`、非 POST 方法 `405`。
+
+写旧字段会被明确拒绝（而不是静默忽略，否则 beta 客户端会以为自己上传/确认成功了）：
+
+| 写入 | 返回 |
+| --- | --- |
+| `patch.script` | `400 script must be uploaded through the script library` |
+| `patch.scriptAck` | `400 scriptAck can only be written by acknowledging a library script` |
 
 ### `/state` 里与动作层相关的字段
 
@@ -246,9 +295,14 @@ profile 里还有一项 `scriptAck: { "sha256": "9f2c…", "at": 1762500100000 }
 | --- | --- | --- |
 | `actions` | `{ [id]: { available, reason } }` | 8 个 id 全列出，含连字符的 `restart-dsh`；挂载后首次探测前为 `{}` |
 | `actionReady` | bool | 当前 profile 的 `action` 是否可用（`available !== false`）；`'unknown'` 视为可用 |
+| `script` | 对象 \| null | 当前 profile 选中的那条的元数据（`name` / `ext` / `bytes` / `sha256` / `savedAt`）；**不含正文、不含文件名** |
+| `scriptAckOk` | bool | 当前选中的那条是否已确认且字节一致 |
+| `scripts` | 数组 | 整个脚本库的元数据，每项 `{ id, name, ext, bytes, sha256, savedAt, ackOk, ackAt, usedBy }`；同样永不含正文 |
 | `lastAction` | 对象 \| null | 本进程最后一次真正下发的命令，仅用于诊断 |
 | `parkedAt` | 数字 \| null | 熔断开始时间（`halted` 才有），见第 2 节 |
 | `shutdownOnHaltEffective` | bool | 见第 2 节的派生规则 |
+
+`profiles[]` 里的 `script` / `scriptAck` 是**兼容投影**：按该 profile 的 `scriptId` 从库里取出来拼上，方便设置页渲染单行而不必遍历 `scripts[]`；权威数据在顶层 `scripts[]`。
 
 手动重测入口是 `POST /config {"recheck": true}`：立即重跑一次能力探测并刷新 `actions`，**不做轮询**。
 
@@ -288,13 +342,18 @@ retryPolicies:
 
 ## 8. schema 迁移
 
-- 当前 `CONFIG_VERSION = 4`。读取时先看 `version`：比 4 小的都按旧结构解析，随后写回 `version: 4`。
-- v2 → v3 引入了 `parked` 与按 profile 的通知开关；v3 → v4 用**脚本**取代了从未发布过的 `customArgv`（那个字段只在 1.6.1 的在制分支里短暂存在，没有任何已发布版本写过它，所以不做搬运）。
+- 当前 `CONFIG_VERSION = 5`。读取时先看 `version`：比 5 小的都按旧结构解析，随后写回 `version: 5`。
+- v2 → v3 引入了 `parked` 与按 profile 的通知开关；v3 → v4 用**脚本**取代了从未发布过的 `customArgv`（那个字段只在 1.6.1 的在制分支里短暂存在，没有任何已发布版本写过它，所以不做搬运）；v4 → v5 把「每份 profile 一个脚本」搬进**顶层共享库**。
+- **v4 → v5 的搬迁**（2 / 3 / 4 都能直接升到 5）：
+  - 每份 profile 的 `script` 元数据变成库里的一条，文件从 `<profileId>.<ext>` 改名为 `<scriptId>.<ext>`，profile 只留 `scriptId`。
+  - **同 `sha256` 且同 `ext` 的旧文件合并成一条**，重复的副本文件删掉；确认状态（`scriptAck`）保留到合并后的那条上。
+  - 搬迁完成后**立刻写盘**：`scripts[]` 与改名后的文件必须一起落盘，只等用户下次写操作的话，中途被杀就会留下没人认领的文件。
 - 旧结构里的 `profiles[]` 原样保留：不改 id、不拆分、不重排，**你手改过的值不会丢**。
-- 新增字段（`action`、`script`、`scriptAck`、`shutdownOnHalt`）缺失时按默认值补齐：`shutdown` / `null` / `null` / `true`。
+- 新增字段（`action`、`scriptId`、`shutdownOnHalt`、`scripts`、`scriptSeq`）缺失时按默认值补齐：`shutdown` / `null` / `true` / `[]` / `0`。
 - v2 文件没有 `parked` 字段，读回即 `null`（等价于「没有熔断现场」）；没有需要搬运的旧状态。
 - `afkAutoAnswer`、`notify` 这类曾经同时存在于顶层与 profile 的键，以 profile 内的值为准，顶层旧值只在没有 profile 值时才被采用。
 - 升级时，从未动过的空 profile 槽会被清理；改过名字或动过任一开关的 profile 一定保留。
+- 迁移是逐字段进行的、可重复：`script` 搬走之后字段就不在了，再读一次不会重复入库。
 
 ## 9. 事件日志
 

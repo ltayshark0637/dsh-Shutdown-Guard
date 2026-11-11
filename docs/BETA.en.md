@@ -92,7 +92,7 @@ Each item is written as "how to act / what you should see / what it looks like w
 
 Please include the following, as specifically as you can:
 
-1. the **relevant fragment** of `data/config.json`: the profile's `action`, `script` (`name` / `ext` / `bytes` / `sha256`) and `scriptAck`;
+1. the **relevant fragment** of `data/config.json`: the profile's `action` and `scriptId`, plus that one entry in the top-level `scripts[]` (`name` / `ext` / `bytes` / `sha256`);
 2. the **tail** of `data/events.log` (roughly the last 20 lines);
 3. the system version (Windows version / macOS version / distribution and kernel), the DSH version and the plugin version;
 4. reproduction steps: how many seconds the countdown was set to, at which second you acted, which button you clicked.

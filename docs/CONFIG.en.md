@@ -19,25 +19,61 @@ The settings page never bypasses layer 2: every change it makes goes through the
 
 ```json
 {
-  "version": 4,
+  "version": 5,
   "activeProfileId": "default",
   "customEnabled": false,
   "lastCustomProfileId": null,
   "language": "auto",
   "parked": null,
+  "scriptSeq": 2,
+  "scripts": [ { "id": "s1", "…": "…" } ],
   "profiles": [ { "id": "default", "…": "…" } ]
 }
 ```
 
 | Top-level key | Type | Default | Notes |
 | --- | --- | --- | --- |
-| `version` | number | `4` | schema version; v1.6.1 raised it from 2 to 4 (3 was an in-development transitional shape and was never released) |
+| `version` | number | `5` | schema version; v1.6.1 took it from 2 to 4, and the script library pushed it to 5 |
 | `activeProfileId` | string | `default` | id of the profile in effect |
 | `customEnabled` | bool | `false` | whether custom profiles may be used |
 | `lastCustomProfileId` | string \| null | `null` | the profile to return to when re-enabled |
 | `language` | enum `auto` / `zh` / `en` / `ru` | `auto` | UI language; `auto` follows the system |
 | `parked` | object \| null | `null` | the halted scene, see `### parked` below in this section; the only **runtime state** written into the config file |
+| `scriptSeq` | number | `0` | id issuer for scripts, only ever increases; deleted ids are never reused |
+| `scripts` | array | `[]` | the **globally shared** script library, metadata only, see `### scripts[]` |
 | `profiles` | array | one `default` | each entry is a behavioural snapshot |
+
+### `scripts[]`: the shared script library
+
+A script used to be a field of one profile; it is now a **top-level shared library**: one file is one record, any number of profiles point at it through `scriptId`, and acknowledging it once covers every profile that points at it.
+
+```json
+{
+  "id": "s1",
+  "name": "wrap up",
+  "ext": "ps1",
+  "file": "s1.ps1",
+  "bytes": 412,
+  "sha256": "9f2c…",
+  "savedAt": 1762500000000,
+  "ack": { "sha256": "9f2c…", "at": 1762500100000 }
+}
+```
+
+| Key | Type | Notes |
+| --- | --- | --- |
+| `id` | `s1` / `s2` … | issued by `scriptSeq`, never reused; must match `^s[1-9][0-9]*$` on read-back, otherwise the whole record is dropped |
+| `name` | string | display name, 1–40 characters; UI only, never part of a path |
+| `ext` | enum `js` / `cmd` / `bat` / `py` / `ps1` | decides which interpreter runs it |
+| `file` | string | **must** be exactly `<id>.<ext>`, otherwise the record is dropped — hand-editing the config cannot point the runner at an arbitrary path |
+| `bytes` | number | file size, display only |
+| `sha256` | 64 hex characters | hash of the content when it was stored, and what the acknowledgement is pinned to |
+| `savedAt` | number | when it entered the library |
+| `ack` | object \| null | `{ sha256, at }`; dropped on read-back when its `sha256` no longer matches the record (treated as unacknowledged) |
+
+- The body lives **only** on disk: `<DATA_DIR>/scripts/<scriptId>.<ext>`. It never enters `config.json`, the event log or `/state`.
+- A deleted file or a hand-edited one does not make the record disappear: the first makes `custom` report `no-script`, the second makes it report `script-not-acknowledged` (see 4.5).
+- A profile only stores `scriptId` (`null` meaning nothing selected); `script` and `scriptAck` **no longer exist**, and writing them is rejected with `400` (see 4.1).
 
 UI appearance (card style / theme / folding / floating-window compact mode) is **not** in this file; see section 7.
 
@@ -86,11 +122,11 @@ Each profile stores its own copy; they do not affect one another.
 | Key | Type | Default | Notes |
 | --- | --- | --- | --- |
 | `action` | enum (8 ids) | `shutdown` | what to run when tasks finish, see section 4 |
-| `script` | object \| null | `null` | metadata of the uploaded script (`name` / `ext` / `file` / `bytes` / `sha256` / `savedAt`); the body is on disk, not in the config |
-| `scriptAck` | object \| null | `null` | the user's acknowledgement of **this one** script: `{ sha256, at }` |
+| `scriptId` | string \| null | `null` | which entry of the shared script library this profile uses; the script itself is not stored per profile any more |
 | `shutdownOnHalt` | bool | `true` | whether the action still runs after a halt (`halted`) |
 
-- `script` and `scriptAck` only mean anything while `action: custom`; `scriptAck.sha256` must equal `script.sha256`, otherwise arming is refused (`script-not-acknowledged`); details in 4.3.
+- `scriptId` only means anything while `action: custom`; if the file is missing you get `no-script`, if it does not match the acknowledged bytes you get `script-not-acknowledged`; details in 4.3.
+- Writing `script` or `scriptAck` into a profile patch is rejected with `400` — see section 5.
 - `shutdownOnHalt: false` means "no action after a halt"; the default `true` matches the old behaviour (a halt only stops waiting for conditions and does not change the action itself).
 - All four are in `PROFILE_PATCH_FIELDS`, so they can be set per profile. Note that `shutdownOnHalt` is **not** among the default profile's locked fields (the locked ones are `countdownSec`, `marginSec`, `onlyOnSuccess`, `blockOnJobs`, `afkAutoAnswer`), so the default profile can change it too.
 
@@ -109,43 +145,47 @@ Eight ids, **seven usable**; `restart-dsh` is listed but greyed out.
 | `lock` | `rundll32 user32.dll,LockWorkStation` | **unsupported** (no supported CLI) | `loginctl lock-session` |
 | `signout` | `shutdown /l` | `osascript` sign-out | `loginctl terminate-user`, **which also ends DSH itself** (DSH runs inside that user session) |
 | `restart-dsh` | **listed but not selectable today** | same | same |
-| `custom` | runs the **user-uploaded script** (see 4.1) | same | same |
+| `custom` | runs the **script selected from the library** (see 4.1) | same | same |
 
 - All actions are **inline**: the plugin counts the countdown itself, and at zero it sends **exactly once** — sending means immediate execution. Cancel = nothing is sent.
 - Cost: if DSH is killed or crashes during the countdown, the action **will not** run. The old implementation used a system timer (`shutdown /t N`), which would still have shut down in that case. This is a deliberate trade-off — better to miss a shutdown than to shut down wrongly.
 - An unknown `action` falls back to `shutdown`: a corrupted config can never produce a state that is "armed with no action at all".
 - **Why `restart-dsh` is greyed out**: restarting DSH has to go through `app.relaunch()`, a capability of the Electron main process that the plugin has no path to; `process.exit()` would skip host cleanup and could damage running sessions, so it is deliberately not done. The id is kept so the config file stays readable and can be lit up directly once the host exposes an interface.
 
-### 4.1 A custom action = uploading a script file
+### 4.1 A custom action = one file picked from the script library
 
-`custom` no longer takes a command line — **you upload a file**:
+`custom` takes no command line; it runs one entry of the **script library**. The library is global: one upload is one record, and any number of profiles may point at it.
 
 ```http
 POST /config
-{ "putScript": { "profileId": "p1", "name": "End-of-day cleanup", "ext": "ps1", "content": "<script body>" } }
+{ "putScript": { "name": "End-of-day cleanup", "ext": "ps1", "content": "<script body>" } }
 ```
 
 | Field | Constraint |
 | --- | --- |
-| `profileId` | must be an existing profile |
-| `name` | display name, 1–40 characters after trimming; it never becomes a path no matter what it says |
+| `name` | display name, 1–40 characters after trimming; whatever it says, it never becomes a path |
 | `ext` | whitelist `js` / `cmd` / `bat` / `py` / `ps1`; anything else 400 |
 | `content` | UTF-8 text, **at most 256 KiB** (counted in bytes, not characters); over the limit 400 |
+| `profileId` | **optional**. When given, the new entry is also selected for that profile and its `action` is set to `custom`; without it the entry is only stored |
 
-- On success the profile's `action` is **forced to `custom`** — uploading a script means you intend to use it.
-- Deleting the script: set `script` to `null` (`{"profileId":"p1","patch":{"script":null}}`).
-- Storage location: `<DATA_DIR>/scripts/<profileId>.<ext>`. **Not in the npm package directory**: the package directory is replaced wholesale on upgrade and is usually not writable after install; `DATA_DIR` is the plugin's writable directory (`config.json` and `events.log` live there too).
-- The file name is generated by the **host**; user input never takes part in building a path, which rules out path traversal; each profile keeps exactly one file, and a new file overwrites the old one.
+- **Deduplication**: an entry with the same `sha256` and the same `ext` is reused, the response says `reused: true`, and the existing entry's `name` is **not** overwritten (a duplicate upload must not quietly rename somebody else's entry).
+- If the entry exists but its file was hand-edited or deleted, uploading the same content again **repairs the file** instead of storing a second copy.
+- Storage location: `<DATA_DIR>/scripts/<scriptId>.<ext>`. **Not in the npm package directory**: the package directory is replaced wholesale on upgrade and is usually not writable after install; `DATA_DIR` is the plugin's writable directory (`config.json` and `events.log` live there too).
+- The file name is generated by the **host** (`<scriptId>.<ext>`); user input never takes part in building a path, which rules out path traversal.
 - The script body **never** enters `config.json`, the event log or `/state` — those only ever carry metadata.
 - The whole request body is capped at **1 MiB** (`BODY_LIMIT`): `/config` used to carry only small patches at 8 KiB, but scripts travel as JSON text and roughly double in size after escaping, so the limit was raised; exceeding it drops the connection outright instead of returning 413.
 
-The script's shape inside a profile:
+The rest of the library operations also live on `POST /config`, one key per request:
 
-```json
-"script": { "name": "End-of-day cleanup", "ext": "ps1", "file": "p1.ps1", "bytes": 412, "sha256": "9f2c…", "savedAt": 1762500000000 }
-```
+| Key | Body | Behaviour |
+| --- | --- | --- |
+| `selectScript` | `{ profileId, scriptId }` | select an entry for that profile (`scriptId: null` clears it); selecting also sets `action` to `custom`; an unknown id is `400 unknown script` |
+| `renameScript` | `{ scriptId, name }` | display name only, 1–40 characters; `sha256` is untouched, so the acknowledgement stays valid |
+| `deleteScript` | `{ scriptId }` | deletes the entry and its file; **an entry still used by profiles may be deleted**, those profiles fall back to having no script, and `affected` in the response is how many profiles were hit |
+| `ackScript` | `{ scriptId }` | records "I acknowledge this content"; the host writes `ack` from the current `sha256` |
+| `unackScript` | `{ scriptId }` | withdraws the acknowledgement |
 
-It is `null` when there is no script.
+See `### scripts[]` in section 2 for the entry shape. A profile only stores `scriptId`.
 
 ### 4.2 Execution mapping
 
@@ -158,12 +198,14 @@ It is `null` when there is no script.
 
 Interpreter detection reuses action capability probing (`subprocess.resolveExecutable`), and the result lands in `/state.actions.custom`. When the interpreter is missing or there is no script, the action area shows unavailable with a reason, and arming is refused.
 
-### 4.3 The acknowledgement is bound to the script content
+### 4.3 The acknowledgement is pinned to the library entry's bytes
 
-A profile also carries `scriptAck: { "sha256": "9f2c…", "at": 1762500100000 } | null`.
+The acknowledgement belongs to the library entry (`scripts[].ack`), not to a profile:
 
-- **Before arming, `scriptAck.sha256 === script.sha256` must hold**, otherwise arming is refused with the reason `script-not-acknowledged`.
-- When the script content changes (re-uploaded, different file), `sha256` changes and **the previous acknowledgement becomes invalid automatically**; it must be ticked again. Changing only the display name does not affect `sha256`, and the acknowledgement stays valid.
+- **Before arming, `ack.sha256 === that entry's sha256` must hold**, otherwise arming is refused with the reason `script-not-acknowledged`.
+- When the entry's content changes (re-uploaded as different bytes), `sha256` changes and **the previous acknowledgement becomes invalid automatically**; it must be ticked again. Changing only the display name does not affect `sha256`, and the acknowledgement stays valid.
+- If the file on disk was hand-edited so its bytes no longer match the recorded `sha256`, you get `script-not-acknowledged` as well — what you acknowledge is the content, not the file name.
+- Acknowledge once and every profile pointing at that entry counts as acknowledged; withdraw once and they all lose it.
 - This guards against "confirm once, then swap the file for something else" — an acknowledgement that lasts a lifetime after one tick is no acknowledgement at all.
 
 ### 4.4 Capability probing and the three-state value
@@ -186,22 +228,22 @@ If a re-probe finds that the **currently selected action** has become unavailabl
 | Value | When it appears |
 | --- | --- |
 | `no-custom-profile` | "custom profiles" is off, so `lock` / `signout` / `custom` are all unavailable |
-| `no-script` | `action: custom` but no script uploaded yet |
+| `no-script` | `action: custom` but no script is selected, or the selected entry's file has been deleted |
 | `missing-interpreter` | the script is there, but none of `python` / `python3` / `node` / `powershell` can be found |
 | `needs-elevation` | used for built-in actions on non-win32: availability reports `'unknown'` with this reason — the command was found, but TCC / polkit may require authorisation. **This is a conservative label, not a detection**: on non-Windows there is no way to know in advance whether an authorisation prompt will appear, so it is always marked "may require authorisation" |
 | `unsupported-on-platform` | the platform has no honest way to do it (macOS `lock`) |
 | `no-host-restart` | `restart-dsh`: Electron's `app.relaunch()` is out of reach |
-| `script-not-acknowledged` | the script's `sha256` does not match `scriptAck`; confirmation is needed again |
+| `script-not-acknowledged` | never acknowledged, or the acknowledged bytes no longer match what is on disk — including a hand-edited file |
 | `no-cli` | the executable cannot be found during probing (the failure value of `argvReachable`; macOS icon/path problems land here too) |
 | `no-session` | kept in the enum; no path currently produces it (an old branch for unavailable sessions) |
 
 The old value `no-custom-command` has been removed (it belonged to the replaced command-line model and was never released).
 
-The boundary of `no-custom-profile`: it is decided by that one switch and says nothing about whether anything is configured. `restart-dsh` is always `no-host-restart` and is **not affected** by it; `custom` with the switch on but no script uploaded reports `no-script` — one says "this action is not open right now", the other says "it is open, but you have not set it up yet", and the two must not be conflated.
+The boundary of `no-custom-profile`: it is decided by that one switch and says nothing about whether anything is configured. `restart-dsh` is always `no-host-restart` and is **not affected** by it; `custom` with the switch on but no script selected reports `no-script` — one says "this action is not open right now", the other says "it is open, but you have not set it up yet", and the two must not be conflated.
 
 ### 4.6 What each of the four script kinds does on Windows
 
-The user only uploads a file and writes no path at all — the path is generated by the host.
+The user only picks a file from the library and writes no path at all — the path is generated by the host.
 
 | Uploaded extension | Needs on the machine | Effect of a typical script |
 | --- | --- | --- |
@@ -221,12 +263,12 @@ Prefix `/api/dsh-shutdown-guard`; local machine only.
 | GET | `/state?since=<ms>` | full state + incremental events |
 | GET | `/events?since=&limit=` | event stream |
 | POST | `/arm` `/disarm` `/cancel` | arm / disarm / cancel this countdown |
-| POST | `/config` | change **behaviour**: profiles, switches, language, upload/delete scripts |
+| POST | `/config` | change **behaviour**: profiles, switches, language, script-library operations |
 | POST | `/ui` | change **appearance**: card style, theme, language, floating-window compact mode |
 
 `/config` and `/ui` are two write entry points on the same HTTP service, split by "behaviour / appearance" because the two layers of data live in different files and are consumed by different UIs:
 
-- `/config` writes `data/config.json`. It accepts `customEnabled`, `activeProfileId`, `language`, `profileId` + `patch` (plus a top-level `afkAutoAnswer`), and additionally `putScript` for uploading a script and `recheck:true` for re-probing action capabilities (see 4.1 and 4.4).
+- `/config` writes `data/config.json`. It accepts `customEnabled`, `activeProfileId`, `language`, `profileId` + `patch` (plus a top-level `afkAutoAnswer`), and the script-library keys `putScript`, `selectScript`, `renameScript`, `deleteScript`, `ackScript`, `unackScript` (see 4.1), as well as `recheck:true` for re-probing action capabilities (see 4.4).
 - `/ui` writes `data/ui.json`. It accepts `variant` (`A`/`B`/`C`), `theme` (`auto`/`dark`/`light`/`claude`), `lang` (`auto`/`zh`/`en`/`ru`) and `compact` (boolean).
 - `/ui` rejects `notify`: notifications are behaviour, not appearance. It returns `400 {"error": "notify belongs to the active profile; use /config updateProfile"}`.
 
@@ -238,7 +280,14 @@ Prefix `/api/dsh-shutdown-guard`; local machine only.
 
 `<field>` values: `countdownSec`, `marginSec`, `onlyOnSuccess`, `blockOnJobs`, `afkAutoAnswer`. To change any of these, create a custom profile first.
 
-Other errors: invalid language `400 unknown language`, unknown profile `400 unknown profile`, POST from a non-local Origin `403`, non-POST method `405`.
+Other errors: invalid language `400 unknown language`, unknown profile `400 unknown profile`, unknown script `400 unknown script`, POST from a non-local Origin `403`, non-POST method `405`.
+
+Writing the old fields is rejected explicitly rather than quietly ignored — otherwise a beta client would believe its upload or acknowledgement went through:
+
+| Written | Response |
+| --- | --- |
+| `patch.script` | `400 script must be uploaded through the script library` |
+| `patch.scriptAck` | `400 scriptAck can only be written by acknowledging a library script` |
 
 ### Fields in `/state` related to the action layer
 
@@ -246,9 +295,14 @@ Other errors: invalid language `400 unknown language`, unknown profile `400 unkn
 | --- | --- | --- |
 | `actions` | `{ [id]: { available, reason } }` | all 8 ids listed, including the hyphenated `restart-dsh`; `{}` after mount and before the first probe |
 | `actionReady` | bool | whether the current profile's `action` is available (`available !== false`); `'unknown'` counts as available |
+| `script` | object \| null | metadata of the entry the current profile uses (`name` / `ext` / `bytes` / `sha256` / `savedAt`); **no body, no file name** |
+| `scriptAckOk` | bool | whether the current entry is acknowledged and still byte-identical |
+| `scripts` | array | metadata of the whole library, each `{ id, name, ext, bytes, sha256, savedAt, ackOk, ackAt, usedBy }`; again never the body |
 | `lastAction` | object \| null | the last command this process actually dispatched; diagnostics only |
 | `parkedAt` | number \| null | when the halt started (only for `halted`), see section 2 |
 | `shutdownOnHaltEffective` | bool | the derived rule from section 2 |
+
+`script` / `scriptAck` inside `profiles[]` are a **compatibility projection**: filled in from the library by that profile's `scriptId` so the settings page can render one row without walking `scripts[]`. The authoritative data is the top-level `scripts[]`.
 
 The manual re-probe entry point is `POST /config {"recheck": true}`: it reruns capability probing immediately and refreshes `actions`; **no polling**.
 
@@ -288,13 +342,18 @@ An unknown `code` falls back to `transient`; a policy with a malformed shape is 
 
 ## 8. Schema migration
 
-- The current `CONFIG_VERSION = 4`. On read the `version` is checked first: anything below 4 is parsed with the old structure and then written back as `version: 4`.
-- v2 → v3 introduced `parked` and per-profile notification switches; v3 → v4 replaced the never-released `customArgv` with **scripts** (that field only existed briefly on the in-progress 1.6.1 branch, and no released version ever wrote it, so nothing is carried over).
+- The current `CONFIG_VERSION = 5`. On read the `version` is checked first: anything below 5 is parsed with the old structure and then written back as `version: 5`.
+- v2 → v3 introduced `parked` and per-profile notification switches; v3 → v4 replaced the never-released `customArgv` with **scripts** (that field only existed briefly on the in-progress 1.6.1 branch, and no released version ever wrote it, so nothing is carried over); v4 → v5 moved "one script per profile" into a **shared top-level library**.
+- **The v4 → v5 move** (2 / 3 / 4 all upgrade straight to 5):
+  - Each profile's `script` metadata becomes one entry in the library, the file is renamed from `<profileId>.<ext>` to `<scriptId>.<ext>`, and the profile keeps only `scriptId`.
+  - **Old files with the same `sha256` and the same `ext` merge into one entry**, duplicate copies are deleted, and the acknowledgement (`scriptAck`) is carried over to the merged entry.
+  - The move is followed by an **immediate write to disk**: `scripts[]` and the renamed files have to land together; waiting for the user's next write would leave orphaned files behind if the process is killed in between.
 - The old `profiles[]` are kept as they are: ids are not changed, entries are not split or reordered, and **values you edited by hand are not lost**.
-- New fields (`action`, `script`, `scriptAck`, `shutdownOnHalt`) are filled with defaults when missing: `shutdown` / `null` / `null` / `true`.
+- New fields (`action`, `scriptId`, `shutdownOnHalt`, `scripts`, `scriptSeq`) are filled with defaults when missing: `shutdown` / `null` / `true` / `[]` / `0`.
 - v2 files have no `parked` field, so it reads back as `null` (equivalent to "no halted scene"); there is no old state to carry over.
 - Keys such as `afkAutoAnswer` and `notify` that once existed both at the top level and inside a profile: the profile value wins, and the old top-level value is used only when a profile has no value.
 - On upgrade, empty profile slots that were never touched are cleaned up; a profile whose name was changed or whose switches were touched is always kept.
+- The migration works field by field and is idempotent: once `script` has been moved the field is gone, so reading again does not import it twice.
 
 ## 9. Event log
 

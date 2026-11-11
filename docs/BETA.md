@@ -92,7 +92,7 @@ npm i -g dsh-shutdown-guard@1.6.0
 
 请带上这些，越具体越好：
 
-1. `data/config.json` 里**相关片段**：profile 的 `action`、`script`（`name` / `ext` / `bytes` / `sha256`）、`scriptAck`；
+1. `data/config.json` 里**相关片段**：profile 的 `action` 与 `scriptId`，以及顶层 `scripts[]` 里那一条（`name` / `ext` / `bytes` / `sha256`）；
 2. `data/events.log` 的**尾部**（最近 20 行左右）；
 3. 系统版本（Windows 版本 / macOS 版本 / 发行版与内核）、DSH 版本、插件版本；
 4. 复现步骤：倒计时设了多少秒、第几秒做的操作、点了哪个按钮。
