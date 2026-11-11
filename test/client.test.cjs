@@ -951,9 +951,7 @@ void (async () => {
       await repaint()
       assert.ok(bodies.some((b) => b && b.renameScript && b.renameScript.name === 'new-name.ps1'),
         'the rename goes to renameScript')
-      const stillEditing = findNode('dsp-libedit')
-      if (stillEditing) stillEditing.props.onKeyDown({ key: 'Escape', preventDefault() {} })
-      await repaint()
+      assert.strictEqual(findNode('dsp-libedit'), null, 'a rejected rename leaves edit mode')
       const row = findNode('dsp-librow')
       assert.ok(flat(row, []).join('').includes('ack.cmd'), 'a rejected rename keeps the old name visible')
       assert.ok(!flat(row, []).join('').includes('new-name.ps1'), 'a rejected rename is never shown optimistically')
