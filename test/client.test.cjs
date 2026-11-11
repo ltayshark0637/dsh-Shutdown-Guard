@@ -754,27 +754,45 @@ void (async () => {
   }
   calls.push('custom-hidden-without-profiles-ok')
 
-  // Consent is a full-screen confirmation dialog, not a checkbox. The dialog
-  // must be escapable without sending anything, and only its primary button may
-  // send the dedicated `ackScript` field.
+  // Consent lives in the shared library row: an unconfirmed entry shows a gate
+  // button, the dialog sends `{ ackScript: { scriptId } }`, and withdrawing is
+  // its own verb that never deletes the script. The fixture mirrors the real
+  // /state payload: top-level `scripts[]` plus the compatibility projection.
+  const LIB_SHA = 'a'.repeat(64)
+  const libScript = (over) => Object.assign({
+    id: 's1', name: 'ack.cmd', ext: 'cmd', bytes: 12, sha256: LIB_SHA,
+    savedAt: 1, ackOk: false, ackAt: null, usedBy: 1,
+  }, over || {})
+  const libProfile = (sc) => ({
+    id: 'default', label: '默认配置', countdownSec: 60, action: 'custom',
+    scriptId: sc.id,
+    script: { name: sc.name, ext: sc.ext, bytes: sc.bytes, sha256: sc.sha256, savedAt: sc.savedAt },
+    scriptAck: sc.ackOk ? { sha256: sc.sha256, at: sc.ackAt } : null,
+  })
+  const setLib = (scripts) => {
+    state.scripts = scripts
+    state.profiles = [libProfile(scripts[0])]
+  }
   state.customEnabled = true
   state.activeProfileId = 'default'
-  state.profiles = [{
-    id: 'default',
-    label: '默认配置',
-    countdownSec: 60,
-    action: 'custom',
-    script: { name: 'ack.cmd', ext: 'cmd', bytes: 12, sha256: 'a'.repeat(64), savedAt: 1 },
-    scriptAck: null,
-  }]
+  setLib([libScript()])
   await repaint()
   {
     const findNode = (cls) => {
       let found = null
       walkNodes(settingsTree(), (n) => {
-        if (!found && n.props && typeof n.props.className === 'string' && n.props.className.split(/\s+/).includes(cls)) found = n
+        if (!found && n.props && typeof n.props.className === 'string'
+          && n.props.className.split(/\s+/).includes(cls)) found = n
       })
       return found
+    }
+    const findAll = (cls) => {
+      const out = []
+      walkNodes(settingsTree(), (n) => {
+        if (n.props && typeof n.props.className === 'string'
+          && n.props.className.split(/\s+/).includes(cls)) out.push(n)
+      })
+      return out
     }
     const dialog = () => document.body.querySelector('[role="dialog"]')
     const errNode = () => (dialog() ? dialog().querySelector('.dsp-modal-err') : null)
@@ -786,17 +804,34 @@ void (async () => {
     const realFetch = global.fetch
     let failNext = false
     global.fetch = async (url, opts) => {
-      if (opts && opts.body) bodies.push(JSON.parse(opts.body))
+      let body = null
+      if (opts && opts.body) {
+        body = JSON.parse(opts.body)
+        bodies.push(body)
+      }
       if (failNext) {
         const error = 'scriptAck is written by ackScript'
-        return { ok: false, json: async () => ({ error, state: 'idle' }) }
+        return { ok: false, json: async () => Object.assign({}, state, { error }) }
+      }
+      // The real host writes the ack onto the library entry; keep the mock state
+      // in sync so the optimistic patch and the next snapshot agree.
+      if (body && body.ackScript) {
+        state.scripts[0].ackOk = true
+        state.scripts[0].ackAt = Date.now()
+        state.profiles[0].scriptAck = { sha256: LIB_SHA, at: state.scripts[0].ackAt }
+      }
+      if (body && body.unackScript) {
+        state.scripts[0].ackOk = false
+        state.scripts[0].ackAt = null
+        state.profiles[0].scriptAck = null
       }
       return { ok: true, json: async () => state }
     }
     try {
-      const openBtn = findNode('dsp-ackopen')
-      assert.ok(openBtn, 'an unconfirmed script renders the confirm button')
+      const openBtn = findNode('dsp-gatebtn')
+      assert.ok(openBtn, 'an unconfirmed script renders the gate button')
       assert.strictEqual(findNode('dsp-ackbox'), null, 'no checkbox remains in the script row')
+      assert.strictEqual(findNode('dsp-ackopen'), null, 'the old confirm link is gone')
 
       // 1. Open: the dialog appears and the primary action owns the focus.
       openBtn.props.onClick({ currentTarget: openBtn })
@@ -810,7 +845,7 @@ void (async () => {
       assert.strictEqual(bodies.length, 0, 'Esc never sends a request')
 
       // 2b. The backdrop does the same.
-      findNode('dsp-ackopen').props.onClick({ currentTarget: findNode('dsp-ackopen') })
+      findNode('dsp-gatebtn').props.onClick({ currentTarget: findNode('dsp-gatebtn') })
       assert.ok(dialog(), 'the dialog can be opened again')
       const root = dialog()
       for (const fn of (root._listeners.mousedown || []).slice()) fn({ target: root })
@@ -820,7 +855,7 @@ void (async () => {
       // 3. A failed confirmation keeps the dialog open and turns the primary
       // action into a retry. Do not pin the wording of the error message.
       failNext = true
-      findNode('dsp-ackopen').props.onClick({ currentTarget: findNode('dsp-ackopen') })
+      findNode('dsp-gatebtn').props.onClick({ currentTarget: findNode('dsp-gatebtn') })
       okBtn()._listeners.click[0]({ preventDefault() {} })
       await settle()
       assert.ok(dialog(), 'a failed confirmation leaves the dialog open')
@@ -830,32 +865,35 @@ void (async () => {
       failNext = false
       esc()
 
-      // 4. Confirm sends ackScript only, then closes.
-      findNode('dsp-ackopen').props.onClick({ currentTarget: findNode('dsp-ackopen') })
+      // 4. Confirm sends the library id only, then closes. The failed attempt
+      // must not leave a local "confirmed" snapshot behind: rebuild from /state.
+      setLib([libScript()])
+      await repaint()
+      findNode('dsp-gatebtn').props.onClick({ currentTarget: findNode('dsp-gatebtn') })
+      assert.ok(dialog(), 'the dialog reopens after a retry')
       okBtn()._listeners.click[0]({ preventDefault() {} })
       await settle()
-      assert.deepStrictEqual(bodies[bodies.length - 1], { ackScript: { profileId: 'default' } },
-        'confirming sends ackScript only')
+      assert.deepStrictEqual(bodies[bodies.length - 1], { ackScript: { scriptId: 's1' } },
+        'confirming sends ackScript for the library entry')
       assert.ok(!('updateProfile' in bodies[bodies.length - 1]) && !('patch' in bodies[bodies.length - 1]),
         'confirming never sends a profile patch')
       assert.strictEqual(dialog(), null, 'a successful confirmation closes the dialog')
 
-      // 5. A confirmed script is shown as such and still lets the user reread
-      // the disclaimer through the same dialog. The fixture mirrors the real
-      // /state payload: { at, sha256 } — the hash is what the client compares.
-      state.profiles[0].scriptAck = { at: Date.now(), sha256: 'a'.repeat(64) }
+      // 5. A confirmed entry shows the green gate; the second button reopens the
+      // dialog so the user can reread the disclaimer.
       await repaint()
-      const viewBtn = findNode('dsp-ackview')
-      assert.ok(viewBtn, 'a confirmed script offers the details link')
-      let status = null
-      walkNodes(settingsTree(), (n) => {
-        if (n.props && typeof n.props.className === 'string' && n.props.className.includes('dsp-ackstatus')) status = n
-      })
-      assert.ok(status, 'the confirmed state is rendered')
+      const okGate = findNode('dsp-gate')
+      assert.ok(okGate && okGate.props.className.includes('is-ok'), 'the confirmed gate turns green')
+      const btns = findAll('dsp-gatebtn')
+      assert.strictEqual(btns.length, 2, 'a confirmed entry offers withdraw and details')
+      assert.strictEqual(flat(btns[0], []).join(''), clientText.zh['set.script.dialog.withdraw'],
+        'the first action withdraws consent')
       const confirmedPrefix = clientText.zh['set.script.confirmed'].split('{time}')[0].trim()
-      assert.ok(flat(status, []).join('').includes(confirmedPrefix), 'the row reports the confirmation time')
-      viewBtn.props.onClick({ currentTarget: viewBtn })
-      assert.ok(dialog(), 'the details link reopens the dialog')
+      const gateText = findNode('dsp-gatetext')
+      assert.ok(gateText && flat(gateText, []).join('').includes(confirmedPrefix),
+        'the gate reports the confirmation time')
+      btns[1].props.onClick({ currentTarget: btns[1] })
+      assert.ok(dialog(), 'the details action reopens the dialog')
       esc()
     } finally {
       global.fetch = realFetch
@@ -863,102 +901,148 @@ void (async () => {
     calls.push('script-ack-payload-ok')
   }
 
+  // 11b. The library list itself and the non-optimistic rename. A 400 from the
+  // host must leave the row showing the old name: an optimistic rename hides a
+  // silently rejected write.
+  await repaint()
+  {
+    const findNode = (cls) => {
+      let found = null
+      walkNodes(settingsTree(), (n) => {
+        if (!found && n.props && typeof n.props.className === 'string'
+          && n.props.className.split(/\s+/).includes(cls)) found = n
+      })
+      return found
+    }
+    const findAll = (cls) => {
+      const out = []
+      walkNodes(settingsTree(), (n) => {
+        if (n.props && typeof n.props.className === 'string'
+          && n.props.className.split(/\s+/).includes(cls)) out.push(n)
+      })
+      return out
+    }
+    state.scripts = [libScript(), libScript({ id: 's2', name: 'other.ps1', ext: 'ps1', sha256: 'b'.repeat(64), usedBy: 2 })]
+    state.profiles = [libProfile(state.scripts[0])]
+    await repaint()
+    assert.strictEqual(findAll('dsp-librow').length, 2, 'the library renders one row per entry')
+    const stat = findNode('dsp-libstat')
+    assert.ok(stat && flat(stat, []).join('').includes('2'), 'the header counts the library entries')
+
+    const bodies = []
+    const realFetch = global.fetch
+    global.fetch = async (url, opts) => {
+      const body = opts.body ? JSON.parse(opts.body) : null
+      bodies.push(body)
+      if (body && body.renameScript) return { ok: false, json: async () => ({ error: 'script name must be 1..40 characters' }) }
+      return { ok: true, json: async () => state }
+    }
+    try {
+      findNode('dsp-libmore').props.onClick({ preventDefault() {}, stopPropagation() {}, currentTarget: findNode('dsp-libmore') })
+      await repaint()
+      const rename = findAll('dsp-libmitem').find((n) => flat(n, []).join('') === clientText.zh['set.script.menu.rename'])
+      assert.ok(rename, 'the row menu offers rename')
+      rename.props.onClick({ preventDefault() {}, stopPropagation() {} })
+      await repaint()
+      const input = findNode('dsp-libedit')
+      assert.ok(input, 'rename edits in place')
+      input.props.onKeyDown({ key: 'Enter', preventDefault() {}, target: { value: 'new-name.ps1' } })
+      await settle()
+      await repaint()
+      assert.ok(bodies.some((b) => b && b.renameScript && b.renameScript.name === 'new-name.ps1'),
+        'the rename goes to renameScript')
+      const stillEditing = findNode('dsp-libedit')
+      if (stillEditing) stillEditing.props.onKeyDown({ key: 'Escape', preventDefault() {} })
+      await repaint()
+      const row = findNode('dsp-librow')
+      assert.ok(flat(row, []).join('').includes('ack.cmd'), 'a rejected rename keeps the old name visible')
+      assert.ok(!flat(row, []).join('').includes('new-name.ps1'), 'a rejected rename is never shown optimistically')
+    } finally {
+      global.fetch = realFetch
+    }
+    calls.push('script-library-list-ok')
+  }
+
   // 12a. The real /state ack carries { at, sha256 }. A payload trimmed to `at`
   // alone (the regression that made "confirmed" vanish after two seconds) must
   // not be treated as confirmed: the client compares the sha, it never guesses.
-  state.customEnabled = true
-  state.activeProfileId = 'default'
-  state.profiles = [{
-    id: 'default',
-    label: '默认配置',
-    countdownSec: 60,
-    action: 'custom',
-    script: { name: 'ack.cmd', ext: 'cmd', bytes: 12, sha256: 'a'.repeat(64), savedAt: 1 },
-    scriptAck: { at: Date.now() },
-  }]
-  // Let the previous test's optimistic grace (1.4 s) expire so /state is adopted
-  // as-is; otherwise the in-flight config patch would re-add the full ack.
+  setLib([libScript()])
+  state.profiles[0].scriptAck = { at: Date.now() }
   await new Promise((resolve) => setTimeout(resolve, 1450))
   await repaint()
   {
     const findNode = (cls) => {
       let found = null
       walkNodes(settingsTree(), (n) => {
-        if (!found && n.props && typeof n.props.className === 'string' && n.props.className.split(/\s+/).includes(cls)) found = n
+        if (!found && n.props && typeof n.props.className === 'string'
+          && n.props.className.split(/\s+/).includes(cls)) found = n
       })
       return found
     }
-    assert.ok(findNode('dsp-ackopen'), 'an ack without the hash is not treated as confirmed')
-    assert.strictEqual(findNode('dsp-ackview'), null, 'the trimmed ack does not render the details link')
+    const gate = findNode('dsp-gate')
+    assert.ok(gate, 'the script row still renders the gate')
+    assert.ok(!gate.props.className.includes('is-ok'), 'an ack without the hash is not treated as confirmed')
+    assert.ok(findNode('dsp-gatebtn'), 'the trimmed ack still offers the confirm button')
     assert.strictEqual(cardEl().querySelector('.dsp-btn').disabled, true,
       'the card stays blocked while the ack has no hash')
     calls.push('script-ack-shape-ok')
   }
 
-  // 12. Withdrawing consent is not deleting the script: the dialog's secondary
-  // action clears only `scriptAck`, the row returns to "not confirmed" at once,
-  // and the card goes back to its blocked state while the script itself stays.
-  state.customEnabled = true
-  state.activeProfileId = 'default'
-  state.profiles = [{
-    id: 'default',
-    label: '默认配置',
-    countdownSec: 60,
-    action: 'custom',
-    script: { name: 'ack.cmd', ext: 'cmd', bytes: 12, sha256: 'a'.repeat(64), savedAt: 1 },
-    scriptAck: { sha256: 'a'.repeat(64), at: Date.now() },
-  }]
+  // 12. Withdrawing consent is not deleting the script: the gate's withdraw
+  // action sends `unackScript`, the row stays, the badge returns to pending and
+  // the card blocks again while the bytes remain in the library.
+  setLib([libScript({ ackOk: true, ackAt: Date.now() })])
   await repaint()
   {
     const findNode = (cls) => {
       let found = null
       walkNodes(settingsTree(), (n) => {
-        if (!found && n.props && typeof n.props.className === 'string' && n.props.className.split(/\s+/).includes(cls)) found = n
+        if (!found && n.props && typeof n.props.className === 'string'
+          && n.props.className.split(/\s+/).includes(cls)) found = n
       })
       return found
     }
-    const dialog = () => document.body.querySelector('[role="dialog"]')
+    const findAll = (cls) => {
+      const out = []
+      walkNodes(settingsTree(), (n) => {
+        if (n.props && typeof n.props.className === 'string'
+          && n.props.className.split(/\s+/).includes(cls)) out.push(n)
+      })
+      return out
+    }
     const bodies = []
     const realFetch = global.fetch
     global.fetch = async (url, opts) => {
-      if (opts && opts.body) bodies.push(JSON.parse(opts.body))
+      const body = opts.body ? JSON.parse(opts.body) : null
+      bodies.push(body)
+      if (body && body.unackScript) {
+        state.scripts[0].ackOk = false
+        state.scripts[0].ackAt = null
+        state.profiles[0].scriptAck = null
+      }
       return { ok: true, json: async () => state }
     }
     try {
-      const scriptSha = state.profiles[0].script.sha256
       const arm = cardEl().querySelector('.dsp-btn')
       assert.strictEqual(arm.disabled, false, 'an acknowledged custom script lets the card arm')
 
-      const viewBtn = findNode('dsp-ackview')
-      assert.ok(viewBtn, 'the confirmed script offers the details link')
-      viewBtn.props.onClick({ currentTarget: viewBtn })
-      assert.ok(dialog(), 'the details link opens the consent dialog')
-      const withdraw = dialog().querySelector('.dsp-modal-withdraw')
-      const close = dialog().querySelector('.dsp-modal-close')
-      assert.ok(withdraw && close, 'a confirmed script offers withdraw and close')
-      assert.strictEqual(withdraw.textContent, clientText.zh['set.script.dialog.withdraw'],
-        'the secondary action is withdraw, not cancel')
-      assert.strictEqual(close.textContent, clientText.zh['set.script.dialog.close'],
-        'the primary action is close, not confirm')
-      assert.strictEqual(dialog().querySelector('.dsp-modal-ok'), null,
-        'a confirmed script no longer offers the acknowledge action')
-
-      withdraw._listeners.click[0]({ preventDefault() {} })
+      const withdraw = findAll('dsp-gatebtn').find((n) => flat(n, []).join('') === clientText.zh['set.script.dialog.withdraw'])
+      assert.ok(withdraw, 'the confirmed gate offers withdraw')
+      withdraw.props.onClick({ preventDefault() {}, currentTarget: withdraw })
       await settle()
-      assert.deepStrictEqual(bodies[bodies.length - 1],
-        { updateProfile: { id: 'default', patch: { scriptAck: null } } },
-        'withdrawing clears only the acknowledgement')
+      assert.deepStrictEqual(bodies[bodies.length - 1], { unackScript: { scriptId: 's1' } },
+        'withdrawing uses the unackScript verb')
       assert.ok(!('ackScript' in bodies[bodies.length - 1]),
         'withdrawing never re-sends ackScript')
-      assert.strictEqual(dialog(), null, 'a successful withdrawal closes the dialog')
+      assert.ok(!('patch' in bodies[bodies.length - 1]),
+        'withdrawing never patches the profile projection')
 
       await repaint()
-      assert.ok(findNode('dsp-ackopen'), 'the row immediately returns to the confirm button')
-      const status = findNode('dsp-ackstatus')
-      assert.ok(!status || !status.props.className.includes('is-ok'),
-        'the row no longer reports a confirmed state')
-      assert.strictEqual(state.profiles[0].script.sha256, scriptSha,
-        'withdrawing keeps the script intact')
+      assert.strictEqual(findAll('dsp-librow').length, 1, 'the script row stays after withdrawing')
+      assert.strictEqual(state.scripts[0].sha256, LIB_SHA, 'withdrawing keeps the script bytes')
+      const gate = findNode('dsp-gate')
+      assert.ok(!gate.props.className.includes('is-ok'), 'the gate returns to pending')
+      assert.ok(findNode('dsp-gatebtn'), 'the confirm button is back')
       assert.strictEqual(cardEl().querySelector('.dsp-btn').disabled, true,
         'the card returns to the blocked state until it is confirmed again')
     } finally {

@@ -1,6 +1,7 @@
 import assert from 'node:assert'
 import { apply } from '../lib/index.mjs'
 import { LANGS, MESSAGES, catalogCoverage, t } from '../lib/i18n.mjs'
+import { writeV4SharedScripts, SAMPLES, SHARED_SHA, sha256 } from './fixtures/script-library.mjs'
 
 const spawns = []
 const timers = new Map()
@@ -824,7 +825,7 @@ assert.strictEqual(res.status, 400, 'the default profile cannot be deleted')
   const here = pathMod.dirname(fileURLToPath(import.meta.url))
   const saved = JSON.parse(fs.readFileSync(pathMod.join(here, '..', 'data', 'config.json'), 'utf8'))
   // v4 adds script uploads; the rest of the store is unchanged.
-  assert.strictEqual(saved.version, 4, 'the profile store is written as v4')
+  assert.strictEqual(saved.version, 5, 'the profile store is written as v5')
   assert.strictEqual(saved.parked, null, 'nothing is parked when no halt happened')
   assert.strictEqual(saved.afkAutoAnswer, undefined, 'no global AFK flag is left behind')
   assert.strictEqual(saved.profiles.find((p) => p.id === 'c3').notify.blocked, false, 'per-profile notify survives a restart')
@@ -1197,21 +1198,24 @@ assert.strictEqual(routes.size, 0, 'disposer removes HTTP routes')
   assert.strictEqual(r.status, 200, 'a script can be uploaded')
   let savedProfile = r.body.profiles.find((p) => p.id === 'c1')
   assert.strictEqual(savedProfile.action, 'custom', 'uploading a script selects the custom action')
-  assert.strictEqual(savedProfile.script.name, 'bye.cmd', 'the display name is kept')
-  assert.strictEqual(savedProfile.script.ext, 'cmd', 'the extension is kept')
-  assert.strictEqual(savedProfile.script.bytes, Buffer.byteLength(scriptBody), 'the byte count matches the upload')
-  assert.match(savedProfile.script.sha256, /^[0-9a-f]{64}$/, 'the content hash is recorded')
-  const scriptFile = pathMod.join(scriptDir, 'c1.cmd')
+  let savedScript = r.body.scripts.find((s) => s.id === savedProfile.scriptId)
+  assert.ok(savedScript, 'the upload lands in the shared library and the profile points at it')
+  assert.strictEqual(savedScript.name, 'bye.cmd', 'the display name is kept')
+  assert.strictEqual(savedScript.ext, 'cmd', 'the extension is kept')
+  assert.strictEqual(savedScript.bytes, Buffer.byteLength(scriptBody), 'the byte count matches the upload')
+  assert.match(savedScript.sha256, /^[0-9a-f]{64}$/, 'the content hash is recorded')
+  const scriptFile = pathMod.join(scriptDir, savedScript.id + '.cmd')
   assert.strictEqual(fs.readFileSync(scriptFile, 'utf8'), scriptBody, 'the bytes land under data/scripts')
   st = await stateNow()
   assert.deepStrictEqual(Object.keys(st.script).sort(), ['bytes', 'ext', 'name', 'savedAt', 'sha256'], 'state carries metadata only')
-  assert.strictEqual(st.script.sha256, savedProfile.script.sha256, 'the state hash matches the file')
+  assert.strictEqual(st.script.sha256, savedScript.sha256, 'the state hash matches the file')
   assert.ok(!JSON.stringify(st.script).includes('shutdown /s'), 'state never leaks the script body')
   await flush()
   calls.push('put-script-ok')
 
   // 42b. Consent is bound to the exact bytes: an unacknowledged script cannot
-  // arm, and replacing the body invalidates the old acknowledgement.
+  // arm, and uploading new bytes creates a new library entry, leaving the old
+  // entry (and its acknowledgement) in place.
   let scriptN = spawns.length
   await postState('/arm')
   statusHandler({ agent: rootAgent, status: 'idle' })
@@ -1221,7 +1225,7 @@ assert.strictEqual(routes.size, 0, 'disposer removes HTTP routes')
   assert.strictEqual(st.lastSkip.key, 'log.actionUnavailable', 'the skip line explains the block')
   assert.strictEqual(st.lastSkip.params.error, 'script-not-acknowledged', 'the machine-readable reason is consent')
   assert.strictEqual(spawns.length, scriptN, 'nothing is sent before consent')
-  r = await postState('/config', { ackScript: { profileId: 'c1' } })
+  r = await postState('/config', { ackScript: { scriptId: savedScript.id } })
   assert.strictEqual(r.status, 200, 'the user can acknowledge the exact bytes')
   await flush()
   st = await stateNow()
@@ -1231,17 +1235,23 @@ assert.strictEqual(routes.size, 0, 'disposer removes HTTP routes')
   await flush()
   assert.strictEqual((await stateNow()).state, 'countdown', 'an acknowledged script can arm')
   await postState('/cancel')
+  const scriptsBefore = st.scripts.length
   r = await postState('/config', { putScript: { profileId: 'c1', name: 'bye.cmd', ext: 'cmd', content: scriptBody + 'echo changed\r\n' } })
-  assert.strictEqual(r.status, 200, 'the body can be replaced')
+  assert.strictEqual(r.status, 200, 'different bytes can be uploaded alongside the old entry')
+  const newScriptId = r.body.scriptId
+  assert.notStrictEqual(newScriptId, savedScript.id, 'different bytes get their own library id')
   await flush()
   st = await stateNow()
-  assert.strictEqual(st.scriptAckOk, false, 'new bytes invalidate the acknowledgement')
+  assert.strictEqual(st.scripts.length, scriptsBefore + 1, 'the old entry stays in the library')
+  assert.strictEqual(st.scripts.find((s) => s.id === savedScript.id).ackOk, true,
+    'the old acknowledgement is unaffected by the new upload')
+  assert.strictEqual(st.scriptAckOk, false, 'the newly selected bytes are unacknowledged')
   scriptN = spawns.length
   await postState('/arm')
   statusHandler({ agent: rootAgent, status: 'idle' })
   await flush()
   st = await stateNow()
-  assert.strictEqual(st.state, 'idle', 'the replaced script cannot arm on the old consent')
+  assert.strictEqual(st.state, 'idle', 'the new script cannot arm on the old consent')
   assert.strictEqual(st.lastSkip.params.error, 'script-not-acknowledged', 'the new bytes need a new consent')
   assert.strictEqual(spawns.length, scriptN, 'still nothing is sent')
   calls.push('script-ack-gate-ok')
@@ -1288,8 +1298,9 @@ assert.strictEqual(routes.size, 0, 'disposer removes HTTP routes')
   await postState('/disarm')
   await postState('/config', { updateProfile: { id: 'c1', patch: { action: 'custom' } } })
   await postState('/config', { putScript: { profileId: 'c1', name: 'gone.cmd', ext: 'cmd', content: '@echo off\r\n' } })
-  await postState('/config', { ackScript: { profileId: 'c1' } })
-  fs.rmSync(pathMod.join(scriptDir, 'c1.cmd'), { force: true })
+  const goneId = (await stateNow()).profiles.find((p) => p.id === 'c1').scriptId
+  await postState('/config', { ackScript: { scriptId: goneId } })
+  fs.rmSync(pathMod.join(scriptDir, goneId + '.cmd'), { force: true })
   await postState('/config', { recheck: true })
   await flush()
   st = await stateNow()
@@ -1305,7 +1316,7 @@ assert.strictEqual(routes.size, 0, 'disposer removes HTTP routes')
   calls.push('script-file-missing-ok')
 
   // 42f. Stores from 1.6.x load: v2 (the 1.6.0 release) and v3 (the beta) keep
-  // their profiles and are rewritten as v4 on the first save.
+  // their profiles and are rewritten as v5 on the first save.
   await postState('/disarm')
   for (const oldVersion of [2, 3]) {
     const seeded = {
@@ -1334,7 +1345,7 @@ assert.strictEqual(routes.size, 0, 'disposer removes HTTP routes')
     assert.strictEqual(loaded.countdownSec, 120, `v${oldVersion} keeps the profile values`)
     await postState('/config', { language: 'zh' })
     const disk = readCfg()
-    assert.strictEqual(disk.version, 4, `v${oldVersion} is rewritten as v4`)
+    assert.strictEqual(disk.version, 5, `v${oldVersion} is rewritten as v5`)
     assert.ok(disk.profiles.some((p) => p.id === 'c1'), `v${oldVersion} keeps the profile on disk`)
     calls.push(oldVersion === 2 ? 'migrate-v2-to-4-ok' : 'migrate-v3-to-4-ok')
   }
@@ -1362,7 +1373,7 @@ assert.strictEqual(routes.size, 0, 'disposer removes HTTP routes')
   assert.strictEqual(st.blockedLevel, 'halted', 'QUOTA halts the batch')
   assert.ok(st.parkedAt > 0, 'the halt carries a timestamp')
   let disk = readCfg()
-  assert.strictEqual(disk.version, 4, 'the store is written as v4')
+  assert.strictEqual(disk.version, 5, 'the store is written as v5')
   assert.strictEqual(disk.parked.code, 'QUOTA', 'the halt code is persisted')
   assert.strictEqual(disk.parked.level, 'halted', 'only a halted block is persisted')
   const parkedAt = disk.parked.at
@@ -1601,22 +1612,23 @@ assert.strictEqual(routes.size, 0, 'disposer removes HTTP routes')
   }
   calls.push('catch-up-after-suspended-timer-ok')
 
-  // 52. The consent round trip: the host computes the hash, the ack must carry
-  // exactly that hash, clear is allowed with null, and a client cannot invent an
-  // ack. The script bytes stay put when the consent is withdrawn.
+  // 52. The consent round trip, now on the library entry: the host computes the
+  // hash, the ack carries it, `unackScript` clears only the consent, and a client
+  // cannot invent an ack through a profile patch.
   await postState('/disarm')
   await postState('/config', { activeProfileId: 'c1' })
   await postState('/config', { updateProfile: { id: 'c1', patch: { action: 'custom' } } })
   const ackBody = '@echo off\r\necho ack\r\n'
   r = await postState('/config', { putScript: { profileId: 'c1', name: 'ack.cmd', ext: 'cmd', content: ackBody } })
   assert.strictEqual(r.status, 200, 'the script to acknowledge is uploaded')
+  const ackScriptId = r.body.scriptId
   st = await stateNow()
   assert.ok(st.script && st.script.sha256, 'the state publishes the script metadata')
   assert.strictEqual(st.scriptAckOk, false, 'a fresh upload is not acknowledged')
   assert.strictEqual(st.profiles.find((p) => p.id === 'c1').scriptAck, null,
     'the stored profile has no ack yet')
 
-  const ackRes = await postState('/config', { ackScript: { profileId: 'c1' } })
+  const ackRes = await postState('/config', { ackScript: { scriptId: ackScriptId } })
   assert.strictEqual(ackRes.status, 200, 'acknowledging the uploaded script is accepted')
   st = await stateNow()
   const ackedProfile = st.profiles.find((p) => p.id === 'c1')
@@ -1628,7 +1640,7 @@ assert.strictEqual(routes.size, 0, 'disposer removes HTTP routes')
     'the state publishes the ack hash for the client to compare')
   assert.strictEqual(ackedProfile.scriptAck.sha256, st.script.sha256,
     'the published ack hash is the host-computed script hash')
-  assert.strictEqual(readCfg().profiles.find((p) => p.id === 'c1').scriptAck.sha256, st.script.sha256,
+  assert.strictEqual(readCfg().scripts.find((s) => s.id === ackScriptId).ack.sha256, st.script.sha256,
     'the stored ack carries the host-computed hash, not a client value')
   assert.strictEqual(st.scriptAckOk, true, 'the state agrees the current bytes are acknowledged')
   await postState('/arm')
@@ -1637,17 +1649,17 @@ assert.strictEqual(routes.size, 0, 'disposer removes HTTP routes')
   assert.strictEqual((await stateNow()).state, 'countdown', 'an acknowledged script can arm')
 
   await postState('/disarm')
-  const cleared = await postState('/config', { updateProfile: { id: 'c1', patch: { scriptAck: null } } })
-  assert.strictEqual(cleared.status, 200, 'un-ticking the consent box is accepted')
+  const cleared = await postState('/config', { unackScript: { scriptId: ackScriptId } })
+  assert.strictEqual(cleared.status, 200, 'withdrawing the consent is accepted')
   st = await stateNow()
   const clearedProfile = st.profiles.find((p) => p.id === 'c1')
   assert.strictEqual(clearedProfile.scriptAck, null, 'the ack is cleared')
-  assert.strictEqual(readCfg().profiles.find((p) => p.id === 'c1').scriptAck, null,
+  assert.strictEqual(readCfg().scripts.find((s) => s.id === ackScriptId).ack, null,
     'the stored ack is cleared too')
   assert.strictEqual(st.scriptAckOk, false, 'clearing the ack turns the gate off again')
   assert.strictEqual(clearedProfile.script.sha256, ackedProfile.script.sha256,
     'clearing the ack does not touch the script metadata')
-  assert.ok(fs.existsSync(pathMod.join(scriptDir, 'c1.cmd')), 'the script bytes stay on disk')
+  assert.ok(fs.existsSync(pathMod.join(scriptDir, ackScriptId + '.cmd')), 'the script bytes stay on disk')
   n = spawns.length
   await postState('/arm')
   statusHandler({ agent: rootAgent, status: 'idle' })
@@ -1664,9 +1676,201 @@ assert.strictEqual(routes.size, 0, 'disposer removes HTTP routes')
     updateProfile: { id: 'c1', patch: { scriptAck: { sha256: 'deadbeef' } } },
   })
   assert.strictEqual(forged.status, 400, 'a client-invented ack is rejected')
-  assert.strictEqual(readCfg().profiles.find((p) => p.id === 'c1').scriptAck, null,
+  assert.strictEqual(forged.body.error, 'scriptAck can only be written by acknowledging a library script',
+    'the rejection names the library route')
+  assert.strictEqual(readCfg().scripts.find((s) => s.id === ackScriptId).ack, null,
     'a rejected ack leaves the stored value untouched')
   calls.push('script-ack-round-trip-ok')
+
+  mount()
+}
+
+// 53. The script library: a v4 store with two profile-owned copies of the same
+// bytes migrates into one shared entry, the migration is written immediately
+// (a crash right after mounting must not lose the library) and is idempotent on
+// the next mount. Uploads dedupe by (sha256, ext), one acknowledgement covers
+// every profile pointing at the entry, deleting it only clears the references,
+// and renaming is a library operation that a profile patch cannot perform.
+{
+  const fs = await import('node:fs')
+  const pathMod = await import('node:path')
+  const { fileURLToPath } = await import('node:url')
+  const here = pathMod.dirname(fileURLToPath(import.meta.url))
+  const dataDir = pathMod.join(here, '..', 'data')
+  const scriptsDir = pathMod.join(dataDir, 'scripts')
+  const cfgFile = pathMod.join(dataDir, 'config.json')
+  const readCfg = () => JSON.parse(fs.readFileSync(cfgFile, 'utf8'))
+  const stateNow = async () => JSON.parse((await request('GET', '/api/dsh-shutdown-guard/state')).body)
+  const postState = async (suffix, payload) => {
+    const r = await request('POST', '/api/dsh-shutdown-guard' + suffix, 'http://127.0.0.1:43129', payload)
+    return { status: r.status, body: JSON.parse(r.body) }
+  }
+  try { fs.rmSync(scriptsDir, { recursive: true, force: true }) } catch { /* fresh */ }
+  try { fs.rmSync(cfgFile, { force: true }) } catch { /* fresh */ }
+  writeV4SharedScripts(dataDir)
+
+  let mount = apply(ctx, { countdownSec: 10, marginSec: 5, onlyOnSuccess: true, language: 'zh' })
+  await flush()
+  let st = await stateNow()
+  let entry = st.scripts.find((s) => s.sha256 === SHARED_SHA)
+  assert.ok(entry, 'the two legacy copies collapse into one library entry')
+  assert.strictEqual(st.scripts.length, 1, 'byte-identical legacy scripts share a single entry')
+  const entryId = entry.id
+  assert.deepStrictEqual(Object.keys(entry).sort(),
+    ['ackAt', 'ackOk', 'bytes', 'ext', 'id', 'name', 'savedAt', 'sha256', 'usedBy'],
+    'a library entry has exactly the published shape')
+  assert.strictEqual(entry.ext, 'ps1', 'the shared extension is kept')
+  assert.strictEqual(entry.bytes, Buffer.byteLength(SAMPLES.shared.content), 'the byte count is kept')
+  assert.strictEqual(entry.ackOk, true, 'the surviving acknowledgement is kept on the entry')
+  assert.strictEqual(typeof entry.ackAt, 'number', 'the ack timestamp survives the migration')
+  assert.strictEqual(entry.usedBy, 2, 'both legacy profiles point at the shared entry')
+  const p1 = st.profiles.find((p) => p.id === 'p1')
+  const p2 = st.profiles.find((p) => p.id === 'p2')
+  assert.strictEqual(p1.scriptId, entryId, 'p1 points at the shared entry')
+  assert.strictEqual(p2.scriptId, entryId, 'p2 points at the shared entry')
+  assert.strictEqual(p1.script.sha256, SHARED_SHA, 'the compatibility projection still describes p1 bytes')
+  assert.strictEqual(p2.script.sha256, SHARED_SHA, 'the compatibility projection still describes p2 bytes')
+  assert.strictEqual(p1.scriptAck && p1.scriptAck.sha256, SHARED_SHA, 'p1 keeps its consent through the projection')
+  assert.strictEqual(p2.scriptAck && p2.scriptAck.sha256, SHARED_SHA,
+    'p2 inherits the shared entry consent through the projection')
+
+  // The migration must hit disk before the first request returns: a host killed
+  // right after mounting would otherwise come back to files it can no longer map.
+  const saved = readCfg()
+  assert.strictEqual(saved.version, 5, 'the migrated store is written as v5 immediately')
+  assert.strictEqual(saved.scripts.length, 1, 'the library is persisted on migration')
+  assert.strictEqual(saved.scripts[0].id, entryId, 'the persisted entry keeps its id')
+  assert.strictEqual(readCfg().scripts[0].ack.sha256, SHARED_SHA, 'the ack moves onto the library entry')
+  const migratedFiles = fs.readdirSync(scriptsDir)
+  assert.deepStrictEqual(migratedFiles, [entryId + '.ps1'], 'only the library-named file remains')
+  calls.push('migrate-script-library-ok')
+
+  // Idempotence: mounting the same store again must not duplicate entries or files.
+  mount()
+  mount = apply(ctx, { countdownSec: 10, marginSec: 5, onlyOnSuccess: true, language: 'zh' })
+  await flush()
+  st = await stateNow()
+  assert.strictEqual(st.scripts.length, 1, 'a second mount does not duplicate the library')
+  assert.deepStrictEqual(fs.readdirSync(scriptsDir), [entryId + '.ps1'], 'a second mount does not copy the file')
+  calls.push('migrate-script-library-idempotent-ok')
+
+  // 53a. Dedupe is keyed by bytes *and* extension.
+  const lib = st.scripts.length
+  let r = await postState('/config', { putScript: { name: 'renamed.ps1', ext: 'ps1', content: SAMPLES.shared.content } })
+  assert.strictEqual(r.status, 200, 're-uploading identical bytes is accepted')
+  assert.strictEqual(r.body.reused, true, 'identical bytes reuse the library entry')
+  assert.strictEqual(r.body.scriptId, entryId, 'the reused upload reports the existing id')
+  st = await stateNow()
+  assert.strictEqual(st.scripts.length, lib, 're-uploading identical bytes does not grow the library')
+  assert.strictEqual(st.scripts.find((s) => s.id === entryId).name, entry.name,
+    'a reuse never renames the existing entry')
+  r = await postState('/config', { putScript: { name: 'shared.py', ext: 'py', content: SAMPLES.sameShaDiffExt.content } })
+  assert.strictEqual(r.body.reused, false, 'the same bytes under another extension are a new script')
+  const pyId = r.body.scriptId
+  r = await postState('/config', { putScript: { name: 'other.ps1', ext: 'ps1', content: SAMPLES.sameExtDiffSha.content } })
+  assert.strictEqual(r.body.reused, false, 'different bytes under the same extension are a new script')
+  const otherId = r.body.scriptId
+  st = await stateNow()
+  assert.strictEqual(st.scripts.length, lib + 2, 'both non-duplicates enter the library')
+  assert.strictEqual(st.scripts.find((s) => s.id === pyId).sha256, SHARED_SHA, 'the py entry hashes its bytes')
+  assert.strictEqual(st.scripts.find((s) => s.id === otherId).sha256, sha256(SAMPLES.sameExtDiffSha.content),
+    'the other ps1 entry hashes its own bytes')
+  calls.push('script-dedupe-ok')
+
+  // 53b. Selecting an entry is per profile; usedBy counts the live references.
+  await postState('/config', { selectScript: { profileId: 'p1', scriptId: entryId } })
+  await postState('/config', { selectScript: { profileId: 'p2', scriptId: pyId } })
+  st = await stateNow()
+  assert.strictEqual(st.profiles.find((p) => p.id === 'p1').scriptId, entryId, 'p1 selects the shared entry')
+  assert.strictEqual(st.profiles.find((p) => p.id === 'p2').scriptId, pyId, 'p2 selects the py entry')
+  assert.strictEqual(st.scripts.find((s) => s.id === entryId).usedBy, 1, 'usedBy follows the references')
+  assert.strictEqual(st.scripts.find((s) => s.id === pyId).usedBy, 1, 'usedBy counts each profile once')
+  assert.strictEqual(st.scripts.find((s) => s.id === otherId).usedBy, 0, 'an unused entry reports zero')
+  assert.strictEqual(st.profiles.find((p) => p.id === 'p2').script.sha256, SHARED_SHA,
+    'the projection describes the newly selected entry')
+  calls.push('script-sharing-ok')
+
+  // 53c. An acknowledgement belongs to the entry, not to the profile that made it.
+  await postState('/config', { selectScript: { profileId: 'p2', scriptId: entryId } })
+  r = await postState('/config', { ackScript: { scriptId: entryId } })
+  assert.strictEqual(r.status, 200, 'acknowledging a library entry is accepted')
+  st = await stateNow()
+  assert.strictEqual(st.profiles.find((p) => p.id === 'p1').scriptAck.sha256, SHARED_SHA, 'p1 shares the ack')
+  assert.strictEqual(st.profiles.find((p) => p.id === 'p2').scriptAck.sha256, SHARED_SHA, 'p2 shares the ack')
+  assert.strictEqual(st.scripts.find((s) => s.id === entryId).ackOk, true, 'the entry records the ack')
+  r = await postState('/config', { putScript: { profileId: 'p1', name: 'next.ps1', ext: 'ps1', content: SAMPLES.sameExtDiffSha.content } })
+  await flush()
+  st = await stateNow()
+  assert.strictEqual(st.profiles.find((p) => p.id === 'p1').scriptAck, null,
+    'switching p1 to fresh bytes loses its consent')
+  assert.strictEqual(st.profiles.find((p) => p.id === 'p2').scriptAck.sha256, SHARED_SHA,
+    'p2 keeps consent via the still-acknowledged entry')
+  assert.strictEqual(st.scripts.find((s) => s.id === entryId).ackOk, true,
+    'a new upload does not clear another entry\'s ack')
+  calls.push('script-ack-scope-ok')
+
+  // 53d. Renaming is a library write; a profile patch cannot rename a script.
+  r = await postState('/config', { renameScript: { scriptId: entryId, name: 'shared-renamed.ps1' } })
+  assert.strictEqual(r.status, 200, 'renaming a library entry is accepted')
+  st = await stateNow()
+  assert.strictEqual(st.scripts.find((s) => s.id === entryId).name, 'shared-renamed.ps1',
+    'the new name is published')
+  assert.strictEqual(readCfg().scripts.find((s) => s.id === entryId).name, 'shared-renamed.ps1',
+    'the new name is persisted')
+  assert.deepStrictEqual(fs.readdirSync(scriptsDir).filter((f) => f.startsWith(entryId + '.')),
+    [entryId + '.ps1'], 'renaming keeps the file name stable on disk')
+  await postState('/config', { updateProfile: { id: 'p1', patch: { name: 'not-a-script-name' } } })
+  st = await stateNow()
+  assert.strictEqual(st.scripts.find((s) => s.id === entryId).name, 'shared-renamed.ps1',
+    'a profile patch cannot rename a script')
+  assert.strictEqual(st.profiles.find((p) => p.id === 'p1').label, 'A',
+    'a profile patch cannot rename the profile through the script route either')
+  const bad = await postState('/config', { renameScript: { scriptId: entryId, name: '' } })
+  assert.strictEqual(bad.status, 400, 'an empty script name is rejected')
+  calls.push('script-rename-ok')
+
+  // 53e. Deleting an entry clears the references and only then does arming fail.
+  await postState('/config', { updateProfile: { id: 'p2', patch: { countdownSec: 10 } } })
+  await postState('/config', { activeProfileId: 'p2' })
+  r = await postState('/config', { deleteScript: { scriptId: entryId } })
+  assert.strictEqual(r.status, 200, 'deleting a referenced entry is accepted')
+  assert.strictEqual(r.body.affected, 1, 'the delete reports the number of profiles it unhooked')
+  st = await stateNow()
+  assert.strictEqual(st.scripts.some((s) => s.id === entryId), false, 'the entry leaves the library')
+  assert.strictEqual(st.profiles.find((p) => p.id === 'p1').scriptId, otherId,
+    'p1 points at the other entry after its upload')
+  assert.strictEqual(st.profiles.find((p) => p.id === 'p2').scriptId, null, 'p2 loses the dangling reference')
+  assert.strictEqual(fs.existsSync(pathMod.join(scriptsDir, entryId + '.ps1')), false,
+    'the deleted entry takes its file with it')
+  const spawnsBefore = spawns.length
+  await postState('/arm')
+  statusHandler({ agent: rootAgent, status: 'idle' })
+  await flush()
+  st = await stateNow()
+  assert.strictEqual(st.state, 'idle', 'a profile without a script cannot arm')
+  assert.strictEqual(st.lastSkip.params.error, 'script-not-acknowledged',
+    'the arm refusal names the missing consent')
+  assert.strictEqual(spawns.length, spawnsBefore, 'nothing is sent with no script')
+  calls.push('script-delete-ok')
+
+  // 53f. The published state is self-consistent: every profile projection can be
+  // matched back to a library entry by id and hash, and every hash is sha256.
+  st = await stateNow()
+  const byId = new Map(st.scripts.map((s) => [s.id, s]))
+  for (const s of st.scripts) {
+    assert.match(s.sha256, /^[0-9a-f]{64}$/, 'every published entry carries a sha256')
+    const used = st.profiles.filter((p) => p.scriptId === s.id).length
+    assert.strictEqual(s.usedBy, used, `usedBy matches the profiles for ${s.id}`)
+  }
+  for (const p of st.profiles) {
+    if (!p.scriptId) continue
+    const s = byId.get(p.scriptId)
+    assert.ok(s, `profile ${p.id} points at a live entry`)
+    assert.strictEqual(p.script.sha256, s.sha256, `profile ${p.id} projection hashes the entry bytes`)
+    assert.strictEqual(s.ackOk === true, !!(p.scriptAck && p.scriptAck.sha256 === s.sha256),
+      `profile ${p.id} ack mirrors the entry`)
+  }
+  calls.push('script-state-contract-ok')
 
   mount()
 }
