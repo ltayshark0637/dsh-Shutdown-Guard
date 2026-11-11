@@ -928,8 +928,13 @@ void (async () => {
     state.profiles = [libProfile(state.scripts[0])]
     await repaint()
     assert.strictEqual(findAll('dsp-librow').length, 2, 'the library renders one row per entry')
-    const stat = findNode('dsp-libstat')
-    assert.ok(stat && flat(stat, []).join('').includes('2'), 'the header counts the library entries')
+    assert.strictEqual(findNode('dsp-libstat'), null,
+      'the library has no summary line of its own any more')
+    const usedRows = findAll('dsp-libused')
+    assert.strictEqual(usedRows.length, 2,
+      'every row carries its own usage count, including the one only one profile uses')
+    assert.ok(flat(usedRows[0], []).join('').includes('1'), 'a single user is stated on its row')
+    assert.ok(flat(usedRows[1], []).join('').includes('2'), 'a shared script states its own count')
 
     const bodies = []
     const realFetch = global.fetch
