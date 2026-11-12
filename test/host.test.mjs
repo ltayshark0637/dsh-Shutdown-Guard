@@ -1077,6 +1077,22 @@ assert.strictEqual(routes.size, 0, 'disposer removes HTTP routes')
     const r = await request('POST', '/api/dsh-shutdown-guard' + suffix, 'http://127.0.0.1:43129', payload)
     return { status: r.status, body: JSON.parse(r.body) }
   }
+  // `/arm` now schedules one tick that re-runs the idle gate, so a test that
+  // wants to see what the countdown registers has to let that tick run first.
+  const armNow = async () => {
+    const before = new Set(timers.keys())
+    const res = await postState('/arm')
+    if (res.status === 200 && res.body.armed) {
+      for (const id of [...timers.keys()]) {
+        if (before.has(id)) continue
+        const cb = timers.get(id)
+        timers.delete(id)
+        if (cb) cb()
+      }
+      await flush()
+    }
+    return res
+  }
   let mount = apply(ctx, { countdownSec: 10, marginSec: 5, onlyOnSuccess: true, language: 'zh' })
   await flush()
   await postState('/config', { createProfile: {} })
@@ -1116,7 +1132,7 @@ assert.strictEqual(routes.size, 0, 'disposer removes HTTP routes')
   assert.strictEqual(st.actions.sleep.available, 'unknown', 'a veto-capable platform reports unknown')
   assert.notStrictEqual(st.actions.sleep.available, false, 'unknown is not treated as unavailable')
   await postState('/config', { updateProfile: { id: 'c1', patch: { action: 'sleep' } } })
-  await postState('/arm')
+  await armNow()
   let n = spawns.length
   statusHandler({ agent: rootAgent, status: 'idle' })
   await flush()
@@ -1131,7 +1147,7 @@ assert.strictEqual(routes.size, 0, 'disposer removes HTTP routes')
   await postState('/disarm')
   await postState('/config', { updateProfile: { id: 'c1', patch: { action: 'shutdown' } } })
   n = spawns.length
-  await postState('/arm')
+  await armNow()
   statusHandler({ agent: rootAgent, status: 'idle' })
   await flush()
   assert.strictEqual((await stateNow()).state, 'countdown', 'shutdown still enters the countdown')
@@ -1146,7 +1162,7 @@ assert.strictEqual(routes.size, 0, 'disposer removes HTTP routes')
   await postState('/disarm')
   await postState('/config', { updateProfile: { id: 'c1', patch: { action: 'lock' } } })
   n = spawns.length
-  await postState('/arm')
+  await armNow()
   statusHandler({ agent: rootAgent, status: 'idle' })
   await flush()
   assert.strictEqual((await stateNow()).state, 'countdown', 'inline action entered the countdown')
@@ -1158,10 +1174,8 @@ assert.strictEqual(routes.size, 0, 'disposer removes HTTP routes')
 
   // 39. Inline fires exactly at the deadline timer, with the row's argv.
   await postState('/disarm')
-  await postState('/arm')
   const beforeIds = new Set(timers.keys())
-  statusHandler({ agent: rootAgent, status: 'idle' })
-  await flush()
+  await armNow()
   const fresh = [...timers.keys()].filter((id) => !beforeIds.has(id))
   assert.ok(fresh.length >= 2, 'the arm registered the action timer and the fired timer')
   assert.strictEqual(spawns.length, n, 'still nothing before the deadline')
@@ -1209,10 +1223,8 @@ assert.strictEqual(routes.size, 0, 'disposer removes HTTP routes')
   // gap must not spawn a second command nor claim it cancelled anything.
   await postState('/disarm')
   await postState('/config', { updateProfile: { id: 'c1', patch: { action: 'lock', countdownSec: 10, marginSec: 45 } } })
-  await postState('/arm')
   const gapBeforeIds = new Set(timers.keys())
-  statusHandler({ agent: rootAgent, status: 'idle' })
-  await flush()
+  await armNow()
   const gapFresh = [...timers.keys()].filter((id) => !gapBeforeIds.has(id))
   assert.ok(gapFresh.length >= 2, 'the arm registered the inline deadline and the fired timer')
   const gapBase = spawns.length
@@ -1265,20 +1277,21 @@ assert.strictEqual(routes.size, 0, 'disposer removes HTTP routes')
   // arm, and uploading new bytes creates a new library entry, leaving the old
   // entry (and its acknowledgement) in place.
   let scriptN = spawns.length
-  await postState('/arm')
-  statusHandler({ agent: rootAgent, status: 'idle' })
-  await flush()
+  let refused = await armNow()
+  assert.strictEqual(refused.status, 409, 'an unacknowledged script is refused before arming')
+  assert.strictEqual(refused.body.error, 'script-not-acknowledged', 'the refusal names the missing consent')
+  assert.strictEqual(refused.body.armed, false, 'the mode is not switched on by a refused arm')
   st = await stateNow()
   assert.strictEqual(st.state, 'idle', 'an unacknowledged script never enters the countdown')
-  assert.strictEqual(st.lastSkip.key, 'log.actionUnavailable', 'the skip line explains the block')
-  assert.strictEqual(st.lastSkip.params.error, 'script-not-acknowledged', 'the machine-readable reason is consent')
+  assert.strictEqual(st.lastSkip, null, 'a refused arm does not claim to have skipped a batch')
   assert.strictEqual(spawns.length, scriptN, 'nothing is sent before consent')
   r = await postState('/config', { ackScript: { scriptId: savedScript.id } })
   assert.strictEqual(r.status, 200, 'the user can acknowledge the exact bytes')
   await flush()
   st = await stateNow()
   assert.strictEqual(st.scriptAckOk, true, 'state reports the acknowledgement')
-  await postState('/arm')
+  r = await armNow()
+  assert.strictEqual(r.status, 200, 'an acknowledged script can be armed')
   statusHandler({ agent: rootAgent, status: 'idle' })
   await flush()
   assert.strictEqual((await stateNow()).state, 'countdown', 'an acknowledged script can arm')
@@ -1295,12 +1308,13 @@ assert.strictEqual(routes.size, 0, 'disposer removes HTTP routes')
     'the old acknowledgement is unaffected by the new upload')
   assert.strictEqual(st.scriptAckOk, false, 'the newly selected bytes are unacknowledged')
   scriptN = spawns.length
-  await postState('/arm')
-  statusHandler({ agent: rootAgent, status: 'idle' })
-  await flush()
+  await postState('/disarm')
+  refused = await armNow()
+  assert.strictEqual(refused.status, 409, 'new bytes without a new consent are refused')
+  assert.strictEqual(refused.body.error, 'script-not-acknowledged', 'the new bytes need a new consent')
+  assert.strictEqual(refused.body.armed, false, 'the refusal leaves the mode off')
   st = await stateNow()
   assert.strictEqual(st.state, 'idle', 'the new script cannot arm on the old consent')
-  assert.strictEqual(st.lastSkip.params.error, 'script-not-acknowledged', 'the new bytes need a new consent')
   assert.strictEqual(spawns.length, scriptN, 'still nothing is sent')
   calls.push('script-ack-gate-ok')
 
@@ -1326,7 +1340,7 @@ assert.strictEqual(routes.size, 0, 'disposer removes HTTP routes')
   await postState('/disarm')
   await postState('/config', { updateProfile: { id: 'c1', patch: { action: 'shutdown' } } })
   const inlineBefore = new Set(timers.keys())
-  await postState('/arm')
+  await armNow()
   statusHandler({ agent: rootAgent, status: 'idle' })
   await flush()
   scriptN = spawns.length
@@ -1354,12 +1368,12 @@ assert.strictEqual(routes.size, 0, 'disposer removes HTTP routes')
   st = await stateNow()
   assert.strictEqual(st.actions.custom.reason, 'no-script', 'a deleted script is reported as missing')
   scriptN = spawns.length
-  await postState('/arm')
-  statusHandler({ agent: rootAgent, status: 'idle' })
-  await flush()
+  refused = await armNow()
+  assert.strictEqual(refused.status, 409, 'a missing file is refused before arming')
+  assert.strictEqual(refused.body.error, 'no-script', 'the missing file is named as a missing script')
+  assert.strictEqual(refused.body.armed, false, 'the refused arm keeps the mode off')
   st = await stateNow()
   assert.strictEqual(st.state, 'idle', 'a missing file never arms')
-  assert.strictEqual(st.lastSkip.key, 'log.actionUnavailable', 'the skip line explains it')
   assert.strictEqual(spawns.length, scriptN, 'nothing is sent for a missing file')
   calls.push('script-file-missing-ok')
 
@@ -1436,7 +1450,7 @@ assert.strictEqual(routes.size, 0, 'disposer removes HTTP routes')
   const addedEvents = (await eventsNow()).slice(totalBefore)
   assert.ok(!addedEvents.some((e) => /blocked|halt|parked/i.test(String(e.key))), 'restoring parked does not replay the failure')
   assert.strictEqual((await eventsNow()).filter((e) => e.key === 'log.blockedSelfHealFailed').length, blockedBefore, 'no duplicate halt event')
-  await postState('/arm')
+  await armNow()
   await postState('/disarm')
   calls.push('parked-persist-ok')
 
@@ -1504,7 +1518,7 @@ assert.strictEqual(routes.size, 0, 'disposer removes HTTP routes')
   await postState('/ui', { theme: 'claude' })
   assert.strictEqual(readCfg().parked.code, 'QUOTA', 'changing appearance does not clear the park')
   await postState('/ui', { theme: 'auto' })
-  await postState('/arm')
+  await armNow()
   await postState('/disarm')
   assert.strictEqual(readCfg().parked, null, 'cleanup: the park is gone before the next scenario')
   calls.push('parked-clear-ok')
@@ -1566,13 +1580,12 @@ assert.strictEqual(routes.size, 0, 'disposer removes HTTP routes')
   assert.strictEqual(st.activeProfileId, 'default', 'the default profile stays active')
   assert.strictEqual(st.actionReady, false, 'a gated action is never reported ready')
   n = spawns.length
-  await postState('/arm')
-  statusHandler({ agent: rootAgent, status: 'idle' })
-  await flush()
+  refused = await armNow()
+  assert.strictEqual(refused.status, 409, 'arming a gated action is refused')
+  assert.strictEqual(refused.body.error, 'action-unavailable', 'the refusal names the unavailable action')
+  assert.strictEqual(refused.body.armed, false, 'the gated refusal leaves the mode off')
   st = await stateNow()
   assert.strictEqual(st.state, 'idle', 'arming a gated action stays idle')
-  assert.strictEqual(st.lastSkip && st.lastSkip.key, 'log.actionUnavailable',
-    'the arm refusal keeps the existing unavailable copy')
   assert.strictEqual(spawns.length, n, 'a gated action sends nothing')
   await postState('/config', { updateProfile: { id: 'default', patch: { action: 'shutdown' } } })
   await postState('/disarm')
@@ -1620,7 +1633,7 @@ assert.strictEqual(routes.size, 0, 'disposer removes HTTP routes')
   ctx.setTimeout = () => { suspended++; return () => {} }
   try {
     n = spawns.length
-    await postState('/arm')
+    await armNow()
     statusHandler({ agent: rootAgent, status: 'idle' })
     await flush()
     st = await stateNow()
@@ -1691,7 +1704,7 @@ assert.strictEqual(routes.size, 0, 'disposer removes HTTP routes')
   assert.strictEqual(readCfg().scripts.find((s) => s.id === ackScriptId).ack.sha256, st.script.sha256,
     'the stored ack carries the host-computed hash, not a client value')
   assert.strictEqual(st.scriptAckOk, true, 'the state agrees the current bytes are acknowledged')
-  await postState('/arm')
+  await armNow()
   statusHandler({ agent: rootAgent, status: 'idle' })
   await flush()
   assert.strictEqual((await stateNow()).state, 'countdown', 'an acknowledged script can arm')
@@ -1709,15 +1722,13 @@ assert.strictEqual(routes.size, 0, 'disposer removes HTTP routes')
     'clearing the ack does not touch the script metadata')
   assert.ok(fs.existsSync(pathMod.join(scriptDir, ackScriptId + '.cmd')), 'the script bytes stay on disk')
   n = spawns.length
-  await postState('/arm')
-  statusHandler({ agent: rootAgent, status: 'idle' })
-  await flush()
+  refused = await armNow()
+  assert.strictEqual(refused.status, 409, 'without an ack the script cannot arm')
+  assert.strictEqual(refused.body.error, 'script-not-acknowledged',
+    'the refusal says the script is not acknowledged')
+  assert.strictEqual(refused.body.armed, false, 'the refusal leaves the mode off')
   st = await stateNow()
   assert.strictEqual(st.state, 'idle', 'without an ack the script cannot arm')
-  assert.strictEqual(st.lastSkip && st.lastSkip.key, 'log.actionUnavailable',
-    'the arm refusal says the script is not acknowledged')
-  assert.strictEqual(st.lastSkip.params && st.lastSkip.params.error, 'script-not-acknowledged',
-    'the skip line names the missing acknowledgement')
   assert.strictEqual(spawns.length, n, 'nothing is sent without an ack')
 
   const forged = await postState('/config', {
@@ -1748,10 +1759,27 @@ assert.strictEqual(routes.size, 0, 'disposer removes HTTP routes')
   const scriptsDir = pathMod.join(dataDir, 'scripts')
   const cfgFile = pathMod.join(dataDir, 'config.json')
   const readCfg = () => JSON.parse(fs.readFileSync(cfgFile, 'utf8'))
+  let refused
   const stateNow = async () => JSON.parse((await request('GET', '/api/dsh-shutdown-guard/state')).body)
   const postState = async (suffix, payload) => {
     const r = await request('POST', '/api/dsh-shutdown-guard' + suffix, 'http://127.0.0.1:43129', payload)
     return { status: r.status, body: JSON.parse(r.body) }
+  }
+  // `/arm` now schedules one tick that re-runs the idle gate, so a test that
+  // wants to see what the countdown registers has to let that tick run first.
+  const armNow = async () => {
+    const before = new Set(timers.keys())
+    const res = await postState('/arm')
+    if (res.status === 200 && res.body.armed) {
+      for (const id of [...timers.keys()]) {
+        if (before.has(id)) continue
+        const cb = timers.get(id)
+        timers.delete(id)
+        if (cb) cb()
+      }
+      await flush()
+    }
+    return res
   }
   try { fs.rmSync(scriptsDir, { recursive: true, force: true }) } catch { /* fresh */ }
   try { fs.rmSync(cfgFile, { force: true }) } catch { /* fresh */ }
@@ -1891,13 +1919,13 @@ assert.strictEqual(routes.size, 0, 'disposer removes HTTP routes')
   assert.strictEqual(fs.existsSync(pathMod.join(scriptsDir, entryId + '.ps1')), false,
     'the deleted entry takes its file with it')
   const spawnsBefore = spawns.length
-  await postState('/arm')
-  statusHandler({ agent: rootAgent, status: 'idle' })
-  await flush()
+  refused = await armNow()
+  assert.strictEqual(refused.status, 409, 'a deleted script is refused before arming')
+  assert.strictEqual(refused.body.error, 'no-script',
+    'the arm refusal names the missing script, not a missing consent')
+  assert.strictEqual(refused.body.armed, false, 'the refused arm leaves the mode off')
   st = await stateNow()
   assert.strictEqual(st.state, 'idle', 'a profile without a script cannot arm')
-  assert.strictEqual(st.lastSkip.params.error, 'no-script',
-    'the arm refusal names the missing script, not a missing consent')
   assert.strictEqual(spawns.length, spawnsBefore, 'nothing is sent with no script')
   calls.push('script-delete-ok')
 
@@ -1914,13 +1942,13 @@ assert.strictEqual(routes.size, 0, 'disposer removes HTTP routes')
   assert.ok(fs.existsSync(pathMod.join(scriptsDir, otherId + '.ps1')),
     'the unselected entry keeps its file')
   const unselectedSpawns = spawns.length
-  await postState('/arm')
-  statusHandler({ agent: rootAgent, status: 'idle' })
-  await flush()
-  st = await stateNow()
-  assert.strictEqual(st.state, 'idle', 'a profile with no script selected cannot arm')
-  assert.strictEqual(st.lastSkip.params.error, 'no-script',
+  refused = await armNow()
+  assert.strictEqual(refused.status, 409, 'a profile with no script selected cannot arm')
+  assert.strictEqual(refused.body.error, 'no-script',
     'an unselected script is reported as no-script, not as unconfirmed')
+  assert.strictEqual(refused.body.armed, false, 'the refused arm leaves the mode off')
+  st = await stateNow()
+  assert.strictEqual(st.state, 'idle', 'a profile with no script selected stays idle')
   assert.strictEqual(st.actions.custom.reason, 'no-script',
     'the action report agrees with the arm refusal')
   assert.strictEqual(spawns.length, unselectedSpawns, 'nothing is sent without a selected script')
@@ -1936,13 +1964,13 @@ assert.strictEqual(routes.size, 0, 'disposer removes HTTP routes')
   assert.strictEqual(r.status, 200, 'the surviving entry can be acknowledged')
   fs.writeFileSync(otherFile, otherBytes + 'Write-Output tampered\r\n')
   const tamperedSpawns = spawns.length
-  await postState('/arm')
-  statusHandler({ agent: rootAgent, status: 'idle' })
-  await flush()
+  refused = await armNow()
+  assert.strictEqual(refused.status, 409, 'a tampered script is refused before arming')
+  assert.strictEqual(refused.body.error, 'script-not-acknowledged',
+    'a changed file is reported as unconfirmed, not as missing')
+  assert.strictEqual(refused.body.armed, false, 'the refused arm leaves the mode off')
   st = await stateNow()
   assert.strictEqual(st.state, 'idle', 'a tampered script cannot arm')
-  assert.strictEqual(st.lastSkip.params.error, 'script-not-acknowledged',
-    'a changed file is reported as unconfirmed, not as missing')
   assert.strictEqual(spawns.length, tamperedSpawns, 'nothing is sent with changed bytes')
   fs.writeFileSync(otherFile, otherBytes)
   calls.push('script-bytes-mismatch-ok')
@@ -2011,6 +2039,122 @@ assert.strictEqual(routes.size, 0, 'disposer removes HTTP routes')
     'the entry recovers once the interpreter is back')
   assert.strictEqual(psEntry.runnable, true, 'one bad entry does not grey out the others')
   calls.push('script-runnable-ok')
+
+  mount()
+}
+
+// 54. `/arm` now answers 409 before flipping the switch, so every refusal path
+// is checked against the same response contract. A failed script execution is
+// also visible as a verdict, not only as "已执行", and the tick `/arm` schedules
+// must catch a job that appears right after the switch is turned on.
+{
+  const fs = await import('node:fs')
+  const pathMod = await import('node:path')
+  const { fileURLToPath } = await import('node:url')
+  const here = pathMod.dirname(fileURLToPath(import.meta.url))
+  const dataDir = pathMod.join(here, '..', 'data')
+  const cfgFile = pathMod.join(dataDir, 'config.json')
+  for (const p of [cfgFile, pathMod.join(dataDir, 'ui.json')]) {
+    try { fs.unlinkSync(p) } catch { /* fresh start */ }
+  }
+  fs.rmSync(pathMod.join(dataDir, 'scripts'), { recursive: true, force: true })
+  const stateNow = async () => JSON.parse((await request('GET', '/api/dsh-shutdown-guard/state')).body)
+  const eventsNow = async () => JSON.parse((await request('GET', '/api/dsh-shutdown-guard/events?limit=300')).body).events
+  const postState = async (suffix, payload) => {
+    const r = await request('POST', '/api/dsh-shutdown-guard' + suffix, 'http://127.0.0.1:43129', payload)
+    return { status: r.status, body: JSON.parse(r.body) }
+  }
+  const armNow = async () => {
+    const before = new Set(timers.keys())
+    const res = await postState('/arm')
+    if (res.status === 200 && res.body.armed) {
+      for (const id of [...timers.keys()]) {
+        if (before.has(id)) continue
+        const cb = timers.get(id)
+        timers.delete(id)
+        if (cb) cb()
+      }
+      await flush()
+    }
+    return res
+  }
+  let mount = apply(ctx, { countdownSec: 10, marginSec: 5, language: 'zh' })
+  await flush()
+  await postState('/config', { createProfile: {} })
+  await postState('/config', { customEnabled: true, activeProfileId: 'c1' })
+  await postState('/config', { updateProfile: { id: 'c1', patch: { action: 'custom', countdownSec: 10 } } })
+
+  // 54a. custom without a script, custom with unacknowledged bytes, and an
+  // action the probe says is unavailable all refuse with their own reason.
+  let r = await postState('/arm')
+  assert.deepStrictEqual([r.status, r.body.error, r.body.armed], [409, 'no-script', false],
+    'a scriptless custom action is refused as no-script')
+  r = await postState('/config', { putScript: { profileId: 'c1', name: 'fail.cmd', ext: 'cmd', content: '@echo off\r\nexit /b 3\r\n' } })
+  const scriptId = r.body.scriptId
+  r = await postState('/arm')
+  assert.deepStrictEqual([r.status, r.body.error, r.body.armed], [409, 'script-not-acknowledged', false],
+    'unacknowledged bytes are refused as script-not-acknowledged')
+  await postState('/config', { updateProfile: { id: 'c1', patch: { action: 'restart-dsh' } } })
+  r = await postState('/arm')
+  assert.deepStrictEqual([r.status, r.body.error, r.body.armed], [409, 'no-host-restart', false],
+    'an action the host cannot run is refused with its probe reason')
+  await postState('/config', { updateProfile: { id: 'c1', patch: { action: 'custom' } } })
+  calls.push('arm-refusal-enumerated-ok')
+
+  // 54b. A non-zero exit must be published as a failure, not hidden behind the
+  // "the action ran" copy.
+  await postState('/config', { ackScript: { scriptId } })
+  const realSpawn = subprocess.spawn
+  subprocess.spawn = (options) => {
+    spawns.push(options.argv)
+    return { done: Promise.resolve({ code: 3 }) }
+  }
+  try {
+    const failedBefore = (await eventsNow()).filter((e) => e.key === 'log.actionFailed').length
+    const beforeIds = new Set(timers.keys())
+    await armNow()
+    const fresh = [...timers.keys()].filter((id) => !beforeIds.has(id))
+    assert.ok(fresh.length >= 2, 'the failing script registered its deadline and fired timers')
+    fireTimer(fresh[0])
+    await flush()
+    await flush()
+    const st = await stateNow()
+    assert.strictEqual(st.lastAction && st.lastAction.failed, true, 'a non-zero exit is published as a failure')
+    assert.strictEqual(st.lastAction.code, 3, 'the exit code is kept next to the verdict')
+    const failed = (await eventsNow()).filter((e) => e.key === 'log.actionFailed')
+    assert.strictEqual(failed.length - failedBefore, 1,
+      'the event log records the failed action once')
+    assert.strictEqual(failed[failed.length - 1].params && failed[failed.length - 1].params.code, '3',
+      'the failure event carries the exit code')
+    await postState('/cancel')
+    await postState('/disarm')
+  } finally {
+    subprocess.spawn = realSpawn
+  }
+  calls.push('action-failure-visible-ok')
+
+  // 54c. `/arm` returns before its one-tick job check; a job registered in that
+  // gap must still hold the action instead of letting the countdown start.
+  await postState('/config', { updateProfile: { id: 'c1', patch: { action: 'shutdown' } } })
+  const raceBefore = new Set(timers.keys())
+  r = await postState('/arm')
+  assert.deepStrictEqual([r.status, r.body.armed], [200, true], 'the switch turns on before the job check runs')
+  emitJob({ type: 'registered', job: { id: 'race-1', kind: 'bash', label: 'race', status: 'running' } })
+  const zeroTick = [...timers.keys()].find((id) => !raceBefore.has(id))
+  assert.ok(zeroTick, 'arming scheduled the post-arm tick')
+  timers.get(zeroTick)()
+  await flush()
+  let st = await stateNow()
+  assert.strictEqual(st.state, 'idle', 'a job registered right after arming keeps the countdown off')
+  assert.strictEqual(st.lastSkip && st.lastSkip.key, 'skip.jobs', 'the job gate explains the hold')
+  const heldSpawns = spawns.length
+  emitJob({ type: 'settled', job: { id: 'race-1', kind: 'bash', label: 'race', status: 'completed' } })
+  await flush()
+  assert.strictEqual(spawns.length, heldSpawns, 'nothing is sent while the job holds the action')
+  assert.strictEqual((await stateNow()).state, 'countdown', 'settling the job lets the held action start')
+  await postState('/cancel')
+  await postState('/disarm')
+  calls.push('arm-then-job-race-ok')
 
   mount()
 }
