@@ -1236,6 +1236,143 @@ void (async () => {
     calls.push('profile-row-switch-ok')
   }
 
+  // 12d. A 409 from /arm is an answer, not a dead click: the card keeps the
+  // switch off and shows the host's reason above the button. An unknown code
+  // must fall back to the generic sentence instead of leaking the raw enum.
+  {
+    state.armed = false
+    state.state = 'idle'
+    state.blocked = null
+    state.jobsRunning = 0
+    state.runningCount = 0
+    state.activeProfileId = 'default'
+    state.profiles = [{ id: 'default', label: '默认', action: 'shutdown' }]
+    state.actions = { shutdown: { available: true }, custom: { available: true } }
+    delete state.lastAction
+    const realFetch = global.fetch
+    let armError = 'script-not-acknowledged'
+    const armBodies = []
+    global.fetch = async (url, opts) => {
+      if (String(url).endsWith('/arm')) {
+        armBodies.push(opts && opts.body ? JSON.parse(opts.body) : null)
+        return {
+          ok: false,
+          status: 409,
+          json: async () => ({
+            error: armError,
+            armed: false,
+            state: 'idle',
+            lang: 'zh',
+            language: 'zh',
+            activeProfileId: 'default',
+            profiles: state.profiles,
+            actions: state.actions,
+            ui: { variant: 'B', theme: 'auto', folded: false, compact: true },
+          }),
+        }
+      }
+      return { ok: true, status: 200, json: async () => state }
+    }
+    try {
+      await repaint()
+      let btn = cardEl().querySelector('.dsp-btn')
+      assert.strictEqual(btn.disabled, false, 'the arm button is clickable before the refusal')
+      const armLabel = btn.textContent
+      for (const fn of (btn._listeners.click || [])) fn({})
+      await settle(10)
+      await repaint()
+      assert.strictEqual(cardEl().querySelector('.dsp-btn').textContent, armLabel,
+        'a refused arm keeps the button asking to arm')
+      assert.strictEqual(state.armed, false, 'the fixture never claims the switch turned on')
+      const note = cardEl().querySelector('.dsp-armnote')
+      assert.ok(note, 'the card has the refusal line')
+      assert.strictEqual(note.hidden, false, 'the refusal line is visible')
+      assert.strictEqual(note.textContent, clientText.zh['action.reason.script-not-acknowledged'],
+        'the refusal names the real reason, not a generic failure')
+      calls.push('arm-refusal-visible-ok')
+
+      armError = 'weird-code'
+      for (const fn of (cardEl().querySelector('.dsp-btn')._listeners.click || [])) fn({})
+      await settle(10)
+      await repaint()
+      assert.strictEqual(cardEl().querySelector('.dsp-armnote').textContent,
+        clientText.zh['action.reason.action-unavailable'], 'an unknown code falls back to the generic sentence')
+      assert.ok(!cardEl().querySelector('.dsp-armnote').textContent.includes('weird-code'),
+        'the raw enum never reaches the card')
+      calls.push('arm-refusal-unknown-ok')
+    } finally {
+      global.fetch = realFetch
+    }
+    assert.ok(armBodies.length >= 2, 'both clicks reached POST /arm')
+  }
+
+  // 12e. Failed and elevated runs share the same short-lived line, and it is
+  // tied to a new `lastAction.at` so polling does not pop it open again.
+  {
+    const realFetch = global.fetch
+    global.fetch = async (url) => ({ ok: true, status: 200, json: async () => state })
+    try {
+      state.lastAction = { at: 100, action: 'custom', code: 1, failed: true, argv: [] }
+      await repaint()
+      let note = cardEl().querySelector('.dsp-armnote')
+      assert.strictEqual(note.hidden, false, 'a failed run raises the note')
+      assert.strictEqual(note.textContent, clientText.zh['card.actionFailed'], 'a failed run says so')
+      calls.push('action-failed-note-ok')
+
+      state.lastAction = { at: 101, action: 'custom', code: 0, elevated: true, argv: [] }
+      await repaint()
+      note = cardEl().querySelector('.dsp-armnote')
+      assert.strictEqual(note.hidden, false, 'an elevated retry raises the note')
+      assert.strictEqual(note.textContent, clientText.zh['card.actionElevated'],
+        'an elevated retry names the elevation')
+
+      // Same `at`: another poll must not restart the eight-second window.
+      const before = note.textContent
+      state.lastAction = { at: 101, action: 'custom', code: 0, elevated: true, argv: [] }
+      await repaint()
+      assert.strictEqual(cardEl().querySelector('.dsp-armnote').textContent, before,
+        'polling the same action does not re-raise the note')
+      calls.push('action-elevated-note-ok')
+    } finally {
+      global.fetch = realFetch
+    }
+  }
+
+  // 12f. The ack gate is selectable: a custom action waiting for confirmation
+  // stays enabled in the picker and the note explains what is still missing.
+  {
+    state.customEnabled = true
+    state.activeProfileId = 'default'
+    state.profiles = [{ id: 'default', label: '默认', action: 'custom', script: { sha256: 'abc' }, scriptAck: null }]
+    state.actions = { custom: { available: false, reason: 'script-not-acknowledged' }, shutdown: { available: true } }
+    await repaint()
+    const tree = (() => {
+      const el = slots['settings.section'].render({})
+      return typeof el.type === 'function' ? el.type({}) : el
+    })()
+    const walk = (node, visit) => {
+      if (!node || node === false) return
+      if (Array.isArray(node)) { node.forEach((n) => walk(n, visit)); return }
+      if (typeof node !== 'object') return
+      visit(node)
+      if (node.children) node.children.forEach((n) => walk(n, visit))
+    }
+    let option = null
+    let reason = null
+    const opts = []
+    walk(tree, (n) => {
+      if (n.type === 'option') opts.push(n)
+      if (n.props && n.props.value === 'custom' && n.type === 'option') option = n
+      if (n.props && n.props.className === 'dsp-sreason') reason = n
+    })
+    assert.ok(option, 'the custom option is rendered: ' + JSON.stringify(opts.map((o) => o.props)))
+    assert.strictEqual(option.props.disabled, false, 'a pending acknowledgement stays selectable')
+    assert.ok(reason, 'the picker explains the pending reason')
+    assert.strictEqual(flat(reason, []).join(''), clientText.zh['action.reason.script-not-acknowledged'],
+      'the note names the acknowledgement, not a generic refusal')
+    calls.push('action-note-pending-ok')
+  }
+
   // 13. A rebuild (here: folding the card) creates a brand-new node with no
   // data-lum. The probe is throttled for 3 s, so without a cached answer the
   // fresh node would show the dark default until the next window. The rebuild
