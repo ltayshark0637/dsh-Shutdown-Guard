@@ -1,6 +1,6 @@
 # Testing guide for v1.6.1-beta.3
 
-> Chinese original: [BETA.md](BETA.md)
+> [中文](BETA.md) · **English** · [Русский](BETA.ru.md)
 
 ## 1. What this version is
 

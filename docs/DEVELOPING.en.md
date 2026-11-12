@@ -1,6 +1,6 @@
 # Local development
 
-> Chinese original: [DEVELOPING.md](DEVELOPING.md)
+> [中文](DEVELOPING.md) · **English** · [Русский](DEVELOPING.ru.md)
 
 ## 1. No build step
 

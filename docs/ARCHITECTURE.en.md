@@ -1,6 +1,6 @@
 # Architecture and gating
 
-> Chinese original: [ARCHITECTURE.md](ARCHITECTURE.md)
+> [中文](ARCHITECTURE.md) · **English** · [Русский](ARCHITECTURE.ru.md)
 
 This document is for maintainers: how state flows, how the five gates decide, how blocking and retries work together, and why the window page must stay same-source with the card.
 The user-facing guide is in [README](../README.en.md).

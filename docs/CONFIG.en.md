@@ -1,6 +1,6 @@
 # Configuration fields
 
-> Chinese original: [CONFIG.md](CONFIG.md)
+> [中文](CONFIG.md) · **English** · [Русский](CONFIG.ru.md)
 
 For maintainers and for people who want to hand-edit the config. The user-facing settings guide is in [README](../README.en.md).
 The gating logic and the motivation behind retries are in [ARCHITECTURE](./ARCHITECTURE.en.md).

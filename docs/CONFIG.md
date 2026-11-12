@@ -1,6 +1,6 @@
 # 配置字段
 
-> English version: [CONFIG.en.md](CONFIG.en.md)
+> **中文** · [English](CONFIG.en.md) · [Русский](CONFIG.ru.md)
 
 面向维护者与想手改配置的人。使用者视角的设置说明在 [README](../README.md)。
 判定逻辑与重试的动机见 [ARCHITECTURE](./ARCHITECTURE.md)。

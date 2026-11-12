@@ -1,6 +1,6 @@
 # 贡献指南
 
-> English version: [CONTRIBUTING.en.md](CONTRIBUTING.en.md)
+> **中文** · [English](CONTRIBUTING.en.md) · [Русский](CONTRIBUTING.ru.md)
 
 谢谢愿意花时间。这个插件是给「任务跑完了想关机」这个具体场景写的，代码量不大，但有几条硬约束是刻意的 —— 先读完这份再动手，比写完被打回省事。
 

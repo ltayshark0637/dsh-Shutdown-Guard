@@ -1,6 +1,6 @@
 # 本地开发
 
-> English version: [DEVELOPING.en.md](DEVELOPING.en.md)
+> **中文** · [English](DEVELOPING.en.md) · [Русский](DEVELOPING.ru.md)
 
 ## 1. 没有构建步骤
 

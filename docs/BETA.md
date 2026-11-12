@@ -1,6 +1,6 @@
 # v1.6.1-beta.3 测试指南
 
-> English version: [BETA.en.md](BETA.en.md)
+> **中文** · [English](BETA.en.md) · [Русский](BETA.ru.md)
 
 ## 1. 这是什么版本
 

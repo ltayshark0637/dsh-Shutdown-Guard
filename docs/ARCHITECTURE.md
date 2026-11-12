@@ -1,6 +1,6 @@
 # 架构与判定
 
-> English version: [ARCHITECTURE.en.md](ARCHITECTURE.en.md)
+> **中文** · [English](ARCHITECTURE.en.md) · [Русский](ARCHITECTURE.ru.md)
 
 这份文档写给维护者：状态怎么流转、五道闸门怎么判、阻断与重试怎么配合、窗口页为什么必须跟卡片同源。
 面向使用者的说明在 [README](../README.md)。

@@ -1,6 +1,6 @@
 # Contributing
 
-> Chinese original: [CONTRIBUTING.md](CONTRIBUTING.md)
+> [中文](CONTRIBUTING.md) · **English** · [Русский](CONTRIBUTING.ru.md)
 
 Thanks for taking the time. This plugin exists for one concrete situation — "the work is done, shut the machine down" — so the codebase is small, but a few constraints are deliberate. Reading this first is cheaper than getting a PR sent back.
 
