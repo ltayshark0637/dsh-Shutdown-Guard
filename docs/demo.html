@@ -968,6 +968,83 @@ h1 em { font-style: normal; color: #f0a83a }
 .setWrap .dsp-srow-new { justify-content: flex-end; color: var(--dsw-alias-label-secondary); font-size: 12px }
 .setWrap .dsp-sgroup-box + .dsp-sgroup-box { margin-top: 6px }
 
+/* 1.6.1 settings mock: the profile list and the script library are two outlined
+   lists, so the classes below are the product's own (lib/client.js) with the
+   token fallbacks this static page needs. */
+.setWrap {
+  --s-use: #6fa5f2;
+  --s-ready: #87b3ea;
+  --s-na: #77756e;
+  --s-need: #f2b13c;
+  --dsp-accent: #d97757;
+}
+.setWrap[data-lum="light"] {
+  --s-use: #2a63c4;
+  --s-ready: #5a94e0;
+  --s-na: #a9adb3;
+  --s-need: #e0a02a;
+}
+.setWrap .dsp-listbox {
+  display: flex;
+  flex-direction: column;
+  margin-top: 6px;
+  border: .5px solid var(--dsw-alias-border-l2);
+  border-radius: 11px;
+  overflow: hidden;
+}
+.setWrap .dsp-listbox .dsp-srow-new { border-top: 0; justify-content: flex-end }
+.setWrap .dsp-srow-prof {
+  gap: 9px;
+  height: 48px;
+  box-sizing: border-box;
+  padding: 0 10px 0 12px;
+  border-top: none;
+  border-bottom: .5px solid var(--dsw-alias-border-l2);
+  cursor: pointer;
+}
+.setWrap .dsp-srow-prof:last-child { border-bottom: 0 }
+.setWrap .dsp-srow-prof .dsp-srow-text { display: flex; flex-direction: row; justify-content: flex-start; align-items: center; gap: 6px; flex: 1 1 auto; min-width: 0; padding-right: 8px }
+.setWrap .dsp-srow-prof .dsp-sval { font-size: 11.5px }
+.setWrap .dsp-srow-prof.is-active { background: color-mix(in srgb, var(--dsp-accent) 7%, transparent); box-shadow: inset 3px 0 0 var(--dsp-accent) }
+.setWrap .dsp-srow-prof.is-active .dsp-stitle { font-weight: 500 }
+.setWrap .dsp-srow-prof.is-active .dsp-libradio { border-color: var(--dsp-accent); box-shadow: inset 0 0 0 3.5px var(--dsp-accent) }
+.setWrap .dsp-libradio { flex: none; width: 15px; height: 15px; border-radius: 50%; border: 1.5px solid var(--dsw-alias-border-l2); box-sizing: border-box }
+.setWrap .dsp-srow-prof .dsp-badge { font-size: 10.5px; line-height: 16px; height: 17px; padding: 0 6px; border-radius: 5px; background: color-mix(in srgb, var(--dsp-accent) 12%, transparent); color: var(--dsp-accent) }
+.setWrap .dsp-actctl { display: flex; flex-direction: column; gap: 4px; width: 100%; min-width: 0 }
+.setWrap .dsp-sel { width: 100%; height: 30px; padding: 0 8px; border-radius: 7px; border: .5px solid var(--dsw-alias-border-l2); background: var(--dsw-specific-selector); color: inherit; font: inherit; font-size: 12.5px }
+.setWrap .dsp-sel option { background: var(--dsw-alias-bg-overlay); color: inherit }
+.setWrap .dsp-srow.dsp-libblock { display: flex; flex-direction: column; align-items: stretch; gap: 0; padding-top: 10px }
+.setWrap .dsp-libhead { display: flex; align-items: center; gap: 12px; width: 100%; min-width: 0 }
+.setWrap .dsp-libheadtext { display: flex; flex-direction: column; gap: 2px; flex: 1 1 auto; min-width: 0 }
+.setWrap .dsp-libup { flex: none; height: 26px; padding: 0 10px; border: .5px solid color-mix(in srgb, currentColor 45%, transparent); border-radius: 7px; font-size: 12px; font-weight: 600; color: var(--dsw-alias-label-primary); background: transparent; white-space: nowrap }
+.setWrap .dsp-lib { display: flex; flex-direction: column; width: 100%; min-width: 0; margin-top: 6px; border: .5px solid var(--dsw-alias-border-l2); border-radius: 11px; overflow: hidden }
+.setWrap .dsp-libwrap { position: relative; min-width: 0; border-bottom: .5px solid var(--dsw-alias-border-l2) }
+.setWrap .dsp-libwrap:last-child { border-bottom: 0 }
+.setWrap .dsp-libwrap.is-on { background: color-mix(in srgb, var(--dsp-accent) 7%, transparent); box-shadow: inset 3px 0 0 var(--dsp-accent) }
+.setWrap .dsp-librow { display: flex; align-items: center; gap: 8px; width: 100%; height: 48px; min-width: 0; box-sizing: border-box; padding: 0 10px 0 12px }
+.setWrap .dsp-librow.is-na { color: var(--dsw-alias-label-tertiary) }
+.setWrap .dsp-librow.is-on .dsp-libradio { border-color: var(--dsp-accent); box-shadow: inset 0 0 0 3.5px var(--dsp-accent) }
+.setWrap .dsp-libname { display: flex; align-items: center; gap: 7px; min-width: 0; flex: 1 1 auto }
+.setWrap .dsp-libname-txt { min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; font-size: 13px }
+.setWrap .dsp-libdot { flex: none; width: 9px; height: 9px; border-radius: 50%; box-sizing: border-box; border: 1.5px solid var(--s-need); background: var(--s-need) }
+.setWrap .dsp-libdot.is-use { background: var(--s-use); border-color: var(--s-use) }
+.setWrap .dsp-libdot.is-ready { background: transparent; border-color: var(--s-ready) }
+.setWrap .dsp-libdot.is-need-open { background: transparent; border-color: var(--s-need) }
+.setWrap .dsp-libdot.is-na { background: var(--s-na); border-color: var(--s-na) }
+.setWrap .dsp-libmeta { flex: none; font-size: 11.5px; font-variant-numeric: tabular-nums; color: var(--dsw-alias-label-tertiary) }
+.setWrap .dsp-libused { flex: none; font-size: 11.5px; color: var(--dsw-alias-label-tertiary); white-space: nowrap }
+.setWrap .dsp-libpill { flex: none; height: 19px; display: inline-flex; align-items: center; padding: 0 6px; border-radius: 999px; font-size: 10.5px; line-height: 19px; white-space: nowrap; color: var(--dsw-alias-label-secondary); background: color-mix(in srgb, currentColor 8%, transparent) }
+.setWrap .dsp-libpill.is-ok { color: var(--s-use); background: color-mix(in srgb, var(--s-use) 12%, transparent) }
+.setWrap .dsp-libpill.is-na { color: var(--s-na); background: color-mix(in srgb, var(--s-na) 14%, transparent) }
+.setWrap .dsp-gate { display: flex; align-items: center; gap: 8px; width: 100%; min-width: 0; box-sizing: border-box; margin: 8px 0 0; padding: 8px 10px; border-radius: 8px; background: color-mix(in srgb, #d3a24a 14%, transparent); border: .5px solid color-mix(in srgb, #d3a24a 40%, transparent) }
+.setWrap .dsp-gate.is-ok { background: color-mix(in srgb, var(--s-use) 10%, transparent); border-color: color-mix(in srgb, var(--s-use) 42%, transparent) }
+.setWrap .dsp-gateicon { flex: none; width: 16px; height: 16px; display: flex; align-items: center; justify-content: center; border-radius: 50%; font-size: 11px; font-weight: 700; color: #8a6414; background: color-mix(in srgb, #d3a24a 30%, transparent) }
+.setWrap .dsp-gate.is-ok .dsp-gateicon { color: var(--s-use); background: color-mix(in srgb, var(--s-use) 22%, transparent) }
+.setWrap .dsp-gatetext { flex: 1 1 auto; min-width: 0; font-size: 12px; line-height: 18px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis }
+.setWrap .dsp-gatebtn { flex: none; height: 26px; padding: 0 10px; border-radius: 7px; border: .5px solid var(--dsw-alias-border-l2); background: transparent; color: inherit; font: inherit; font-size: 12px; font-weight: 600; white-space: nowrap }
+.setWrap .dsp-gatebtn.is-ok { color: var(--s-use); border-color: color-mix(in srgb, var(--s-use) 42%, transparent) }
+.setWrap .dsp-gatebtns { display: flex; align-items: center; gap: 6px; flex: none }
+
 </style>
 <style>
 
@@ -1411,24 +1488,77 @@ transition:transform .24s cubic-bezier(.22,.61,.36,1),width .24s cubic-bezier(.2
         <div class="dsp-srow-text"><span class="dsp-stitle" data-i18n="s.watch.custom">自定义配置</span>
           <span class="dsp-sdesc" data-i18n="s.watch.customDesc">正在使用自定义配置，默认配置暂时挂起。</span></div><span class="dsp-switch on" aria-hidden="true"><i></i></span>
       </div>
-      <div class="dsp-sgroup-box"><div class="dsp-sgroup"><span class="dsp-sgroup-title" data-i18n="s.prof.group">配置</span></div>
-        <div class="dsp-srow">
-  <div class="dsp-srow-text"><span class="dsp-stitle" data-i18n="s.prof.pick">选择配置</span></div><span class="dsp-sval" data-i18n="s.prof.cur">自定义 3（120 秒）</span></div>
-        <div class="dsp-srow">
-  <div class="dsp-srow-text"><span class="dsp-stitle" data-i18n="s.prof.default">默认</span></div><span class="dsp-sval" data-i18n="s.cd.60">60 秒</span></div>
-        <div class="dsp-srow">
-  <div class="dsp-srow-text"><span class="dsp-stitle" data-i18n="s.prof.c1">自定义 1</span></div><span class="dsp-sval" data-i18n="s.cd.90">90 秒</span><span class="dsp-sacts"><span class="dsp-slink" data-i18n="s.prof.setDefault">设为默认</span><span class="dsp-slink" data-i18n="s.prof.rename">重命名</span><span class="dsp-slink" data-i18n="s.prof.del">删除</span></span></div>
+      <div class="dsp-sgroup"><span class="dsp-sgroup-title" data-i18n="s.prof.group">配置</span></div>
+      <div class="dsp-listbox">
+        <div class="dsp-srow dsp-srow-prof" role="radio" aria-checked="false" aria-label="默认">
+          <span class="dsp-libradio" aria-hidden="true"></span>
+          <div class="dsp-srow-text"><span class="dsp-stitle" data-i18n="s.prof.default">默认</span></div>
+          <span class="dsp-sval" data-i18n="s.cd.60">60 秒</span>
+        </div>
+        <div class="dsp-srow dsp-srow-prof" role="radio" aria-checked="false" aria-label="自定义 1">
+          <span class="dsp-libradio" aria-hidden="true"></span>
+          <div class="dsp-srow-text"><span class="dsp-stitle" data-i18n="s.prof.c1">自定义 1</span></div>
+          <span class="dsp-sval" data-i18n="s.sec.90">90 秒</span><span class="dsp-sacts"><span class="dsp-slink" data-i18n="s.prof.setDefault">设为默认</span><span class="dsp-slink" data-i18n="s.prof.rename">重命名</span><span class="dsp-slink" data-i18n="s.prof.del">删除</span></span>
+        </div>
+        <div class="dsp-srow dsp-srow-prof" role="radio" aria-checked="false" aria-label="自定义 2">
+          <span class="dsp-libradio" aria-hidden="true"></span>
+          <div class="dsp-srow-text"><span class="dsp-stitle" data-i18n="s.prof.c2">自定义 2</span></div>
+          <span class="dsp-sval" data-i18n="s.sec.120">120 秒</span><span class="dsp-sacts"><span class="dsp-slink" data-i18n="s.prof.setDefault">设为默认</span><span class="dsp-slink" data-i18n="s.prof.rename">重命名</span><span class="dsp-slink" data-i18n="s.prof.del">删除</span></span>
+        </div>
+        <div class="dsp-srow dsp-srow-prof is-active" role="radio" aria-checked="true" aria-label="自定义 3">
+          <span class="dsp-libradio" aria-hidden="true"></span>
+          <div class="dsp-srow-text"><span class="dsp-stitle" data-i18n="s.prof.c3">自定义 3</span><span class="dsp-badge" data-i18n="s.prof.active">当前</span></div>
+          <span class="dsp-sval" data-i18n="s.sec.120">120 秒</span><span class="dsp-sacts"><span class="dsp-slink" data-i18n="s.prof.setDefault">设为默认</span><span class="dsp-slink" data-i18n="s.prof.rename">重命名</span><span class="dsp-slink" data-i18n="s.prof.del">删除</span></span>
+        </div>
         <div class="dsp-srow dsp-srow-new" data-new><span class="dsp-stitle" data-i18n="s.prof.new">＋ 新建</span></div>
       </div>
       <div class="dsp-sgroup-box"><div class="dsp-sgroup"><span class="dsp-sgroup-title" data-i18n="s.watch.group">守夜行为</span></div>
+        <div class="dsp-srow">
+  <div class="dsp-srow-text"><span class="dsp-stitle" data-i18n="s.row.cd">倒计时时长</span><span class="dsp-sdesc" data-i18n="s.row.cdDesc">关机前留出的取消时间，10–600 秒。</span></div><span class="dsp-seg"><button class="dsp-segbtn" type="button" data-i18n="s.cd.30">30 秒</button><button class="dsp-segbtn" type="button" data-i18n="s.cd.60">60 秒</button><button class="dsp-segbtn on" type="button" data-i18n="s.cd.120">2 分钟</button><button class="dsp-segbtn" type="button" data-i18n="s.cd.300">5 分钟</button></span></div>
+        <div class="dsp-srow dsp-srow-stack">
+          <div class="dsp-srow-text"><span class="dsp-stitle" data-i18n="s.row.action">任务完成后做什么</span><span class="dsp-sdesc" data-i18n="s.row.actionDesc">到点后执行这个动作。灰掉的选项在当前系统上不可用，原因写在选项下面。</span></div>
+          <div class="dsp-actctl"><select class="dsp-sel" aria-label="任务完成后做什么" data-i18n-aria="s.row.action"><option data-i18n="s.action.custom">执行脚本</option></select></div>
+        </div>
+        <div class="dsp-srow dsp-srow-stack dsp-libblock">
+          <div class="dsp-libhead"><div class="dsp-libheadtext"><span class="dsp-stitle" data-i18n="s.script.title">自定义脚本</span><span class="dsp-sdesc" data-i18n="s.script.desc">选择的文件保存在插件数据目录，不写进配置。</span></div><span class="dsp-libup" data-i18n="s.script.upload">＋ 上传脚本</span></div>
+          <div class="dsp-lib" role="radiogroup" aria-label="自定义脚本">
+            <div class="dsp-libwrap is-on"><div class="dsp-librow is-on" role="radio" aria-checked="true">
+              <span class="dsp-libradio" aria-hidden="true"></span>
+              <span class="dsp-libname"><span class="dsp-libdot is-use" aria-hidden="true"></span><span class="dsp-libname-txt">night-batch</span></span>
+              <span class="dsp-libmeta">py · 1.2 KB</span><span class="dsp-libused" data-i18n="s.script.used2">被 2 个配置使用</span><span class="dsp-libpill is-ok" data-i18n="s.script.confirmedShort">✓ 已确认</span>
+            </div></div>
+            <div class="dsp-libwrap"><div class="dsp-librow" role="radio" aria-checked="false">
+              <span class="dsp-libradio" aria-hidden="true"></span>
+              <span class="dsp-libname"><span class="dsp-libdot is-ready" aria-hidden="true"></span><span class="dsp-libname-txt">cleanup</span></span>
+              <span class="dsp-libmeta">cmd · 2.0 KB</span><span class="dsp-libused" data-i18n="s.script.used1">被 1 个配置使用</span><span class="dsp-libpill is-ok" data-i18n="s.script.confirmedShort">✓ 已确认</span>
+            </div></div>
+            <div class="dsp-libwrap"><div class="dsp-librow" role="radio" aria-checked="false">
+              <span class="dsp-libradio" aria-hidden="true"></span>
+              <span class="dsp-libname"><span class="dsp-libdot is-need-open" aria-hidden="true"></span><span class="dsp-libname-txt">lock-screen-with-a-very-long-name</span></span>
+              <span class="dsp-libmeta">ps1 · 640 B</span><span class="dsp-libused" data-i18n="s.script.used0">被 0 个配置使用</span><span class="dsp-libpill" data-i18n="s.script.pending">尚未确认</span>
+            </div></div>
+            <div class="dsp-libwrap"><div class="dsp-librow is-na" role="radio" aria-checked="false" aria-disabled="true">
+              <span class="dsp-libradio" aria-hidden="true"></span>
+              <span class="dsp-libname"><span class="dsp-libdot is-na" aria-hidden="true"></span><span class="dsp-libname-txt">deploy</span></span>
+              <span class="dsp-libmeta">py · 980 B</span><span class="dsp-libused" data-i18n="s.script.used1">被 1 个配置使用</span><span class="dsp-libpill is-na" data-i18n="s.script.na.interp">找不到解释器</span>
+            </div></div>
+          </div>
+          <div class="dsp-gate is-ok">
+            <span class="dsp-gateicon" aria-hidden="true">✓</span>
+            <span class="dsp-gatetext" data-i18n="s.script.confirmedAt">已确认 · 2021/03/14 14:32</span>
+            <span class="dsp-gatebtns"><span class="dsp-gatebtn is-ok" data-i18n="s.script.withdraw">撤销确认</span><span class="dsp-gatebtn" data-i18n="s.script.more">查看完整说明</span></span>
+          </div>
+        </div>
         <div class="dsp-srow">
   <div class="dsp-srow-text"><span class="dsp-stitle" data-i18n="s.row.sessions">会话都停下来</span><span class="dsp-sdesc" data-i18n="s.row.sessionsDesc">底线条件，始终开启。</span></div><span class="dsp-sval" data-i18n="s.always">总是开启</span></div>
         <div class="dsp-srow">
   <div class="dsp-srow-text"><span class="dsp-stitle" data-i18n="s.row.jobs">后台任务跑完</span><span class="dsp-sdesc" data-i18n="s.row.jobsDesc">有后台任务在跑时，先不下发关机指令。</span></div><span class="dsp-switch on" aria-hidden="true"><i></i></span></div>
         <div class="dsp-srow">
-  <div class="dsp-srow-text"><span class="dsp-stitle" data-i18n="s.row.errors">有会话报错就跳过这一轮</span><span class="dsp-sdesc" data-i18n="s.row.errorsDesc">只认成功的任务，出过错的批次不关机。</span></div><span class="dsp-switch" aria-hidden="true"><i></i></span></div>
+  <div class="dsp-srow-text"><span class="dsp-stitle" data-i18n="s.row.errors">有会话报错就跳过这一轮</span><span class="dsp-sdesc" data-i18n="s.row.errorsDesc">只认成功的任务，出过错的批次不关机。</span></div><span class="dsp-switch on" aria-hidden="true"><i></i></span></div>
         <div class="dsp-srow">
-  <div class="dsp-srow-text"><span class="dsp-stitle" data-i18n="s.row.cd">倒计时时长</span><span class="dsp-sdesc" data-i18n="s.row.cdDesc">关机前留出的取消时间，10–600 秒。</span></div><span class="dsp-seg"><button class="dsp-segbtn" type="button" data-i18n="s.cd.30">30 秒</button><button class="dsp-segbtn" type="button" data-i18n="s.cd.60">60 秒</button><button class="dsp-segbtn on" type="button" data-i18n="s.cd.120">2 分钟</button><button class="dsp-segbtn" type="button" data-i18n="s.cd.300">5 分钟</button></span></div>
+  <div class="dsp-srow-text"><span class="dsp-stitle" data-i18n="s.row.halt">熔断后仍执行</span><span class="dsp-sdesc" data-i18n="s.row.haltDesc">配额耗尽等原因停下后，仍然按上面的动作执行。</span></div><span class="dsp-switch on" aria-hidden="true"><i></i></span></div>
+        <div class="dsp-srow">
+  <div class="dsp-srow-text"><span class="dsp-stitle" data-i18n="s.row.afk">AFK 自动回答</span><span class="dsp-sdesc" data-i18n="s.row.afkDesc">武装后 agent 若向你提问，自动代为回复。</span></div><span class="dsp-switch on" aria-hidden="true"><i></i></span></div>
       </div>
     </div>
 
@@ -1848,6 +1978,30 @@ transition:transform .24s cubic-bezier(.22,.61,.36,1),width .24s cubic-bezier(.2
       's.status.lastV': '还有 2 个后台任务在运行，暂不关机。',
       's.status.log': '事件日志',
       's.status.logV': '最近 4 条，完整记录在插件 data/events.log。',
+      's.prof.c2': '自定义 2',
+      's.prof.c3': '自定义 3',
+      's.prof.active': '当前',
+      's.sec.90': '90 秒',
+      's.sec.120': '120 秒',
+      's.row.action': '任务完成后做什么',
+      's.row.actionDesc': '到点后执行这个动作。灰掉的选项在当前系统上不可用，原因写在选项下面。',
+      's.action.custom': '执行脚本',
+      's.script.title': '自定义脚本',
+      's.script.desc': '选择的文件保存在插件数据目录，不写进配置。',
+      's.script.upload': '＋ 上传脚本',
+      's.script.used2': '被 2 个配置使用',
+      's.script.used1': '被 1 个配置使用',
+      's.script.used0': '被 0 个配置使用',
+      's.script.confirmedShort': '✓ 已确认',
+      's.script.pending': '尚未确认',
+      's.script.na.interp': '找不到解释器',
+      's.script.confirmedAt': '已确认 · 2021/03/14 14:32',
+      's.script.withdraw': '撤销确认',
+      's.script.more': '查看完整说明',
+      's.row.halt': '熔断后仍执行',
+      's.row.haltDesc': '配额耗尽等原因停下后，仍然按上面的动作执行。',
+      's.row.afk': 'AFK 自动回答',
+      's.row.afkDesc': '武装后 agent 若向你提问，自动代为回复。',
     },
 
     en: {
@@ -2097,6 +2251,30 @@ transition:transform .24s cubic-bezier(.22,.61,.36,1),width .24s cubic-bezier(.2
       's.status.lastV': 'Two background jobs were still running, so it held off.',
       's.status.log': 'Event log',
       's.status.logV': 'The last four lines; the full log is in the plugin’s data/events.log.',
+      's.prof.c2': 'Custom 2',
+      's.prof.c3': 'Custom 3',
+      's.prof.active': 'Active',
+      's.sec.90': '90s',
+      's.sec.120': '120s',
+      's.row.action': 'What happens when the work is done',
+      's.row.actionDesc': 'Runs this when the countdown ends. Greyed options are unavailable on this system, and the reason sits under the picker.',
+      's.action.custom': 'Run a script',
+      's.script.title': 'Custom scripts',
+      's.script.desc': 'Uploaded files live in the plugin data directory, never in the config.',
+      's.script.upload': '+ Upload script',
+      's.script.used2': 'Used by 2 profiles',
+      's.script.used1': 'Used by 1 profile',
+      's.script.used0': 'Used by no profile',
+      's.script.confirmedShort': '✓ Confirmed',
+      's.script.pending': 'Not confirmed',
+      's.script.na.interp': 'No interpreter found',
+      's.script.confirmedAt': 'Confirmed · 2021-03-14 14:32',
+      's.script.withdraw': 'Withdraw',
+      's.script.more': 'Read the full note',
+      's.row.halt': 'Still run after a halt',
+      's.row.haltDesc': 'After a halt (quota, and so on) still run the action above.',
+      's.row.afk': 'AFK auto-reply',
+      's.row.afkDesc': 'While armed, answers for you when the agent asks something.',
     },
 
     ru: {
@@ -2346,6 +2524,30 @@ transition:transform .24s cubic-bezier(.22,.61,.36,1),width .24s cubic-bezier(.2
       's.status.lastV': 'Ещё работали две фоновые задачи, поэтому выключение отложено.',
       's.status.log': 'Журнал событий',
       's.status.logV': 'Последние четыре строки; полный журнал — в data/events.log плагина.',
+      's.prof.c2': 'Своя 2',
+      's.prof.c3': 'Своя 3',
+      's.prof.active': 'Текущий',
+      's.sec.90': '90 с',
+      's.sec.120': '120 с',
+      's.row.action': 'Что делать по завершении',
+      's.row.actionDesc': 'Действие выполняется, когда отсчёт закончится. Серые пункты на этой системе недоступны, причина указана под списком.',
+      's.action.custom': 'Запустить скрипт',
+      's.script.title': 'Свои скрипты',
+      's.script.desc': 'Загруженные файлы лежат в каталоге данных плагина и не попадают в конфиг.',
+      's.script.upload': '+ Загрузить скрипт',
+      's.script.used2': 'Используется в 2 профилях',
+      's.script.used1': 'Используется в 1 профиле',
+      's.script.used0': 'Не используется',
+      's.script.confirmedShort': '✓ Подтверждён',
+      's.script.pending': 'Не подтверждён',
+      's.script.na.interp': 'Интерпретатор не найден',
+      's.script.confirmedAt': 'Подтверждён · 14.03.2021 14:32',
+      's.script.withdraw': 'Отозвать',
+      's.script.more': 'Полное описание',
+      's.row.halt': 'Выполнять после остановки',
+      's.row.haltDesc': 'После остановки (например, из-за квоты) всё равно выполнять действие выше.',
+      's.row.afk': 'Автоответ в AFK',
+      's.row.afkDesc': 'Пока режим включён, отвечает за вас, когда агент задаёт вопрос.',
     },
   }
 
