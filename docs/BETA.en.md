@@ -20,6 +20,8 @@ After installing, **fully quit DSH and start it again** (on macOS, quit with ⌘
 
 If you are on a beta older than 1.6.1, just install 1.6.1 over it — every item and expected behaviour here describes 1.6.1.
 
+**Back up `data/config.json` and `data/scripts/` before upgrading**: they live inside the plugin package directory, and `npm i` replaces that whole directory (reason: antepenultimate item in section 4).
+
 Rollback:
 
 ```bash
@@ -87,7 +89,7 @@ Each item is written as "how to act / what you should see / what it looks like w
 - **Linux may show one authentication dialog**: when an action first exits non-zero, the host retries it once through `pkexec` (waiting up to 120 seconds), and polkit may ask for a password. The premise is "non-zero means it did not run"; if a command produced a side effect yet still returned non-zero, it could in the extreme run twice.
 - **No timer, no automatic retry**: when the host cannot provide a timer, `retryAt` is set to 0, the log gets a `log.retryUnavailable` entry, and the UI stops showing "retrying in N seconds".
 - Script stdout / stderr are each **truncated to 4096 bytes**; anything beyond that is not visible.
-- Scripts live in the plugin's writable data directory (`data/scripts/`), not in the npm package directory; upgrading the plugin does not take them away.
+- **Config, scripts and the event log all live in `data/` inside the plugin package directory** (`data/config.json`, `data/scripts/`, `data/events.log`): they are not published in the npm tarball, but their location is inside the package directory, and an `npm i` upgrade replaces that whole directory — `data/` may go with it. **Back up `data/config.json` and `data/scripts/` before upgrading.**
 - Upgrading from 1.6.0 bumps `config.json` to the new schema and migrates the old config automatically; internal experimental fields such as `customArgv` were never released with any version and take no part in the migration.
 - The schema in 1.6.1 is 5 (the global script library `scripts[]` is new); upgrading from 1.6.0 migrates automatically at startup and writes the result immediately — no manual edits, just install over the top and restart DSH.
 

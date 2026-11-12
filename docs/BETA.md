@@ -20,6 +20,8 @@ npm i -g dsh-shutdown-guard@1.6.1
 
 已经装着 1.6.1 之前 beta 的，直接装 1.6.1 覆盖即可 —— 本文件的测试项与期望行为描述的都是 1.6.1。
 
+**升级前先备份 `data/config.json` 与 `data/scripts/`**：它们就在插件包目录里，`npm i` 覆盖升级会替换整个包目录（原因见第 4 节倒数第三条）。
+
 回滚：
 
 ```bash
@@ -87,7 +89,7 @@ npm i -g dsh-shutdown-guard@1.6.0
 - **Linux 上可能弹一次认证框**：某个动作首次以非 0 退出时，宿主会用 `pkexec` 重试一次（最多等 120 秒），polkit 可能要求输入密码。前提是「非 0 ＝ 没执行成功」；若某条命令产生了副作用却仍返回非 0，极端情况下会重复执行一次。
 - **没有定时器就不自动重试**：宿主给不出定时能力时 `retryAt` 置 0、事件日志记 `log.retryUnavailable`，界面不会显示「N 秒后重试」。
 - 脚本执行输出 stdout / stderr **各截 4096 字节**，超出部分看不到。
-- 脚本存在插件的可写数据目录（`data/scripts/`），不在 npm 包目录里；升级插件不会带走它们。
+- **配置、脚本、事件日志都在插件包目录里的 `data/`**（`data/config.json`、`data/scripts/`、`data/events.log`）：它们没被打进 npm 包，但位置就在包目录内部，而 `npm i` 覆盖升级会替换整个包目录 —— `data/` 可能一起没了。**升级前先备份 `data/config.json` 与 `data/scripts/`。**
 - 从 1.6.0 升上来时 `config.json` 会升到新 schema，旧配置自动迁移；`customArgv` 这类内部试验字段从未随任何版本发布，不参与迁移。
 - 1.6.1 的 schema 是 5（多出全局脚本库 `scripts[]`）；从 1.6.0 升上来会在启动时自动迁移并立刻写盘，不需要手工改文件，覆盖安装后重启 DSH 即可。
 

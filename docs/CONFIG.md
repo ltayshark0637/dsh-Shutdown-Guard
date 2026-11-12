@@ -71,7 +71,7 @@
 | `savedAt` | 数字 | 入库时间戳 |
 | `ack` | 对象 \| null | `{ sha256, at }`；`sha256` 与记录不一致时读回即丢弃（视为没确认） |
 
-- 正文**只**在磁盘：`<DATA_DIR>/scripts/<scriptId>.<ext>`，不进 `config.json`、事件日志或 `/state`。
+- 正文**只**在磁盘：`<插件目录>/data/scripts/<scriptId>.<ext>`（即 `DATA_DIR/scripts`），不进 `config.json`、事件日志或 `/state`。**该目录在插件包目录内部**，没被打进 npm 包，但 `npm i` 覆盖升级会替换整个包目录 —— 升级前先备份 `data/config.json` 与 `data/scripts/`。
 - 文件被删、被手改成别的字节，记录本身不会自动消失：前者让 `custom` 报 `no-script`，后者让 `custom` 报 `script-not-acknowledged`（见 4.5）。
 - 一份 profile 只记 `scriptId`（`null` = 没选脚本）；`script` / `scriptAck` 这两个旧字段**已经不存在**，写它们会被 400 拒绝（见 4.1）。
 
@@ -170,7 +170,7 @@ POST /config
 
 - **去重**：同 `sha256` 且同 `ext` 的库条目会被复用，响应里带 `reused: true`，**不覆盖**已有条目的 `name`（重复上传不能悄悄给别人改名字）。
 - 条目存在但磁盘文件被手改过/删掉了，重传同样的内容会**修复文件**而不是再存一份。
-- 存储位置：`<DATA_DIR>/scripts/<scriptId>.<ext>`。**不在 npm 包目录**：包目录在升级时会被整体替换、安装后通常不可写；`DATA_DIR` 才是插件的可写目录（`config.json`、`events.log` 也在这里）。
+- 存储位置：`<插件目录>/data/scripts/<scriptId>.<ext>`（`PLUGIN_DIR/data/scripts`，`config.json` 与 `events.log` 也在同一个 `data/` 下）。**这里是插件包目录内部**：`data/` 没被打进 npm 包，但覆盖升级会替换整个包目录，所以升级前要先备份。
 - 文件名由**宿主**生成（`<scriptId>.<ext>`），用户输入不参与拼路径，规避路径穿越。
 - 脚本正文**永不**进 `config.json`、事件日志或 `/state` —— 这些地方只有元数据。
 - 整个请求体上限 **1 MiB**（`BODY_LIMIT`）：`/config` 以前只带小补丁时是 8 KiB，脚本走 JSON 文本、转义后体积约翻倍，所以放宽了；超过会直接断开连接而不是返回 413。

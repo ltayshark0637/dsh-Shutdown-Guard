@@ -158,6 +158,6 @@ docs/         面向维护者的文档：ARCHITECTURE、CONFIG、DEVELOPING、BE
 data/         运行时数据（config.json / ui.json / events.log / scripts/），不提交
 ```
 
-`data/scripts/` 放全局脚本库里那些文件的正文，文件名是 `<scriptId>.<ext>`，由宿主生成。它**必须在包外**：npm 包目录在升级时被整体替换、安装后通常不可写，脚本放进去会在下一次升级时消失。脚本正文不进 `config.json`，库里只留 `sha256`、大小、显示名这些元数据。
+`data/scripts/` 放全局脚本库里那些文件的正文，文件名是 `<scriptId>.<ext>`，由宿主生成。它就在**插件包目录内部**（`PLUGIN_DIR/data/scripts`，与 `config.json`、`events.log` 同层）：`data/` 没被打进 npm 包，但覆盖升级会替换整个包目录，所以升级前要先备份 —— 这一点与「文件尽量放包外」的初衷相反，是目前已知的取舍。脚本正文不进 `config.json`，库里只留 `sha256`、大小、显示名这些元数据。
 
 `preview/` 是设计过程稿，不是当前实现；`docs/screenshots/` 是脚本产物。
