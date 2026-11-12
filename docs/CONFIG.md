@@ -230,7 +230,7 @@ POST /config
 | `no-custom-profile` | 未开启「自定义配置」时，`lock` / `signout` / `custom` 这三个动作一律不可用 |
 | `no-script` | `action: custom` 但没选脚本，或选中的条目文件已经被删掉 |
 | `missing-interpreter` | 脚本在，但 `python` / `python3` / `node` / `powershell` 一个都找不到 |
-| `needs-elevation` | 内置动作在非 win32 上就用它：可用性报 `'unknown'`、原因给这个 —— 命令找到了，但 TCC / polkit 可能要求授权。**这是保守标注，不是检测**：非 Windows 上无法预知授权弹窗会不会出现，所以一律标为「可能需授权」 |
+| `needs-elevation` | 内置动作在非 win32 上就用它：可用性报 `'unknown'`、原因给这个 —— 命令找到了，但 TCC / polkit 可能要求授权。**这是「无法可靠探测时的保守标注，不是检测结果」**：不能读成「需要 sudo」；实测 Ubuntu 24.04.5 LTS 桌面上六个动作都不需要额外提权即可执行 |
 | `unsupported-on-platform` | 本平台没有诚实的做法（macOS 的 `lock`） |
 | `no-host-restart` | `restart-dsh`：够不着 Electron 的 `app.relaunch()` |
 | `script-not-acknowledged` | 没确认过，或确认的字节与当前不一致 —— 包括磁盘文件被手改成别的字节 |
@@ -253,6 +253,16 @@ POST /config
 | `.js` | `node` | 本地文件整理、调 `fetch` 发消息 |
 
 注意：脚本以**当前用户权限**运行，插件不审查内容，也不对其安全性作担保 —— 这也是为什么武装前必须确认免责文案（见 4.3）。
+
+### 4.7 Linux 上的提权重试
+
+只有 Linux 有这一层。`shutdown` / `restart` / `sleep` / `hibernate` / `lock` / `signout` 之一**首次以非 0 退出**时，宿主会用 `pkexec` 重试**一次**：
+
+- `pkexec` 通过 polkit 申请授权、以 root 身份执行同一条命令，可能弹出认证框；单次等待上限 120 秒（普通动作是 15 秒）。
+- 成功的命令（退出码 0）**绝不**重发 —— 一次关机不会被送两遍。
+- `custom` 脚本**永不**提权：那是用户自己的脚本，始终以当前用户身份运行。
+
+风险写在明面上：这套重试的前提是「非 0 退出＝没执行成功」。如果某条命令**已经产生了副作用却仍返回非 0**，理论上会被执行两次 —— 极端情况下确实可能重复执行一次关机或注销。之所以接受它，是因为半途失败的关机更需要那次提权尝试，而多送一次关机相比机器永远关不掉，代价更低。
 
 ## 5. 端点
 
@@ -298,13 +308,28 @@ POST /config
 | `script` | 对象 \| null | 当前 profile 选中的那条的元数据（`name` / `ext` / `bytes` / `sha256` / `savedAt`）；**不含正文、不含文件名** |
 | `scriptAckOk` | bool | 当前选中的那条是否已确认且字节一致 |
 | `scripts` | 数组 | 整个脚本库的元数据，每项 `{ id, name, ext, bytes, sha256, savedAt, ackOk, ackAt, usedBy }`；同样永不含正文 |
-| `lastAction` | 对象 \| null | 本进程最后一次真正下发的命令，仅用于诊断 |
+| `lastAction` | 对象 \| null | 本进程最后一次真正下发的命令，仅用于诊断；`{ action, at, argv, code, failed, error?, elevated? }` |
+| `lastAction.failed` | bool | 那次命令的失败判定：退出码非 0，或 spawn 本身报错。命令「跑了」与「成功」是两回事，这个字段只回答后者 |
+| `lastAction.elevated` | bool（可缺省） | 仅当发生了 Linux 上那次 `pkexec` 提权重试时为 `true`；没重试时这个键不出现，不要读成 `false` |
 | `parkedAt` | 数字 \| null | 熔断开始时间（`halted` 才有），见第 2 节 |
 | `shutdownOnHaltEffective` | bool | 见第 2 节的派生规则 |
 
 `profiles[]` 里的 `script` / `scriptAck` 是**兼容投影**：按该 profile 的 `scriptId` 从库里取出来拼上，方便设置页渲染单行而不必遍历 `scripts[]`；权威数据在顶层 `scripts[]`。
 
 手动重测入口是 `POST /config {"recheck": true}`：立即重跑一次能力探测并刷新 `actions`，**不做轮询**。
+
+### `/arm` 的拒绝契约
+
+动作不可运行时，`POST /arm` **不**先武装再失败，而是直接拒绝，返回 **409**，body 是 `{ error: <reason>, ...statePayload() }` —— 也就是说被拒时你仍然拿到一份完整状态，`armed` 保持 `false`。`error` 的取值来自 `armRefusal()`：
+
+| `error` | 什么时候 |
+| --- | --- |
+| `no-script` | `action: custom`，但没选脚本或选中的文件已被删掉 |
+| `script-not-acknowledged` | 选中的脚本没确认过，或磁盘上的字节与确认的不一致 |
+| 该动作的探测 `reason` | 探测阶段就判了不可用（如 `no-custom-profile`、`missing-interpreter`、`no-cli`） |
+| `action-unavailable` | 兜底：拿不到具体原因，但动作确实不可运行 |
+
+界面侧据此把「拒绝原因」直接显示出来，而不是显示一个假装武装成功的开关。
 
 ## 6. 重试策略
 
@@ -329,6 +354,8 @@ retryPolicies:
 ```
 
 未知 `code` 回落 `transient`；形状写错的策略会被丢弃并保留默认值。当前生效的分配可从 `/state` 的 `retryAssign`、`retryPolicies` 读到。
+
+**定时器不可用时不承诺重试**：如果宿主给不出定时能力，`retryAt` 直接置 `0`，事件日志记一条 `log.retryUnavailable`，界面不再显示「N 秒后重试」。宁可显示「不会自动重试」，也不要显示一个永远不会到来的倒计时。
 
 ## 7. 界面偏好存在哪
 

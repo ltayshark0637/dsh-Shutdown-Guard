@@ -85,7 +85,7 @@ A: Per platform, and the distinction matters:
 
 - **Windows**: fully verified, including actually running shutdown / restart / sleep.
 - **macOS**: **shutdown has been verified on real hardware — it actually shut the machine down** (Apple Silicon / macOS 27.2 / DSH Desktop, plugin `1.6.1-beta.3`): the plugin sent the command, the system accepted it, and the machine powered off. **Provided no app is blocking shutdown** — a terminal running a foreground command or an editor with unsaved changes makes macOS stop it and wait for confirmation, exactly like a manual "Shut Down" from the Apple menu. Restart, sign out, sleep and hibernate have **not** been verified on real hardware yet.
-- **Linux**: covered by code and assertions only — **no real-hardware test yet**.
+- **Linux**: **all six actions have been verified on real hardware** (Ubuntu 24.04.5 LTS / desktop session, plugin `1.6.1-beta.5`): shutdown, restart, sleep, hibernate, lock and sign out all really execute. **Known limitation**: "sign out" ends the whole login session, so DSH exits with it and no further events are recorded — that is the meaning of `loginctl terminate-user`, not a defect. **Not verified yet**: automatic retries under real rate limiting / timeouts, and whether the armed state survives a plugin reload.
 
 On macOS, probing reports `"unknown"` rather than `true`: the system may only decide at the moment of execution. `"unknown"` means "you can arm with it, but the OS decides at that moment" — it is not a fault.
 

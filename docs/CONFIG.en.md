@@ -230,7 +230,7 @@ If a re-probe finds that the **currently selected action** has become unavailabl
 | `no-custom-profile` | "custom profiles" is off, so `lock` / `signout` / `custom` are all unavailable |
 | `no-script` | `action: custom` but no script is selected, or the selected entry's file has been deleted |
 | `missing-interpreter` | the script is there, but none of `python` / `python3` / `node` / `powershell` can be found |
-| `needs-elevation` | used for built-in actions on non-win32: availability reports `'unknown'` with this reason — the command was found, but TCC / polkit may require authorisation. **This is a conservative label, not a detection**: on non-Windows there is no way to know in advance whether an authorisation prompt will appear, so it is always marked "may require authorisation" |
+| `needs-elevation` | used for built-in actions on non-win32: availability reports `'unknown'` with this reason — the command was found, but TCC / polkit may require authorisation. **This is a conservative label for "cannot be probed reliably", not a detection result**: do not read it as "needs sudo"; on a real Ubuntu 24.04.5 LTS desktop all six actions ran without any extra elevation |
 | `unsupported-on-platform` | the platform has no honest way to do it (macOS `lock`) |
 | `no-host-restart` | `restart-dsh`: Electron's `app.relaunch()` is out of reach |
 | `script-not-acknowledged` | never acknowledged, or the acknowledged bytes no longer match what is on disk — including a hand-edited file |
@@ -253,6 +253,16 @@ The user only picks a file from the library and writes no path at all — the pa
 | `.js` | `node` | tidy local files, call `fetch` to send a message |
 
 Note: scripts run with **the current user's permissions**; the plugin does not review the content and makes no guarantee about its safety — this is also why the disclaimer must be acknowledged before arming (see 4.3).
+
+### 4.7 The elevated retry on Linux
+
+Only Linux has this layer. When one of `shutdown` / `restart` / `sleep` / `hibernate` / `lock` / `signout` exits **non-zero for the first time**, the host retries it **once** through `pkexec`:
+
+- `pkexec` asks polkit for consent and runs the same command as root, so an authentication dialog may appear; the single wait is capped at 120 seconds (ordinary actions get 15).
+- A command that exited 0 is **never** sent again — one shutdown is never delivered twice.
+- `custom` scripts are **never** elevated: that is the user's own script and always runs as the current user.
+
+The risk is stated plainly: this retry assumes that "non-zero exit" means "did not run". If a command **did have a side effect yet still returned non-zero**, it would in theory run twice — in the extreme, a shutdown or sign-out could be repeated once. That is accepted because a half-failed power action needs the elevated attempt more, and sending one extra shutdown costs less than a machine that never powers off.
 
 ## 5. Endpoints
 
@@ -298,13 +308,28 @@ Writing the old fields is rejected explicitly rather than quietly ignored — ot
 | `script` | object \| null | metadata of the entry the current profile uses (`name` / `ext` / `bytes` / `sha256` / `savedAt`); **no body, no file name** |
 | `scriptAckOk` | bool | whether the current entry is acknowledged and still byte-identical |
 | `scripts` | array | metadata of the whole library, each `{ id, name, ext, bytes, sha256, savedAt, ackOk, ackAt, usedBy }`; again never the body |
-| `lastAction` | object \| null | the last command this process actually dispatched; diagnostics only |
+| `lastAction` | object \| null | the last command this process actually dispatched; diagnostics only; `{ action, at, argv, code, failed, error?, elevated? }` |
+| `lastAction.failed` | bool | the verdict for that command: non-zero exit, or the spawn itself failed. "Ran" and "worked" are different answers; this field only answers the latter |
+| `lastAction.elevated` | bool (may be absent) | `true` only when the Linux `pkexec` retry happened; when there was no retry the key is absent — do not read that as `false` |
 | `parkedAt` | number \| null | when the halt started (only for `halted`), see section 2 |
 | `shutdownOnHaltEffective` | bool | the derived rule from section 2 |
 
 `script` / `scriptAck` inside `profiles[]` are a **compatibility projection**: filled in from the library by that profile's `scriptId` so the settings page can render one row without walking `scripts[]`. The authoritative data is the top-level `scripts[]`.
 
 The manual re-probe entry point is `POST /config {"recheck": true}`: it reruns capability probing immediately and refreshes `actions`; **no polling**.
+
+### The `/arm` refusal contract
+
+When the action cannot run, `POST /arm` does **not** arm and then fail: it refuses up front with **409**, and the body is `{ error: <reason>, ...statePayload() }` — you still get a full state payload, and `armed` stays `false`. The value of `error` comes from `armRefusal()`:
+
+| `error` | When |
+| --- | --- |
+| `no-script` | `action: custom`, but no script is selected or the selected file has been deleted |
+| `script-not-acknowledged` | the selected script was never acknowledged, or the bytes on disk differ from the acknowledged ones |
+| that action's probe `reason` | probing already found it unavailable (`no-custom-profile`, `missing-interpreter`, `no-cli`, …) |
+| `action-unavailable` | fallback: no specific reason available, but the action really cannot run |
+
+The UI shows that refusal reason instead of a switch that pretends to have armed.
 
 ## 6. Retry policies
 
@@ -329,6 +354,8 @@ retryPolicies:
 ```
 
 An unknown `code` falls back to `transient`; a policy with a malformed shape is dropped and the default is kept. The live assignments can be read from `retryAssign` and `retryPolicies` in `/state`.
+
+**No timer, no promise of a retry**: when the host cannot provide a timer, `retryAt` is set to `0`, the log gets one `log.retryUnavailable` entry, and the UI stops showing "retrying in N seconds". Better to say "will not retry automatically" than to show a countdown that never arrives.
 
 ## 7. Where UI preferences live
 
