@@ -1,7 +1,7 @@
 # Shutdown Guard · 任务完成后关机
 **中文** · [English](https://github.com/ltayshark0637/dsh-Shutdown-Guard/blob/main/README.en.md) · [Русский](https://github.com/ltayshark0637/dsh-Shutdown-Guard/blob/main/README.ru.md)
 
-稳定版 `v1.6.0` · 开发版 `v1.6.1-beta.5` · [更新记录](https://github.com/ltayshark0637/dsh-Shutdown-Guard/blob/main/CHANGELOG.md)
+稳定版 `v1.6.1` · [更新记录](https://github.com/ltayshark0637/dsh-Shutdown-Guard/blob/main/CHANGELOG.md)
 
 <p align="center"><img src="https://ltayshark0637.github.io/dsh-Shutdown-Guard/screenshots/banner.png" width="880" alt="Shutdown Guard — 任务完成后自动关机，侧边栏守夜卡片"></p>
 
@@ -23,10 +23,10 @@
 dsh plugin --profile web add dsh-shutdown-guard
 ```
 
-内测版要显式写版本号，不带版本号装到的仍是稳定版 `1.6.0`：
+不写版本号时装到的是最新稳定版；要指定版本就显式写：
 
 ```bash
-dsh plugin --profile web add dsh-shutdown-guard@1.6.1-beta.5
+dsh plugin --profile web add dsh-shutdown-guard@1.6.1
 ```
 
 或者直接从 GitHub 装：
