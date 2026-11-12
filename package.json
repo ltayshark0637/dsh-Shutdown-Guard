@@ -15,7 +15,7 @@
     "url": "https://github.com/ltayshark0637/dsh-Shutdown-Guard/issues"
   },
   "main": "lib/index.mjs",
-  "icon": "assets/icon-shield-2-128.png",
+  "icon": "assets/icon-glyph-128.png",
   "files": [
     "lib",
     "assets/icon-shield-2-128.png",
