@@ -2089,17 +2089,36 @@ assert.strictEqual(routes.size, 0, 'disposer removes HTTP routes')
   let r = await postState('/arm')
   assert.deepStrictEqual([r.status, r.body.error, r.body.armed], [409, 'no-script', false],
     'a scriptless custom action is refused as no-script')
+  let st = await stateNow()
+  assert.strictEqual(st.armed, false, 'a refused arm leaves the switch off')
+  assert.strictEqual(st.actions.custom.reason, 'no-script', 'the action report agrees there is no script')
   r = await postState('/config', { putScript: { profileId: 'c1', name: 'fail.cmd', ext: 'cmd', content: '@echo off\r\nexit /b 3\r\n' } })
   const scriptId = r.body.scriptId
   r = await postState('/arm')
   assert.deepStrictEqual([r.status, r.body.error, r.body.armed], [409, 'script-not-acknowledged', false],
     'unacknowledged bytes are refused as script-not-acknowledged')
+  // NOTE(30): the probe still reports custom as available here; /arm is the
+  // authority for the ack gate. Reported to host-core; assert it once the
+  // availability table carries the same reason.
   await postState('/config', { updateProfile: { id: 'c1', patch: { action: 'restart-dsh' } } })
   r = await postState('/arm')
   assert.deepStrictEqual([r.status, r.body.error, r.body.armed], [409, 'no-host-restart', false],
     'an action the host cannot run is refused with its probe reason')
   await postState('/config', { updateProfile: { id: 'c1', patch: { action: 'custom' } } })
   calls.push('arm-refusal-enumerated-ok')
+
+  // 54a-bis. A library selection without profileId targets the active profile.
+  r = await postState('/config', { putScript: { profileId: 'c1', name: 'second.cmd', ext: 'cmd', content: '@echo off\r\necho second\r\n' } })
+  const secondId = r.body.scriptId
+  r = await postState('/config', { selectScript: { scriptId: secondId } })
+  assert.strictEqual(r.status, 200, 'selectScript works without a profileId')
+  st = await stateNow()
+  assert.strictEqual(st.activeProfileId, 'c1', 'the active profile is the implicit target')
+  assert.strictEqual(st.profiles.find((p) => p.id === 'c1').scriptId, secondId,
+    'the active profile now points at the requested entry')
+  r = await postState('/config', { selectScript: { scriptId } })
+  assert.strictEqual(r.status, 200, 'the original entry can be selected again')
+  calls.push('select-script-defaults-to-active-ok')
 
   // 54b. A non-zero exit must be published as a failure, not hidden behind the
   // "the action ran" copy.
@@ -2133,6 +2152,60 @@ assert.strictEqual(routes.size, 0, 'disposer removes HTTP routes')
   }
   calls.push('action-failure-visible-ok')
 
+  // 54b-bis. On Linux a refused power action is retried once through pkexec; a
+  // custom script never elevates, because its own exit code is the answer.
+  {
+    const realPlatform = process.platform
+    Object.defineProperty(process, 'platform', { value: 'linux' })
+    try {
+      let outcomes = [1, 0]
+      subprocess.spawn = (options) => {
+        spawns.push(options.argv)
+        const code = outcomes.length > 0 ? outcomes.shift() : 0
+        return { done: Promise.resolve({ code }) }
+      }
+      await postState('/config', { updateProfile: { id: 'c1', patch: { action: 'shutdown' } } })
+      const elevatedBefore = spawns.length
+      const elevatedTimers = new Set(timers.keys())
+      const elevatedEvents = (await eventsNow()).filter((e) => e.key === 'log.actionElevated').length
+      await armNow()
+      const elevatedFresh = [...timers.keys()].filter((id) => !elevatedTimers.has(id))
+      fireTimer(elevatedFresh[0])
+      await flush()
+      await flush()
+      st = await stateNow()
+      assert.strictEqual(spawns.length - elevatedBefore, 2, 'a refused power action is retried exactly once')
+      assert.ok(spawns[elevatedBefore][0].includes('systemctl'), 'the first attempt is the plain command')
+      assert.ok(spawns[elevatedBefore + 1][0].includes('pkexec'), 'the retry goes through pkexec')
+      assert.strictEqual(st.lastAction.elevated, true, 'the state says the retry was elevated')
+      assert.strictEqual(st.lastAction.code, 0, 'the successful retry is what the action reports')
+      assert.strictEqual((await eventsNow()).filter((e) => e.key === 'log.actionElevated').length - elevatedEvents, 1,
+        'elevation is logged once')
+      await postState('/cancel')
+      await postState('/disarm')
+
+      outcomes = [1]
+      const customBefore = spawns.length
+      await postState('/config', { updateProfile: { id: 'c1', patch: { action: 'custom' } } })
+      const customTimers = new Set(timers.keys())
+      await armNow()
+      const customFresh = [...timers.keys()].filter((id) => !customTimers.has(id))
+      fireTimer(customFresh[0])
+      await flush()
+      await flush()
+      st = await stateNow()
+      assert.strictEqual(spawns.length - customBefore, 1, 'a script failure is not retried')
+      assert.ok(!spawns.slice(customBefore).some((argv) => String(argv[0]).includes('pkexec')), 'custom never uses pkexec')
+      assert.strictEqual(st.lastAction.failed, true, 'the script failure is still published')
+      await postState('/cancel')
+      await postState('/disarm')
+      calls.push('elevation-retry-ok')
+    } finally {
+      subprocess.spawn = realSpawn
+      Object.defineProperty(process, 'platform', { value: realPlatform })
+    }
+  }
+
   // 54c. `/arm` returns before its one-tick job check; a job registered in that
   // gap must still hold the action instead of letting the countdown start.
   await postState('/config', { updateProfile: { id: 'c1', patch: { action: 'shutdown' } } })
@@ -2144,7 +2217,7 @@ assert.strictEqual(routes.size, 0, 'disposer removes HTTP routes')
   assert.ok(zeroTick, 'arming scheduled the post-arm tick')
   timers.get(zeroTick)()
   await flush()
-  let st = await stateNow()
+  st = await stateNow()
   assert.strictEqual(st.state, 'idle', 'a job registered right after arming keeps the countdown off')
   assert.strictEqual(st.lastSkip && st.lastSkip.key, 'skip.jobs', 'the job gate explains the hold')
   const heldSpawns = spawns.length
@@ -2155,6 +2228,28 @@ assert.strictEqual(routes.size, 0, 'disposer removes HTTP routes')
   await postState('/cancel')
   await postState('/disarm')
   calls.push('arm-then-job-race-ok')
+
+  // 54d. The "skipped because of errors" line must not outlive the error window:
+  // new activity clears the count, so the old line would claim a skip over 0 errors.
+  await postState('/config', { updateProfile: { id: 'c1', patch: { action: 'shutdown' } } })
+  await postState('/arm')
+  rootAgent.status = 'running'
+  statusHandler({ agent: rootAgent, status: 'running' })
+  errorHandler({ agent: rootAgent })
+  rootAgent.status = 'idle'
+  statusHandler({ agent: rootAgent, status: 'idle' })
+  await flush()
+  st = await stateNow()
+  assert.ok(st.lastSkip && String(st.lastSkip.key).startsWith('skip.errors'),
+    'an errored batch leaves the error skip behind')
+  rootAgent.status = 'running'
+  statusHandler({ agent: rootAgent, status: 'running' })
+  await flush()
+  st = await stateNow()
+  assert.strictEqual(st.erroredCount, 0, 'new activity clears the error window')
+  assert.strictEqual(st.lastSkip, null, 'the stale error skip does not survive the cleared window')
+  await postState('/disarm')
+  calls.push('stale-skip-cleared-ok')
 
   mount()
 }
