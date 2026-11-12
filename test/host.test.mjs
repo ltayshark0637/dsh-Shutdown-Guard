@@ -909,6 +909,47 @@ calls.push('agent-total-fallback-ok')
 dispose()
 assert.strictEqual(routes.size, 0, 'disposer removes HTTP routes')
 
+// 30b. A teammate still working means the batch is not finished, even though
+// the root turn just ended. The child is not a root, so only the all-agents
+// gate can hold the countdown.
+{
+  const fs = await import('node:fs')
+  const pathMod = await import('node:path')
+  const { fileURLToPath } = await import('node:url')
+  const here = pathMod.dirname(fileURLToPath(import.meta.url))
+  const cfgFile = pathMod.join(here, '..', 'data', 'config.json')
+  try { fs.unlinkSync(cfgFile) } catch { /* fresh start */ }
+  const kid = { id: 'kid-1', status: 'running', sessionId: 'session-kid-1' }
+  agents.list = () => [...rootsValue, kid]
+  rootAgent.status = 'idle'
+  const disposeAgents = apply(ctx, { countdownSec: 10, marginSec: 5, onlyOnSuccess: true, language: 'zh' })
+  const beforeSubagent = spawns.length
+  const armTimers = new Set(timers.keys())
+  res = await request('POST', '/api/dsh-shutdown-guard/arm', 'http://127.0.0.1:43129')
+  assert.strictEqual(res.status, 200, 'arming is accepted while a child agent runs')
+  for (const id of newTimers(armTimers)) fireTimer(id)
+  await flush()
+  body = JSON.parse((await request('GET', '/api/dsh-shutdown-guard/state')).body)
+  assert.strictEqual(body.armed, true, 'the mode is armed')
+  assert.strictEqual(body.state, 'idle', 'a running child agent keeps the countdown idle')
+  assert.strictEqual(body.agentRunningTotal, 1, 'the child is counted as running')
+  assert.strictEqual(body.runningCount, 0, 'the root is not running')
+  assert.strictEqual(spawns.length, beforeSubagent, 'no command is sent while the child runs')
+  calls.push('subagent-blocks-arm-ok')
+
+  kid.status = 'idle'
+  statusHandler({ agent: rootAgent, status: 'idle' })
+  await flush()
+  body = JSON.parse((await request('GET', '/api/dsh-shutdown-guard/state')).body)
+  assert.strictEqual(body.agentRunningTotal, 0, 'no agent is running any more')
+  assert.strictEqual(body.state, 'countdown', 'the countdown starts once every agent is idle')
+  assert.strictEqual(spawns.length, beforeSubagent, 'the countdown itself sends nothing')
+  calls.push('subagent-idle-allows-arm-ok')
+
+  disposeAgents()
+  delete agents.list
+}
+
 // 29. Upgrade paths. A 1.5.2 install kept `notify` in ui.json and `afkAutoAnswer`
 // at the top level of config.json; both have to land in the profile store.
 {
