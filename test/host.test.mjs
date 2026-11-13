@@ -1,5 +1,5 @@
 import assert from 'node:assert'
-import { apply, hostRestartPlan, restartHelperLaunch, takeRestartStatus } from '../lib/index.mjs'
+import { apply, hostRestartPlan, judgeLaunchResult, restartHelperLaunch, takeRestartStatus } from '../lib/index.mjs'
 import { LANGS, MESSAGES, catalogCoverage, t } from '../lib/i18n.mjs'
 import { writeV4SharedScripts, SAMPLES, SHARED_SHA, sha256 } from './fixtures/script-library.mjs'
 
@@ -1972,6 +1972,49 @@ assert.strictEqual(routes.size, 0, 'disposer removes HTTP routes')
     assert.deepStrictEqual([cliLaunch.file, cliLaunch.args[1]], ['cmd', cli.helperPath],
       'the CLI helper is a plain detached child')
     calls.push('desktop-restart-plan-ok')
+
+    // 54f-2. A launcher that printed nothing is not proof of failure, and a
+    // non-zero ReturnValue or any stderr is proof it did not start. Real-machine
+    // launch failures cannot be injected here (runLaunch spawns PowerShell
+    // directly), so the pure verdict and the helper's liveness marker carry it.
+    const verdictCases = [
+      [{ code: 0, out: '0' }, true, 0],
+      [{ code: 0, out: '1' }, false, 1],
+      [{ code: 9, out: '' }, false, 9],
+      [{ code: 0, out: '', err: '' }, true, 0],
+      [{ code: 0, out: '  0  ' }, true, 0],
+    ]
+    for (const [outcome, started, code] of verdictCases) {
+      const v = judgeLaunchResult(outcome)
+      assert.strictEqual(v.started, started, 'the launcher verdict follows code/ReturnValue: ' + JSON.stringify(outcome))
+      assert.strictEqual(v.code, code, 'the verdict reports the code it judged: ' + JSON.stringify(outcome))
+    }
+    const denied = judgeLaunchResult({ code: 0, out: '0', err: 'denied' })
+    assert.strictEqual(denied.started, false, 'stderr means the helper did not start')
+    assert.strictEqual(denied.detail, 'denied', 'stderr wins over a clean ReturnValue')
+    calls.push('restart-launch-verdict-ok')
+
+    const markerPlan = hostRestartPlan({ platform: 'win32', versions: { electron: '43' },
+      argv: [desktopExe, 'C:\\Program Files\\DSH Desktop\\resources\\app.asar\\bin.js', 'web'],
+      execPath: desktopExe, dataDir: 'C:\\data', pid: 12 })
+    const markerAt = markerPlan.content.indexOf('helper-start')
+    assert.ok(markerAt > 0, 'the helper writes a liveness marker')
+    assert.ok(!markerPlan.content.slice(0, markerAt).includes('ping')
+      && !markerPlan.content.slice(0, markerAt).includes('taskkill'),
+      'the marker comes before the wait and the kill')
+    assert.ok(markerPlan.content.indexOf('ping') > markerAt, 'the first wait follows the marker')
+    const cliPlan = hostRestartPlan({ platform: 'win32', versions: {}, argv: ['bin.js', 'web'],
+      execPath: 'C:\\node.exe', dataDir: 'C:\\data', pid: 13 })
+    assert.ok(!cliPlan.content.includes('helper-start'), 'the CLI helper has no desktop marker')
+    calls.push('restart-helper-start-marker-ok')
+
+    for (const lang of LANGS) {
+      const failed = t(lang, 'log.restartLaunchFailed', { code: '9', error: 'denied' })
+      assert.ok(failed.includes('9') && failed.includes('denied'),
+        'the launch failure renders its code and error in ' + lang)
+      assert.ok(t(lang, 'log.restartFallback').length > 0, 'the fallback line exists in ' + lang)
+    }
+    calls.push('restart-launch-copy-ok')
 
 
     const dir = fs.mkdtempSync(pathMod.join(os.tmpdir(), 'dsh-restart-status-'))
