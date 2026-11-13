@@ -1546,7 +1546,7 @@ transition:transform .24s cubic-bezier(.22,.61,.36,1),width .24s cubic-bezier(.2
   <div class="dsp-srow-text"><span class="dsp-stitle" data-i18n="s.row.cd">倒计时时长</span><span class="dsp-sdesc" data-i18n="s.row.cdDesc">执行前的取消时间，10–600 秒。</span></div><span class="dsp-seg"><button class="dsp-segbtn" type="button" data-i18n="s.cd.30">30 秒</button><button class="dsp-segbtn" type="button" data-i18n="s.cd.60">60 秒</button><button class="dsp-segbtn on" type="button" data-i18n="s.cd.120">2 分钟</button><button class="dsp-segbtn" type="button" data-i18n="s.cd.300">5 分钟</button></span></div>
         <div class="dsp-srow dsp-srow-stack">
           <div class="dsp-srow-text"><span class="dsp-stitle" data-i18n="s.row.action">任务完成后做什么</span><span class="dsp-sdesc" data-i18n="s.row.actionDesc">到点后执行这个动作。灰掉的选项在当前系统上不可用，原因写在选项下面。</span></div>
-          <div class="dsp-actctl"><div class="dsp-selwrap"><button class="dsp-sel" type="button" role="combobox" aria-expanded="false" aria-label="任务完成后做什么" data-i18n-aria="s.row.action" data-selbtn><span data-selval data-i18n="s.action.custom">执行脚本</span><span class="dsp-selcaret" aria-hidden="true"></span></button><div class="dsp-selmenu" role="listbox" aria-label="任务完成后做什么" hidden><button class="dsp-selitem" type="button" role="option" data-action="shutdown" aria-selected="false" data-i18n="s.action.shutdown">关机</button><button class="dsp-selitem" type="button" role="option" data-action="restart" aria-selected="false" data-i18n="s.action.restart">重启</button><button class="dsp-selitem" type="button" role="option" data-action="sleep" aria-selected="false" data-i18n="s.action.sleep">睡眠</button><button class="dsp-selitem" type="button" role="option" data-action="hibernate" aria-selected="false" data-i18n="s.action.hibernate">休眠</button><button class="dsp-selitem" type="button" role="option" data-action="lock" aria-selected="false" data-i18n="s.action.lock">锁屏</button><button class="dsp-selitem" type="button" role="option" data-action="signout" aria-selected="false" data-i18n="s.action.signout">注销</button><button class="dsp-selitem is-na" type="button" role="option" data-action="restart-dsh" aria-selected="false" aria-disabled="true" disabled data-i18n="s.action.restartDsh">重启 DSH</button><button class="dsp-selitem" type="button" role="option" data-action="custom" aria-selected="true" data-i18n="s.action.custom">执行脚本</button></div></div></div>
+          <div class="dsp-actctl"><div class="dsp-selwrap"><button class="dsp-sel" type="button" role="combobox" aria-expanded="false" aria-label="任务完成后做什么" data-i18n-aria="s.row.action" data-selbtn><span data-selval data-i18n="s.action.custom">执行脚本</span><span class="dsp-selcaret" aria-hidden="true"></span></button><div class="dsp-selmenu" role="listbox" aria-label="任务完成后做什么" hidden><button class="dsp-selitem" type="button" role="option" data-action="shutdown" aria-selected="false" data-i18n="s.action.shutdown">关机</button><button class="dsp-selitem" type="button" role="option" data-action="restart" aria-selected="false" data-i18n="s.action.restart">重启</button><button class="dsp-selitem" type="button" role="option" data-action="sleep" aria-selected="false" data-i18n="s.action.sleep">睡眠</button><button class="dsp-selitem" type="button" role="option" data-action="hibernate" aria-selected="false" data-i18n="s.action.hibernate">休眠</button><button class="dsp-selitem" type="button" role="option" data-action="lock" aria-selected="false" data-i18n="s.action.lock">锁屏</button><button class="dsp-selitem" type="button" role="option" data-action="signout" aria-selected="false" data-i18n="s.action.signout">注销</button><button class="dsp-selitem" type="button" role="option" data-action="restart-dsh" aria-selected="false" data-i18n="s.action.restartDsh">重启 DSH</button><button class="dsp-selitem" type="button" role="option" data-action="custom" aria-selected="true" data-i18n="s.action.custom">执行脚本</button></div></div></div>
         </div>
         <div class="dsp-srow dsp-srow-stack dsp-libblock">
           <div class="dsp-libhead"><div class="dsp-libheadtext"><span class="dsp-stitle" data-i18n="s.script.title">自定义脚本</span><span class="dsp-sdesc" data-i18n="s.script.desc">选择的文件保存在插件数据目录，不写进配置。</span></div><span class="dsp-libup" data-i18n="s.script.upload">＋ 上传脚本</span></div>
@@ -2863,6 +2863,22 @@ transition:transform .24s cubic-bezier(.22,.61,.36,1),width .24s cubic-bezier(.2
   }
 
   // Variant C: terminal lines, LEDs and the footer string.
+  // The demo keeps the product's term.cmd convention: the armed command is
+  // `<action> --when idle`, and only the action picked in the settings panel
+  // changes it. Anything without a command of its own falls back to shutdown,
+  // which is the product's default action.
+  var pickedAction = 'custom'
+  var ACTION_CMD = {
+    shutdown: 'shutdown --when idle',
+    restart: 'restart --when idle',
+    sleep: 'sleep --when idle',
+    hibernate: 'hibernate --when idle',
+    lock: 'lock --when idle',
+    signout: 'signout --when idle',
+    'restart-dsh': 'restart dsh --when idle'
+  }
+  function cCmd(s) { return ACTION_CMD[pickedAction || (s && s.action) || ''] || 'shutdown --when idle' }
+
   function cL2(s) { return 'jobs ' + (s.jobs || 0) + ' · agent ' + runCount(s) }
 
   function cL3(s) {
@@ -2989,7 +3005,7 @@ transition:transform .24s cubic-bezier(.22,.61,.36,1),width .24s cubic-bezier(.2
         led += '<i class="dsp-led-seg' + (on[i] ? ' on' : '') + '" data-i="' + i + '"></i>'
       }
       return '<div class="dsp-cbody dsp-v-c" data-v="C"><div class="dsp-screen">' +
-        '<div class="dsp-term-line"><span class="dsp-pr">&gt;</span>shutdown --when idle</div>' +
+        '<div class="dsp-term-line"><span class="dsp-pr">&gt;</span><span class="dsp-l1">' + esc(cCmd(s)) + '</span></div>' +
         '<div class="dsp-term-line"><span class="dsp-pr">&gt;</span><span class="dsp-l2">' + esc(cL2(s)) + '</span></div>' +
         '<div class="dsp-term-line"><span class="dsp-pr">&gt;</span><span class="dsp-l3">' + esc(cL3(s)) + '</span><i class="dsp-caret"></i></div>' +
         '</div><div class="dsp-led">' + led + '</div>' +
@@ -3019,6 +3035,8 @@ transition:transform .24s cubic-bezier(.22,.61,.36,1),width .24s cubic-bezier(.2
     }
 
     if (variant === 'C') {
+      var l1 = body.querySelector('.dsp-l1')
+      if (l1 && l1.textContent !== cCmd(s)) l1.textContent = cCmd(s)
       var l2 = body.querySelector('.dsp-l2')
       if (l2 && l2.textContent !== cL2(s)) l2.textContent = cL2(s)
       var l3 = body.querySelector('.dsp-l3')
@@ -3687,6 +3705,12 @@ transition:transform .24s cubic-bezier(.22,.61,.36,1),width .24s cubic-bezier(.2
           var btn = list.parentNode.querySelector('[data-selbtn]')
           var val = btn ? btn.querySelector('[data-selval]') : null
           if (val) { val.textContent = item.textContent; val.removeAttribute('data-i18n') }
+          if (item.getAttribute('data-action')) {
+            pickedAction = item.getAttribute('data-action')
+            state.action = pickedAction
+            var cmds = document.querySelectorAll('.dsp-l1')
+            for (var c = 0; c < cmds.length; c++) cmds[c].textContent = cCmd(state)
+          }
           list.hidden = true
           if (btn) btn.setAttribute('aria-expanded', 'false')
         }

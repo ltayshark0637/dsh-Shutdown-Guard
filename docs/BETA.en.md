@@ -1,31 +1,31 @@
-# Testing and verification guide for v1.6.1
+# Testing and verification guide for v1.6.2
 
 > [中文](BETA.md) · **English** · [Русский](BETA.ru.md)
 
 ## 1. What this version is
 
-`1.6.1` is the **stable release**; this document is kept as a regression checklist you can still walk through after release.
+`1.6.2` is the **stable release**; this document is kept as a regression checklist you can still walk through after release.
 
-- To re-verify a specific behaviour, follow section 3 item by item; those expectations hold on 1.6.1.
+- To re-verify a specific behaviour, follow section 3 item by item; those expectations hold on 1.6.2.
 - Install with an explicit version number (see section 2) so a moving `latest` can never install something else.
-- Behaviour may keep evolving after 1.6.1; this document is authoritative for the documentation.
+- Behaviour may keep evolving after 1.6.2; this document is authoritative for the documentation.
 
 ## 2. How to install
 
 ```bash
-npm i -g dsh-shutdown-guard@1.6.1
+npm i -g dsh-shutdown-guard@1.6.2
 ```
 
 After installing, **fully quit DSH and start it again** (on macOS, quit with ⌘Q — closing the window or refreshing the page does not count). The client bundle is compiled into the module graph only at startup, so closing the window or refreshing never loads new code; the same applies after you change code or upgrade the plugin.
 
-If you are on a beta older than 1.6.1, just install 1.6.1 over it — every item and expected behaviour here describes 1.6.1.
+If you are on 1.6.1, just install 1.6.2 over it — every item and expected behaviour here describes 1.6.2.
 
 **Back up `data/config.json` and `data/scripts/` before upgrading**: they live inside the plugin package directory, and `npm i` replaces that whole directory (reason: antepenultimate item in section 4).
 
 Rollback:
 
 ```bash
-npm i -g dsh-shutdown-guard@1.6.0
+npm i -g dsh-shutdown-guard@1.6.1
 ```
 
 (If the local PowerShell forbids `npm.ps1`, use `npm.cmd`.)
@@ -91,7 +91,7 @@ Each item is written as "how to act / what you should see / what it looks like w
 - Script stdout / stderr are each **truncated to 4096 bytes**; anything beyond that is not visible.
 - **Config, scripts and the event log all live in `data/` inside the plugin package directory** (`data/config.json`, `data/scripts/`, `data/events.log`): they are not published in the npm tarball, but their location is inside the package directory, and an `npm i` upgrade replaces that whole directory — `data/` may go with it. **Back up `data/config.json` and `data/scripts/` before upgrading.**
 - Upgrading from 1.6.0 bumps `config.json` to the new schema and migrates the old config automatically; internal experimental fields such as `customArgv` were never released with any version and take no part in the migration.
-- The schema in 1.6.1 is 5 (the global script library `scripts[]` is new); upgrading from 1.6.0 migrates automatically at startup and writes the result immediately — no manual edits, just install over the top and restart DSH.
+- The schema in 1.6.2 is 5 (the global script library `scripts[]` is new); upgrading from 1.6.0 migrates automatically at startup and writes the result immediately — no manual edits, just install over the top and restart DSH. Upgrading from 1.6.1 changes nothing in the config format, so no migration is needed.
 
 ## 5. How to report
 
