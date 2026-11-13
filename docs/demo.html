@@ -1011,8 +1011,8 @@ h1 em { font-style: normal; color: #f0a83a }
 .setWrap .dsp-libradio { flex: none; width: 15px; height: 15px; border-radius: 50%; border: 1.5px solid var(--dsw-alias-border-l2); box-sizing: border-box }
 .setWrap .dsp-srow-prof .dsp-badge { font-size: 10.5px; line-height: 16px; height: 17px; padding: 0 6px; border-radius: 5px; background: color-mix(in srgb, var(--dsp-accent) 12%, transparent); color: var(--dsp-accent) }
 .setWrap .dsp-actctl { display: flex; flex-direction: column; gap: 4px; width: 100%; min-width: 0 }
-.setWrap .dsp-sel { width: 100%; height: 30px; padding: 0 8px; border-radius: 7px; border: .5px solid var(--dsw-alias-border-l2); background: var(--dsw-specific-selector); color: inherit; font: inherit; font-size: 12.5px }
-.setWrap .dsp-sel option { background: var(--dsw-alias-bg-overlay); color: inherit }
+.setWrap .dsp-sel { display: flex; align-items: center; justify-content: space-between; gap: 8px; width: 100%; box-sizing: border-box; height: 30px; padding: 0 8px; border-radius: 7px; border: .5px solid var(--dsw-alias-border-l2); background: var(--dsw-specific-selector); color: inherit; font: inherit; font-size: 12.5px; cursor: pointer }
+.setWrap .dsp-selcaret { flex: none; width: 0; height: 0; background: transparent; border-left: 4px solid transparent; border-right: 4px solid transparent; border-top: 5px solid var(--dsw-alias-label-tertiary, #8f8d84) }
 .setWrap .dsp-srow.dsp-libblock { display: flex; flex-direction: column; align-items: stretch; gap: 0; padding-top: 10px }
 .setWrap .dsp-libhead { display: flex; align-items: center; gap: 12px; width: 100%; min-width: 0 }
 .setWrap .dsp-libheadtext { display: flex; flex-direction: column; gap: 2px; flex: 1 1 auto; min-width: 0 }
@@ -1021,7 +1021,7 @@ h1 em { font-style: normal; color: #f0a83a }
 .setWrap .dsp-libwrap { position: relative; min-width: 0; border-bottom: .5px solid var(--dsw-alias-border-l2) }
 .setWrap .dsp-libwrap:last-child { border-bottom: 0 }
 .setWrap .dsp-libwrap.is-on { background: color-mix(in srgb, var(--dsp-accent) 7%, transparent); box-shadow: inset 3px 0 0 var(--dsp-accent) }
-.setWrap .dsp-librow { display: flex; align-items: center; gap: 8px; width: 100%; height: 48px; min-width: 0; box-sizing: border-box; padding: 0 10px 0 12px }
+.setWrap .dsp-librow { display: flex; align-items: center; gap: 7px; width: 100%; height: 48px; min-width: 0; box-sizing: border-box; padding: 0 8px 0 10px }
 .setWrap .dsp-librow.is-na { color: var(--dsw-alias-label-tertiary) }
 .setWrap .dsp-librow.is-on .dsp-libradio { border-color: var(--dsp-accent); box-shadow: inset 0 0 0 3.5px var(--dsp-accent) }
 .setWrap .dsp-libname { display: flex; align-items: center; gap: 7px; min-width: 0; flex: 1 1 auto }
@@ -1031,8 +1031,14 @@ h1 em { font-style: normal; color: #f0a83a }
 .setWrap .dsp-libdot.is-ready { background: transparent; border-color: var(--s-ready) }
 .setWrap .dsp-libdot.is-need-open { background: transparent; border-color: var(--s-need) }
 .setWrap .dsp-libdot.is-na { background: var(--s-na); border-color: var(--s-na) }
-.setWrap .dsp-libmeta { flex: none; font-size: 11.5px; font-variant-numeric: tabular-nums; color: var(--dsw-alias-label-tertiary) }
-.setWrap .dsp-libused { flex: none; font-size: 11.5px; color: var(--dsw-alias-label-tertiary); white-space: nowrap }
+.setWrap .dsp-libmeta { flex: none; font-size: 11px; font-variant-numeric: tabular-nums; color: var(--dsw-alias-label-tertiary) }
+.setWrap .dsp-libused { flex: none; font-size: 11px; color: var(--dsw-alias-label-tertiary); white-space: nowrap }
+.setWrap .dsp-libmore { flex: none; width: 24px; height: 24px; padding: 0; border: 0; border-radius: 6px; background: transparent; color: var(--dsw-alias-label-tertiary); font: inherit; font-size: 15px; line-height: 1; text-align: center; cursor: pointer }
+.setWrap .dsp-libwrap:has(.dsp-libmenu) { z-index: 2 }
+.setWrap .dsp-libmenu { position: absolute; top: calc(100% - 6px); right: 2px; z-index: 30; display: flex; flex-direction: column; min-width: 112px; gap: 2px; padding: 4px; border: .5px solid var(--dsw-alias-border-l2); border-radius: 8px; background: var(--dsw-alias-bg-overlay, #2a2a28); box-shadow: 0 10px 24px rgba(0, 0, 0, .42) }
+.setWrap .dsp-libmitem { display: block; width: 100%; padding: 6px 8px; border: 0; border-radius: 5px; background: transparent; color: inherit; font: inherit; font-size: 12px; line-height: 18px; text-align: left; white-space: nowrap; cursor: pointer }
+.setWrap .dsp-libmitem.is-danger { color: var(--dsw-alias-label-danger, #e2766b) }
+.setWrap .dsp-lib:has(.dsp-libmenu) { overflow: visible }
 .setWrap .dsp-libpill { flex: none; height: 19px; display: inline-flex; align-items: center; padding: 0 6px; border-radius: 999px; font-size: 10.5px; line-height: 19px; white-space: nowrap; color: var(--dsw-alias-label-secondary); background: color-mix(in srgb, currentColor 8%, transparent) }
 .setWrap .dsp-libpill.is-ok { color: var(--s-use); background: color-mix(in srgb, var(--s-use) 12%, transparent) }
 .setWrap .dsp-libpill.is-na { color: var(--s-na); background: color-mix(in srgb, var(--s-na) 14%, transparent) }
@@ -1517,7 +1523,7 @@ transition:transform .24s cubic-bezier(.22,.61,.36,1),width .24s cubic-bezier(.2
   <div class="dsp-srow-text"><span class="dsp-stitle" data-i18n="s.row.cd">倒计时时长</span><span class="dsp-sdesc" data-i18n="s.row.cdDesc">关机前留出的取消时间，10–600 秒。</span></div><span class="dsp-seg"><button class="dsp-segbtn" type="button" data-i18n="s.cd.30">30 秒</button><button class="dsp-segbtn" type="button" data-i18n="s.cd.60">60 秒</button><button class="dsp-segbtn on" type="button" data-i18n="s.cd.120">2 分钟</button><button class="dsp-segbtn" type="button" data-i18n="s.cd.300">5 分钟</button></span></div>
         <div class="dsp-srow dsp-srow-stack">
           <div class="dsp-srow-text"><span class="dsp-stitle" data-i18n="s.row.action">任务完成后做什么</span><span class="dsp-sdesc" data-i18n="s.row.actionDesc">到点后执行这个动作。灰掉的选项在当前系统上不可用，原因写在选项下面。</span></div>
-          <div class="dsp-actctl"><select class="dsp-sel" aria-label="任务完成后做什么" data-i18n-aria="s.row.action"><option data-i18n="s.action.custom">执行脚本</option></select></div>
+          <div class="dsp-actctl"><div class="dsp-sel" role="combobox" aria-expanded="false" aria-label="任务完成后做什么" data-i18n-aria="s.row.action" tabindex="0"><span data-i18n="s.action.custom">执行脚本</span><span class="dsp-selcaret" aria-hidden="true"></span></div></div>
         </div>
         <div class="dsp-srow dsp-srow-stack dsp-libblock">
           <div class="dsp-libhead"><div class="dsp-libheadtext"><span class="dsp-stitle" data-i18n="s.script.title">自定义脚本</span><span class="dsp-sdesc" data-i18n="s.script.desc">选择的文件保存在插件数据目录，不写进配置。</span></div><span class="dsp-libup" data-i18n="s.script.upload">＋ 上传脚本</span></div>
@@ -1525,22 +1531,23 @@ transition:transform .24s cubic-bezier(.22,.61,.36,1),width .24s cubic-bezier(.2
             <div class="dsp-libwrap is-on"><div class="dsp-librow is-on" role="radio" aria-checked="true">
               <span class="dsp-libradio" aria-hidden="true"></span>
               <span class="dsp-libname"><span class="dsp-libdot is-use" aria-hidden="true"></span><span class="dsp-libname-txt">night-batch</span></span>
-              <span class="dsp-libmeta">py · 1.2 KB</span><span class="dsp-libused" data-i18n="s.script.used2">被 2 个配置使用</span><span class="dsp-libpill is-ok" data-i18n="s.script.confirmedShort">✓ 已确认</span>
-            </div></div>
+              <span class="dsp-libmeta">py · 1.2 KB</span><span class="dsp-libused" data-i18n="s.script.used2">被 2 个配置使用</span><span class="dsp-libpill is-ok" data-i18n="s.script.confirmedShort">✓ 已确认</span><button class="dsp-libmore" type="button" aria-label="更多" aria-expanded="true">⋯</button>
+            </div>
+            <div class="dsp-libmenu" role="menu"><button class="dsp-libmitem" type="button" role="menuitem" data-i18n="s.prof.rename">重命名</button><button class="dsp-libmitem is-danger" type="button" role="menuitem" data-i18n="s.prof.del">删除</button></div></div>
             <div class="dsp-libwrap"><div class="dsp-librow" role="radio" aria-checked="false">
               <span class="dsp-libradio" aria-hidden="true"></span>
               <span class="dsp-libname"><span class="dsp-libdot is-ready" aria-hidden="true"></span><span class="dsp-libname-txt">cleanup</span></span>
-              <span class="dsp-libmeta">cmd · 2.0 KB</span><span class="dsp-libused" data-i18n="s.script.used1">被 1 个配置使用</span><span class="dsp-libpill is-ok" data-i18n="s.script.confirmedShort">✓ 已确认</span>
+              <span class="dsp-libmeta">cmd · 2.0 KB</span><span class="dsp-libused" data-i18n="s.script.used1">被 1 个配置使用</span><span class="dsp-libpill is-ok" data-i18n="s.script.confirmedShort">✓ 已确认</span><button class="dsp-libmore" type="button" aria-label="更多">⋯</button>
             </div></div>
             <div class="dsp-libwrap"><div class="dsp-librow" role="radio" aria-checked="false">
               <span class="dsp-libradio" aria-hidden="true"></span>
               <span class="dsp-libname"><span class="dsp-libdot is-need-open" aria-hidden="true"></span><span class="dsp-libname-txt">lock-screen-with-a-very-long-name</span></span>
-              <span class="dsp-libmeta">ps1 · 640 B</span><span class="dsp-libused" data-i18n="s.script.used0">被 0 个配置使用</span><span class="dsp-libpill" data-i18n="s.script.pending">尚未确认</span>
+              <span class="dsp-libmeta">ps1 · 640 B</span><span class="dsp-libused" data-i18n="s.script.used0">被 0 个配置使用</span><span class="dsp-libpill" data-i18n="s.script.pending">尚未确认</span><button class="dsp-libmore" type="button" aria-label="更多">⋯</button>
             </div></div>
             <div class="dsp-libwrap"><div class="dsp-librow is-na" role="radio" aria-checked="false" aria-disabled="true">
               <span class="dsp-libradio" aria-hidden="true"></span>
               <span class="dsp-libname"><span class="dsp-libdot is-na" aria-hidden="true"></span><span class="dsp-libname-txt">deploy</span></span>
-              <span class="dsp-libmeta">py · 980 B</span><span class="dsp-libused" data-i18n="s.script.used1">被 1 个配置使用</span><span class="dsp-libpill is-na" data-i18n="s.script.na.interp">找不到解释器</span>
+              <span class="dsp-libmeta">py · 980 B</span><span class="dsp-libused" data-i18n="s.script.used1">被 1 个配置使用</span><span class="dsp-libpill is-na" data-i18n="s.script.na.interp">找不到解释器</span><button class="dsp-libmore" type="button" aria-label="更多">⋯</button>
             </div></div>
           </div>
           <div class="dsp-gate is-ok">
