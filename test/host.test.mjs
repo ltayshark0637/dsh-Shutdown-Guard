@@ -1901,17 +1901,30 @@ assert.strictEqual(routes.size, 0, 'disposer removes HTTP routes')
     'a rejected ack leaves the stored value untouched')
   calls.push('script-ack-round-trip-ok')
 
-  // 54f. The desktop shell is restarted as a whole: name, argv entry and the
-  // Electron runtime must all agree before the plugin claims it can restart.
+  // 54f. The desktop shell is restarted as a whole. The desktop entry rewrites
+  // process.argv before plugins load, so detection must use the Electron runtime
+  // and the executable name only -- never the argv shape.
   {
     const fs = await import('node:fs')
     const pathMod = await import('node:path')
     const os = await import('node:os')
     const desktopExe = 'C:\\Program Files\\DSH Desktop\\DSH Desktop.exe'
-    const entry = 'C:\\Program Files\\DSH Desktop\\resources\\app.asar\\harness-node-entry.mjs'
+    const desktopArgv = [desktopExe, 'C:\\Program Files\\DSH Desktop\\resources\\app.asar\\bin.js', 'web']
+
+    const noEntryArgv = ['C:\\Program Files\\DSH Desktop\\resources\\app.asar\\bin.js', 'web']
+    const noEntry = hostRestartPlan({ platform: 'win32', versions: { electron: '43.0.0' },
+      argv: noEntryArgv, execPath: desktopExe, dataDir: 'C:\\data', pid: 11 })
+    assert.strictEqual(noEntry.desktop, true, 'the shell is recognised without an argv entry')
+    assert.ok(noEntry.content.includes('taskkill /IM "DSH Desktop.exe" /T /F'),
+      'the shell is still ended by image name')
+    assert.ok(noEntry.content.includes('Start-Process -FilePath'),
+      'the shell is still restarted through Start-Process')
+    assert.ok(!noEntry.content.includes('bin.js'), 'the rewritten argv is not passed on')
+    assert.ok(!noEntry.content.includes('--port'), 'the shell still picks its own port')
+    calls.push('desktop-detected-without-entry-ok')
     const desktop = hostRestartPlan({
       platform: 'win32', versions: { electron: '30' },
-      argv: ['node', entry], execPath: desktopExe,
+      argv: desktopArgv, execPath: desktopExe,
       cwd: 'C:\\work dir', dataDir: 'C:\\data', pid: 4242,
     })
     assert.strictEqual(desktop.desktop, true, 'a known desktop shell is restarted as a desktop')
@@ -1926,20 +1939,30 @@ assert.strictEqual(routes.size, 0, 'disposer removes HTTP routes')
     assert.ok(!desktop.content.includes('--port'), 'the desktop shell picks its own port')
     assert.strictEqual((desktop.content.match(/%ERRORLEVEL%/g) || []).length, 2,
       'both the kill and the start record their exit code')
-    const old = hostRestartPlan({ platform: 'win32', versions: { electron: '30' }, argv: ['node', entry],
+    const old = hostRestartPlan({ platform: 'win32', versions: { electron: '30' }, argv: desktopArgv,
       execPath: 'C:\\Program Files\\DeepSeek Harness\\DeepSeek Harness.exe', dataDir: 'C:\\data', pid: 1 })
     assert.strictEqual(old.desktop, true, 'the old shell name is still recognised')
-    const unknown = hostRestartPlan({ platform: 'win32', versions: { electron: '30' }, argv: ['node', entry],
+    const unknown = hostRestartPlan({ platform: 'win32', versions: { electron: '30' }, argv: desktopArgv,
       execPath: 'C:\\Program Files\\Other\\some.exe', dataDir: 'C:\\data', pid: 4242 })
-    assert.ok(!unknown.desktop, 'an unknown binary is never restarted as a desktop')
+    assert.strictEqual(unknown.desktop, false, 'an unknown binary is never restarted as a desktop')
     assert.ok(unknown.content.includes('taskkill /PID 4242 /F'), 'it falls back to the pid helper')
     const cli = hostRestartPlan({ platform: 'win32', versions: {}, argv: ['bin.js', 'web'],
       execPath: 'C:\\node.exe', dataDir: 'C:\\data', pid: 7 })
-    assert.ok(!cli.desktop, 'a CLI host is not a desktop host')
+    assert.strictEqual(cli.desktop, false, 'a CLI host is not a desktop host')
     assert.ok(cli.content.includes('taskkill /PID 7 /F'), 'the CLI helper still kills this pid')
     assert.ok(!cli.content.includes('/IM'), 'the CLI helper never kills by image name')
     assert.ok(cli.content.includes('start "" C:\\node.exe bin.js web'),
       'the CLI helper keeps its executable and argv')
+    const electronButNode = hostRestartPlan({ platform: 'win32', versions: { electron: '30' },
+      argv: ['bin.js', 'web'], execPath: 'C:\\Program Files\\nodejs\\node.exe', dataDir: 'C:\\data', pid: 8 })
+    assert.strictEqual(electronButNode.desktop, false,
+      'the executable whitelist, not Electron alone, decides')
+    const noElectron = hostRestartPlan({ platform: 'win32', versions: {}, argv: desktopArgv,
+      execPath: desktopExe, dataDir: 'C:\\data', pid: 9 })
+    assert.strictEqual(noElectron.desktop, false, 'a non-Electron runtime is never a desktop')
+    const posix = hostRestartPlan({ platform: 'linux', versions: {}, argv: ['bin.js', 'web'],
+      execPath: '/usr/bin/node', dataDir: '/tmp/data', cwd: '/tmp', pid: 10 })
+    assert.strictEqual(posix.desktop, false, 'a POSIX plan is never a desktop plan')
     const launched = restartHelperLaunch(desktop)
     assert.strictEqual(launched.file, 'powershell.exe', 'the desktop helper is launched by powershell')
     const launchLine = launched.args.join(' ')
@@ -1949,6 +1972,7 @@ assert.strictEqual(routes.size, 0, 'disposer removes HTTP routes')
     assert.deepStrictEqual([cliLaunch.file, cliLaunch.args[1]], ['cmd', cli.helperPath],
       'the CLI helper is a plain detached child')
     calls.push('desktop-restart-plan-ok')
+
 
     const dir = fs.mkdtempSync(pathMod.join(os.tmpdir(), 'dsh-restart-status-'))
     const file = pathMod.join(dir, 'restart.status')
