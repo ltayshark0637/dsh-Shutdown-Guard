@@ -1,5 +1,5 @@
 import assert from 'node:assert'
-import { apply, customProfileOnly, hostRestartPlan, judgeLaunchResult, restartHelperLaunch, takeRestartStatus } from '../lib/index.mjs'
+import { actionSpecFor, apply, customProfileOnly, hostRestartPlan, judgeLaunchResult, restartHelperLaunch, takeRestartStatus } from '../lib/index.mjs'
 import { LANGS, MESSAGES, catalogCoverage, t } from '../lib/i18n.mjs'
 import { writeV4SharedScripts, SAMPLES, SHARED_SHA, sha256 } from './fixtures/script-library.mjs'
 
@@ -1172,10 +1172,10 @@ assert.strictEqual(routes.size, 0, 'disposer removes HTTP routes')
   // command, the UI must let the user arm and report the sent command afterwards.
   // The probe is the only public way to reach that state, so the platform is
   // spoofed just for the recheck, then restored before anything runs.
-  const realPlatform = process.platform
+  const realPlatDesc = process.platform
   Object.defineProperty(process, 'platform', { value: 'linux' })
   await postState('/config', { recheck: true })
-  Object.defineProperty(process, 'platform', { value: realPlatform })
+  Object.defineProperty(process, 'platform', { value: realPlatDesc })
   st = await stateNow()
   assert.strictEqual(st.actions.sleep.available, 'unknown', 'a veto-capable platform reports unknown')
   assert.notStrictEqual(st.actions.sleep.available, false, 'unknown is not treated as unavailable')
@@ -1779,6 +1779,31 @@ assert.strictEqual(routes.size, 0, 'disposer removes HTTP routes')
     'Windows never gates lock or signout behind custom profiles')
   calls.push('custom-profile-only-platform-ok')
 
+  // Hibernate no longer degrades to sleep on macOS: the card said hibernate
+  // while the machine only slept, so the row is explicitly unsupported instead.
+  // `actionSpecFor` reads process.platform directly and takes no platform option,
+  // so the getter is swapped for synchronous assertions and restored in finally.
+  const darwinPlatDesc = Object.getOwnPropertyDescriptor(process, 'platform')
+  function onPlatform(platform, fn) {
+    Object.defineProperty(process, 'platform', { value: platform, configurable: true })
+    try { return fn() } finally { Object.defineProperty(process, 'platform', darwinPlatDesc) }
+  }
+  onPlatform('darwin', () => {
+    const hibernate = actionSpecFor('hibernate')
+    assert.strictEqual(hibernate.argv, null, 'macOS hibernate has no command')
+    assert.strictEqual(hibernate.reason, 'unsupported-on-platform',
+      'macOS hibernate reports the unsupported reason')
+    assert.ok(!('degrade' in hibernate),
+      'hibernate must not quietly degrade to sleep any more')
+    assert.deepStrictEqual(actionSpecFor('sleep').argv(), ['pmset', 'sleepnow'],
+      'macOS sleep keeps its own command')
+  })
+  assert.deepStrictEqual(onPlatform('win32', () => actionSpecFor('hibernate').argv()),
+    ['shutdown', '/h'], 'Windows hibernate is unchanged')
+  assert.deepStrictEqual(onPlatform('linux', () => actionSpecFor('hibernate').argv()),
+    ['systemctl', 'hibernate'], 'Linux hibernate is unchanged')
+  assert.strictEqual(process.platform, darwinPlatDesc.value, 'the platform getter is restored')
+  calls.push('darwin-hibernate-unsupported-ok')
   // 50. Enabling the feature must not make an unsaved script mandatory: a
   // profile can still store action=custom first and be told why it cannot arm.
   r = await postState('/config', { createProfile: { label: '脚本门' } })
@@ -2494,7 +2519,7 @@ assert.strictEqual(routes.size, 0, 'disposer removes HTTP routes')
   // 54b-bis. On Linux a refused power action is retried once through pkexec; a
   // custom script never elevates, because its own exit code is the answer.
   {
-    const realPlatform = process.platform
+    const realPlatDesc = process.platform
     Object.defineProperty(process, 'platform', { value: 'linux' })
     try {
       let outcomes = [1, 0]
@@ -2541,7 +2566,7 @@ assert.strictEqual(routes.size, 0, 'disposer removes HTTP routes')
       calls.push('elevation-retry-ok')
     } finally {
       subprocess.spawn = realSpawn
-      Object.defineProperty(process, 'platform', { value: realPlatform })
+      Object.defineProperty(process, 'platform', { value: realPlatDesc })
     }
   }
 
