@@ -1373,6 +1373,40 @@ void (async () => {
     calls.push('action-note-pending-ok')
   }
 
+  // 12g. "解除" on a blocked card is one request: /unblock. Chaining /disarm +
+  // /arm (the old shape) armed a guard the user had never turned on.
+  {
+    state.armed = false
+    state.state = 'idle'
+    state.blocked = '已暂停：配额不足'
+    state.activeProfileId = 'default'
+    state.profiles = [{ id: 'default', label: '默认', action: 'shutdown' }]
+    state.actions = { shutdown: { available: true }, custom: { available: true } }
+    delete state.lastAction
+    const realFetch = global.fetch
+    const urls = []
+    global.fetch = async (url, opts) => {
+      if (!opts || opts.method === 'POST') urls.push(String(url))
+      return { ok: true, status: 200, json: async () => state }
+    }
+    try {
+      await repaint()
+      const btn = cardEl().querySelector('.dsp-btn')
+      assert.strictEqual(btn.textContent, clientText.zh['btn.disarm'],
+        'a blocked card still offers the clear button')
+      for (const fn of (btn._listeners.click || [])) fn({})
+      await settle(10)
+      const paths = urls.map((u) => u.replace(/^.*\/api\/dsh-shutdown-guard/, ''))
+      assert.deepStrictEqual(paths, ['/unblock'],
+        'clearing a block sends exactly one request, /unblock')
+      assert.ok(!paths.includes('/arm'), 'clearing never arms the guard')
+      calls.push('blocked-clear-unblock-only-ok')
+    } finally {
+      state.blocked = null
+      global.fetch = realFetch
+    }
+  }
+
   // 13. A rebuild (here: folding the card) creates a brand-new node with no
   // data-lum. The probe is throttled for 3 s, so without a cached answer the
   // fresh node would show the dark default until the next window. The rebuild

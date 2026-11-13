@@ -142,7 +142,7 @@ function fireTimer(id) {
 
 assert.deepStrictEqual(
   [...routes.keys()].sort(),
-  ['/api/dsh-shutdown-guard/arm', '/api/dsh-shutdown-guard/cancel', '/api/dsh-shutdown-guard/config', '/api/dsh-shutdown-guard/disarm', '/api/dsh-shutdown-guard/events', '/api/dsh-shutdown-guard/state', '/api/dsh-shutdown-guard/ui', '/api/dsh-shutdown-guard/window'],
+  ['/api/dsh-shutdown-guard/arm', '/api/dsh-shutdown-guard/cancel', '/api/dsh-shutdown-guard/config', '/api/dsh-shutdown-guard/disarm', '/api/dsh-shutdown-guard/events', '/api/dsh-shutdown-guard/state', '/api/dsh-shutdown-guard/ui', '/api/dsh-shutdown-guard/unblock', '/api/dsh-shutdown-guard/window'],
 )
 
 // 1. initial state
@@ -1677,6 +1677,48 @@ assert.strictEqual(routes.size, 0, 'disposer removes HTTP routes')
   assert.strictEqual((await eventsNow()).filter((e) => e.key === 'log.retryRecovered').length,
     recoveredAfter, 'the timer path does not add another recovery line')
   calls.push('waiting-still-heals-ok')
+
+  // 48d. /unblock clears a block without touching armed. The card used to fake
+  // this with /disarm + /arm; on an off guard that switched the mode on.
+  await postState('/disarm')
+  await halt()
+  st = await stateNow()
+  assert.strictEqual(st.blockedLevel, 'halted', 'precondition: a halt is parked')
+  assert.strictEqual(st.armed, false, 'precondition: the guard is off')
+  n = spawns.length
+  let unblockRes = await postState('/unblock')
+  assert.strictEqual(unblockRes.status, 200, '/unblock answers 200')
+  st = await stateNow()
+  assert.strictEqual(st.blockedLevel, null, 'the block is cleared')
+  assert.strictEqual(st.parkedAt, null, 'the parked halt is gone from state')
+  assert.strictEqual(st.armed, false, 'clearing a block never arms the guard')
+  assert.strictEqual(st.state, 'idle', 'nothing starts a countdown')
+  assert.strictEqual(spawns.length, n, 'clearing sends no command')
+  assert.ok((await eventsNow()).some((e) => e.key === 'log.unblocked'), 'the clear is announced')
+  calls.push('unblock-keeps-guard-off-ok')
+
+  // 48e. Clearing while armed leaves the mode on: block and switch are separate.
+  await postState('/arm')
+  st = await stateNow()
+  assert.strictEqual(st.armed, true, 'precondition: the guard is armed')
+  await halt()
+  st = await stateNow()
+  assert.strictEqual(st.blockedLevel, 'halted', 'precondition: an armed halt')
+  await postState('/unblock')
+  st = await stateNow()
+  assert.strictEqual(st.blockedLevel, null, 'the block is cleared')
+  assert.strictEqual(st.armed, true, 'clearing does not disarm')
+  await postState('/disarm')
+  calls.push('unblock-keeps-armed-ok')
+
+  // 48f. With nothing blocked /unblock is a silent no-op.
+  st = await stateNow()
+  assert.strictEqual(st.blockedLevel, null, 'precondition: nothing is blocked')
+  const eventsBeforeUnblock = (await eventsNow()).length
+  unblockRes = await postState('/unblock')
+  assert.strictEqual(unblockRes.status, 200, '/unblock still answers 200')
+  assert.strictEqual((await eventsNow()).length, eventsBeforeUnblock, 'a no-op writes no event')
+  calls.push('unblock-silent-without-block-ok')
 
   // 49. Custom-profile-only actions vanish while custom profiles are off: not
   // just the picker (the client hides those rows) but the host map itself, so a
