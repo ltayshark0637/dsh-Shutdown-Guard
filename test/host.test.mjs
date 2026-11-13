@@ -1,5 +1,5 @@
 import assert from 'node:assert'
-import { apply, hostRestartPlan } from '../lib/index.mjs'
+import { apply, hostRestartPlan, restartHelperLaunch, takeRestartStatus } from '../lib/index.mjs'
 import { LANGS, MESSAGES, catalogCoverage, t } from '../lib/i18n.mjs'
 import { writeV4SharedScripts, SAMPLES, SHARED_SHA, sha256 } from './fixtures/script-library.mjs'
 
@@ -1900,6 +1900,95 @@ assert.strictEqual(routes.size, 0, 'disposer removes HTTP routes')
   assert.strictEqual(readCfg().scripts.find((s) => s.id === ackScriptId).ack, null,
     'a rejected ack leaves the stored value untouched')
   calls.push('script-ack-round-trip-ok')
+
+  // 54f. The desktop shell is restarted as a whole: name, argv entry and the
+  // Electron runtime must all agree before the plugin claims it can restart.
+  {
+    const fs = await import('node:fs')
+    const pathMod = await import('node:path')
+    const os = await import('node:os')
+    const desktopExe = 'C:\\Program Files\\DSH Desktop\\DSH Desktop.exe'
+    const entry = 'C:\\Program Files\\DSH Desktop\\resources\\app.asar\\harness-node-entry.mjs'
+    const desktop = hostRestartPlan({
+      platform: 'win32', versions: { electron: '30' },
+      argv: ['node', entry], execPath: desktopExe,
+      cwd: 'C:\\work dir', dataDir: 'C:\\data', pid: 4242,
+    })
+    assert.strictEqual(desktop.desktop, true, 'a known desktop shell is restarted as a desktop')
+    assert.ok(desktop.content.includes('taskkill /IM "DSH Desktop.exe" /T /F'),
+      'the whole shell tree is ended by image name')
+    assert.ok(!desktop.content.includes('/PID'), 'the desktop helper no longer kills one pid')
+    assert.ok(desktop.content.includes('Start-Process -FilePath'),
+      'the new shell is started through Start-Process, outside the helper console')
+    assert.ok(!desktop.content.includes('start "" "C:\\Program Files\\DSH Desktop\\DSH Desktop.exe"'),
+      'the desktop helper never starts the shell as a direct child')
+    assert.ok(!desktop.content.includes('bin.js'), 'no harness entry is passed on the desktop')
+    assert.ok(!desktop.content.includes('--port'), 'the desktop shell picks its own port')
+    assert.strictEqual((desktop.content.match(/%ERRORLEVEL%/g) || []).length, 2,
+      'both the kill and the start record their exit code')
+    const old = hostRestartPlan({ platform: 'win32', versions: { electron: '30' }, argv: ['node', entry],
+      execPath: 'C:\\Program Files\\DeepSeek Harness\\DeepSeek Harness.exe', dataDir: 'C:\\data', pid: 1 })
+    assert.strictEqual(old.desktop, true, 'the old shell name is still recognised')
+    const unknown = hostRestartPlan({ platform: 'win32', versions: { electron: '30' }, argv: ['node', entry],
+      execPath: 'C:\\Program Files\\Other\\some.exe', dataDir: 'C:\\data', pid: 4242 })
+    assert.ok(!unknown.desktop, 'an unknown binary is never restarted as a desktop')
+    assert.ok(unknown.content.includes('taskkill /PID 4242 /F'), 'it falls back to the pid helper')
+    const cli = hostRestartPlan({ platform: 'win32', versions: {}, argv: ['bin.js', 'web'],
+      execPath: 'C:\\node.exe', dataDir: 'C:\\data', pid: 7 })
+    assert.ok(!cli.desktop, 'a CLI host is not a desktop host')
+    assert.ok(cli.content.includes('taskkill /PID 7 /F'), 'the CLI helper still kills this pid')
+    assert.ok(!cli.content.includes('/IM'), 'the CLI helper never kills by image name')
+    assert.ok(cli.content.includes('start "" C:\\node.exe bin.js web'),
+      'the CLI helper keeps its executable and argv')
+    const launched = restartHelperLaunch(desktop)
+    assert.strictEqual(launched.file, 'powershell.exe', 'the desktop helper is launched by powershell')
+    const launchLine = launched.args.join(' ')
+    assert.ok(launchLine.includes('Invoke-CimMethod') && launchLine.includes('Win32_Process'),
+      'the desktop helper is created through WMI, outside the shell tree')
+    const cliLaunch = restartHelperLaunch(cli)
+    assert.deepStrictEqual([cliLaunch.file, cliLaunch.args[1]], ['cmd', cli.helperPath],
+      'the CLI helper is a plain detached child')
+    calls.push('desktop-restart-plan-ok')
+
+    const dir = fs.mkdtempSync(pathMod.join(os.tmpdir(), 'dsh-restart-status-'))
+    const file = pathMod.join(dir, 'restart.status')
+    fs.writeFileSync(file, 'ok\n')
+    assert.strictEqual(takeRestartStatus({ dataDir: dir }), 'ok', 'ok is read back')
+    assert.strictEqual(fs.existsSync(file), false, 'ok is consumed')
+    fs.writeFileSync(file, 'unverified')
+    assert.strictEqual(takeRestartStatus({ dataDir: dir }), 'unverified', 'unverified is read back')
+    assert.strictEqual(fs.existsSync(file), false, 'unverified is consumed')
+    assert.strictEqual(takeRestartStatus({ dataDir: dir }), null, 'a missing status is null')
+    fs.writeFileSync(file, 'not a status')
+    assert.doesNotThrow(() => takeRestartStatus({ dataDir: dir }), 'garbage never throws')
+    assert.strictEqual(takeRestartStatus({ dataDir: dir }), null, 'garbage is not a claim')
+    assert.strictEqual(fs.existsSync(file), false, 'garbage is consumed too')
+    calls.push('restart-status-consumed-ok')
+
+    // 54h. A success line may only come from the helper's status file, once per
+    // boot: a plain boot claims nothing, and reading the file clears it.
+    const dataDir = pathMod.join(process.cwd(), 'data')
+    const liveStatus = pathMod.join(dataDir, 'restart.status')
+    const count = async (key) => (await eventsNow()).filter((e) => e.key === key).length
+    try { fs.unlinkSync(liveStatus) } catch { /* absent */ }
+    const verifiedBefore = await count('log.restartVerified')
+    const unverifiedBefore = await count('log.shellStartUnverified')
+    mount()
+    mount = apply(ctx, { countdownSec: 10, marginSec: 5, language: 'zh' })
+    await flush()
+    assert.strictEqual(await count('log.restartVerified'), verifiedBefore,
+      'a boot without a status file does not claim a restart')
+    assert.strictEqual(await count('log.shellStartUnverified'), unverifiedBefore,
+      'and does not claim it was unverified either')
+    fs.writeFileSync(liveStatus, 'ok')
+    mount()
+    mount = apply(ctx, { countdownSec: 10, marginSec: 5, language: 'zh' })
+    await flush()
+    assert.strictEqual(await count('log.restartVerified'), verifiedBefore + 1,
+      'the next boot reports the helper result exactly once')
+    assert.strictEqual(fs.existsSync(liveStatus), false, 'the status file is cleared after reading')
+    calls.push('restart-no-false-success-ok')
+  }
 
   mount()
 }
