@@ -1,5 +1,5 @@
 import assert from 'node:assert'
-import { apply, hostRestartPlan, judgeLaunchResult, restartHelperLaunch, takeRestartStatus } from '../lib/index.mjs'
+import { apply, customProfileOnly, hostRestartPlan, judgeLaunchResult, restartHelperLaunch, takeRestartStatus } from '../lib/index.mjs'
 import { LANGS, MESSAGES, catalogCoverage, t } from '../lib/i18n.mjs'
 import { writeV4SharedScripts, SAMPLES, SHARED_SHA, sha256 } from './fixtures/script-library.mjs'
 
@@ -1722,27 +1722,38 @@ assert.strictEqual(routes.size, 0, 'disposer removes HTTP routes')
 
   // 49. Custom-profile-only actions vanish while custom profiles are off: not
   // just the picker (the client hides those rows) but the host map itself, so a
-  // stale client cannot arm them. restart-dsh keeps its own reason: that gate is
-  // older and must not be overwritten by this one.
+  // stale client cannot arm them. Windows gates only custom; POSIX keeps the
+  // older set. restart-dsh keeps its own reason: that gate is older and must not
+  // be overwritten by this one.
   await postState('/disarm')
   await postState('/config', { customEnabled: false })
   st = await stateNow()
-  for (const id of ['lock', 'signout', 'custom']) {
+  const gated = process.platform === 'win32' ? ['custom'] : ['lock', 'signout', 'custom']
+  for (const id of gated) {
     assert.deepStrictEqual(st.actions[id], { available: false, reason: 'no-custom-profile' },
-      `${id} reports no-custom-profile while custom profiles are off`)
+      id + ' reports no-custom-profile while custom profiles are off')
   }
   assert.strictEqual(st.actions.shutdown.available, true, 'shutdown needs no custom profile')
+  if (process.platform === 'win32') {
+    assert.strictEqual(st.actions.lock.available, true, 'Windows can lock without a custom profile')
+    assert.strictEqual(st.actions.signout.available, true, 'Windows can sign out without a custom profile')
+  }
   // The default profile keeps action editable, so a stale profile can still say
-  // lock after the feature is switched off. The gate must refuse that arm even
-  // though the profile itself is the default one.
-  await postState('/config', { updateProfile: { id: 'default', patch: { action: 'lock' } } })
+  // the gated action after the feature is switched off. The gate must refuse
+  // that arm even though the profile itself is the default one.
+  const gatedAction = process.platform === 'win32' ? 'custom' : 'lock'
+  await postState('/config', { updateProfile: { id: 'default', patch: { action: gatedAction } } })
   st = await stateNow()
   assert.strictEqual(st.activeProfileId, 'default', 'the default profile stays active')
   assert.strictEqual(st.actionReady, false, 'a gated action is never reported ready')
   n = spawns.length
   refused = await armNow()
   assert.strictEqual(refused.status, 409, 'arming a gated action is refused')
-  assert.strictEqual(refused.body.error, 'action-unavailable', 'the refusal names the unavailable action')
+  assert.strictEqual(refused.body.error,
+    process.platform === 'win32' ? 'no-script' : 'action-unavailable',
+    process.platform === 'win32'
+      ? 'Windows refuses a scriptless custom action as no-script'
+      : 'the refusal names the unavailable action')
   assert.strictEqual(refused.body.armed, false, 'the gated refusal leaves the mode off')
   st = await stateNow()
   assert.strictEqual(st.state, 'idle', 'arming a gated action stays idle')
@@ -1756,6 +1767,17 @@ assert.strictEqual(routes.size, 0, 'disposer removes HTTP routes')
   assert.strictEqual(r.body.actions.custom.reason, 'no-script',
     'custom falls back to no-script once the feature is on')
   calls.push('no-custom-profile-gate-ok')
+
+  // The gate is platform-shaped, not a property of the running test host.
+  assert.deepStrictEqual(customProfileOnly('win32'), ['custom'],
+    'Windows gates only the custom action')
+  assert.deepStrictEqual(customProfileOnly('darwin'), ['lock', 'signout', 'custom'],
+    'macOS keeps the older custom-profile set')
+  assert.deepStrictEqual(customProfileOnly('linux'), ['lock', 'signout', 'custom'],
+    'Linux keeps the older custom-profile set')
+  assert.ok(!customProfileOnly('win32').includes('lock') && !customProfileOnly('win32').includes('signout'),
+    'Windows never gates lock or signout behind custom profiles')
+  calls.push('custom-profile-only-platform-ok')
 
   // 50. Enabling the feature must not make an unsaved script mandatory: a
   // profile can still store action=custom first and be told why it cannot arm.
