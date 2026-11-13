@@ -1,7 +1,7 @@
 # Shutdown Guard · Shut down when tasks finish
 [中文](https://github.com/ltayshark0637/dsh-Shutdown-Guard/blob/main/README.md) · **English** · [Русский](https://github.com/ltayshark0637/dsh-Shutdown-Guard/blob/main/README.ru.md)
 
-Stable `v1.6.1` · [Changelog](https://github.com/ltayshark0637/dsh-Shutdown-Guard/blob/main/CHANGELOG.md)
+Stable `v1.6.2` · [Changelog](https://github.com/ltayshark0637/dsh-Shutdown-Guard/blob/main/CHANGELOG.md)
 
 <p align="center"><img src="https://ltayshark0637.github.io/dsh-Shutdown-Guard/screenshots/banner.png" width="880" alt="Shutdown Guard — shut down automatically when every task is done, a night-watch card in the sidebar"></p>
 
@@ -26,7 +26,7 @@ dsh plugin --profile web add dsh-shutdown-guard
 Without a version you get the latest stable; name one explicitly to pin it:
 
 ```bash
-dsh plugin --profile web add dsh-shutdown-guard@1.6.1
+dsh plugin --profile web add dsh-shutdown-guard@1.6.2
 ```
 
 Or straight from GitHub:
@@ -62,7 +62,7 @@ The window icon at the right of the card header pulls the card out into a floati
 Four tabs; it opens on Appearance and every switch applies immediately.
 
 - **Appearance**: card style (three thumbnailed cards, thumbnails following UI language and background), theme, fold by default, compact floating window, UI language.
-- **Watch**: the "custom profile" switch on its own, then the profile list (switch, set as default, rename, delete, create) once it is on; below that the four gating rows, "AFK auto-answer", and the **what to do at the deadline** picker (shut down / restart / sleep / hibernate / lock screen / sign out / custom script).
+- **Watch**: the "custom profile" switch on its own, then the profile list (switch, set as default, rename, delete, create) once it is on; below that the four gating rows, "AFK auto-answer", and the **what to do at the deadline** picker (shut down / restart / sleep / hibernate / lock screen / sign out / restart DSH / custom script).
 - **Notifications**: one master switch plus four per-event switches (countdown started, about to shut down, first block, block cleared).
 - **Status**: current block, why it did not shut down last time, recent events.
 
@@ -83,7 +83,7 @@ A: Both the host and the client bundle load only when DSH starts; HMR does not a
 **Q: Does it support macOS and Linux?**
 A: Per platform, and the distinction matters:
 
-- **Windows**: fully verified, including actually running shutdown / restart / sleep.
+- **Windows**: fully verified, including actually running shutdown / restart / sleep; **"restart DSH" is verified on real hardware on the desktop build** — the whole desktop app exits and comes back on its own, and the next launch records "restart completed" in the event log.
 - **macOS**: **shutdown has been verified on real hardware — it actually shut the machine down** (Apple Silicon / macOS 27.2 / DSH Desktop, plugin `1.6.1-beta.3`): the plugin sent the command, the system accepted it, and the machine powered off. **Provided no app is blocking shutdown** — a terminal running a foreground command or an editor with unsaved changes makes macOS stop it and wait for confirmation, exactly like a manual "Shut Down" from the Apple menu. Restart, sign out, sleep and hibernate have **not** been verified on real hardware yet.
 - **Linux**: **all six actions have been verified on real hardware** (Ubuntu 24.04.5 LTS / desktop session, plugin `1.6.1-beta.5`): shutdown, restart, sleep, hibernate, lock and sign out all really execute. **Known limitation**: "sign out" ends the whole login session, so DSH exits with it and no further events are recorded — that is the meaning of `loginctl terminate-user`, not a defect. **Not verified yet**: automatic retries under real rate limiting / timeouts, and whether the armed state survives a plugin reload.
 

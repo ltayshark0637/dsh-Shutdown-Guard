@@ -1,7 +1,7 @@
 # Shutdown Guard · 任务完成后关机
 **中文** · [English](https://github.com/ltayshark0637/dsh-Shutdown-Guard/blob/main/README.en.md) · [Русский](https://github.com/ltayshark0637/dsh-Shutdown-Guard/blob/main/README.ru.md)
 
-稳定版 `v1.6.1` · [更新记录](https://github.com/ltayshark0637/dsh-Shutdown-Guard/blob/main/CHANGELOG.md)
+稳定版 `v1.6.2` · [更新记录](https://github.com/ltayshark0637/dsh-Shutdown-Guard/blob/main/CHANGELOG.md)
 
 <p align="center"><img src="https://ltayshark0637.github.io/dsh-Shutdown-Guard/screenshots/banner.png" width="880" alt="Shutdown Guard — 任务完成后自动关机，侧边栏守夜卡片"></p>
 
@@ -26,7 +26,7 @@ dsh plugin --profile web add dsh-shutdown-guard
 不写版本号时装到的是最新稳定版；要指定版本就显式写：
 
 ```bash
-dsh plugin --profile web add dsh-shutdown-guard@1.6.1
+dsh plugin --profile web add dsh-shutdown-guard@1.6.2
 ```
 
 或者直接从 GitHub 装：
@@ -62,7 +62,7 @@ dsh plugin --profile web add github:ltayshark0637/dsh-Shutdown-Guard
 分四个标签页，打开时停在外观页，所有开关立即生效。
 
 - **外观**：卡片样式（三张带缩略图的卡片，缩略图随界面语言与背景深浅换）、主题、默认折叠、悬浮窗简洁模式、界面语言。
-- **守夜**：最上面是「自定义配置」开关，打开后才出现配置列表（切换、设为默认、重命名、删除、新建）；再往下是四行判定闸、「AFK 自动回答」，以及**到点做什么**的下拉（关机 / 重启 / 睡眠 / 休眠 / 锁屏 / 注销 / 自定义脚本）。
+- **守夜**：最上面是「自定义配置」开关，打开后才出现配置列表（切换、设为默认、重命名、删除、新建）；再往下是四行判定闸、「AFK 自动回答」，以及**到点做什么**的下拉（关机 / 重启 / 睡眠 / 休眠 / 锁屏 / 注销 / 重启 DSH / 自定义脚本）。
 - **通知**：状态变化总开关 + 四类分开关（进入倒计时、即将关机、首次阻断、阻断恢复）。
 - **状态**：当前阻断、上次为什么没关机、最近事件。
 
@@ -83,7 +83,7 @@ A：服务端和客户端都要重启 DSH 才加载新代码，本机 HMR 对本
 **Q：支持 macOS 和 Linux 吗？**
 A：分平台说，别只看一句话：
 
-- **Windows**：完整验证，包括真实执行关机 / 重启 / 睡眠。
+- **Windows**：完整验证，包括真实执行关机 / 重启 / 睡眠；**「重启 DSH」已在桌面端真机验证** —— 整个桌面应用退出后能自己回来，成功后下次启动会在事件日志里记一条「重启已完成」。
 - **macOS**：**「关机」已真机验证能真正执行**（Apple Silicon / macOS 27.2 / DSH Desktop，插件 `1.6.1-beta.3`）：插件发出命令 → 系统接受 → 机器实际关机。**前提是没有应用阻止关机** —— 终端跑着前台命令、编辑器有未保存文档时，macOS 会像手动点苹果菜单「关机」一样拦下并等待确认。重启、注销、睡眠、休眠尚未真机验证。
 - **Linux**：**六个动作已在真机验证执行成功**（Ubuntu 24.04.5 LTS / 桌面会话，插件 `1.6.1-beta.5`）：关机、重启、睡眠、休眠、锁屏、注销都能真正执行。**已知限制**：「注销」结束的是整个登录会话，DSH 会随之退出，此后不再有事件记录 —— 这是 `loginctl terminate-user` 的语义，不是缺陷。**尚未验证**：真实限流 / 超时下的自动重试；插件重载后武装状态是否保留。
 
