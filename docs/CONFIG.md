@@ -273,6 +273,7 @@ POST /config
 | GET | `/state?since=<ms>` | 完整状态 + 增量事件 |
 | GET | `/events?since=&limit=` | 事件流水 |
 | POST | `/arm` `/disarm` `/cancel` | 武装 / 解除 / 取消本次倒计时 |
+| POST | `/unblock` | 只清除阻断（熔断与等待重试都算），不改变武装状态；无阻断时返回 200 且不写事件 |
 | POST | `/config` | 改**行为**：profile、开关、语言、上传/删除脚本 |
 | POST | `/ui` | 改**外观**：卡片样式、主题、语言、悬浮窗简洁模式 |
 

@@ -273,6 +273,7 @@ Prefix `/api/dsh-shutdown-guard`; local machine only.
 | GET | `/state?since=<ms>` | full state + incremental events |
 | GET | `/events?since=&limit=` | event stream |
 | POST | `/arm` `/disarm` `/cancel` | arm / disarm / cancel this countdown |
+| POST | `/unblock` | clear the block only (halted or waiting); never changes the armed state; 200 with no event when nothing is blocked |
 | POST | `/config` | change **behaviour**: profiles, switches, language, script-library operations |
 | POST | `/ui` | change **appearance**: card style, theme, language, floating-window compact mode |
 
