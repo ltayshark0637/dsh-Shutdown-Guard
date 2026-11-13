@@ -1013,6 +1013,18 @@ h1 em { font-style: normal; color: #f0a83a }
 .setWrap .dsp-actctl { display: flex; flex-direction: column; gap: 4px; width: 100%; min-width: 0 }
 .setWrap .dsp-sel { display: flex; align-items: center; justify-content: space-between; gap: 8px; width: 100%; box-sizing: border-box; height: 30px; padding: 0 8px; border-radius: 7px; border: .5px solid var(--dsw-alias-border-l2); background: var(--dsw-specific-selector); color: inherit; font: inherit; font-size: 12.5px; cursor: pointer }
 .setWrap .dsp-selcaret { flex: none; width: 0; height: 0; background: transparent; border-left: 4px solid transparent; border-right: 4px solid transparent; border-top: 5px solid var(--dsw-alias-label-tertiary, #8f8d84) }
+.setWrap .dsp-selwrap { position: relative; width: 100%; min-width: 0 }
+.setWrap .dsp-selmenu { position: absolute; top: calc(100% + 4px); left: 0; right: 0; z-index: 40; display: flex; flex-direction: column; gap: 1px; padding: 4px; border: .5px solid var(--dsw-alias-border-l2); border-radius: 8px; background: var(--dsw-alias-bg-overlay, #2a2a28); box-shadow: 0 10px 24px rgba(0, 0, 0, .42) }
+.setWrap .dsp-selitem { display: flex; align-items: center; width: 100%; padding: 6px 8px; border: 0; border-radius: 5px; background: transparent; color: inherit; font: inherit; font-size: 12.5px; line-height: 18px; text-align: left; cursor: pointer }
+.setWrap .dsp-selitem[aria-selected="true"] { background: var(--dsw-alias-interactive-bg-hover, rgba(255, 255, 255, .08)) }
+.setWrap .dsp-selitem.is-na { opacity: .45; cursor: not-allowed }
+.setWrap .dsp-switch { cursor: pointer }
+.setWrap .dsp-evlog { display: flex; flex-direction: column; gap: 3px; width: 100%; min-width: 0 }
+.setWrap .dsp-ev { display: flex; gap: 8px; min-width: 0; font-size: 11.5px; line-height: 16px; color: var(--dsw-alias-label-secondary) }
+.setWrap .dsp-ev-time { flex: none; font-variant-numeric: tabular-nums; color: var(--dsw-alias-label-tertiary) }
+.setWrap .dsp-ev-text { min-width: 0; overflow-wrap: anywhere }
+.setWrap .dsp-sval-dim { opacity: .55 }
+.setWrap .dsp-selmenu[hidden], .setWrap .dsp-libmenu[hidden] { display: none }
 .setWrap .dsp-srow.dsp-libblock { display: flex; flex-direction: column; align-items: stretch; gap: 0; padding-top: 10px }
 .setWrap .dsp-libhead { display: flex; align-items: center; gap: 12px; width: 100%; min-width: 0 }
 .setWrap .dsp-libheadtext { display: flex; flex-direction: column; gap: 2px; flex: 1 1 auto; min-width: 0 }
@@ -1472,19 +1484,22 @@ transition:transform .24s cubic-bezier(.22,.61,.36,1),width .24s cubic-bezier(.2
     </div>
 
     <div class="dsp-tabpanel" data-pane="look">
-      <div class="dsp-cards"><button class="dsp-vcard on" type="button" data-vcard="a">
+      <div class="dsp-srow dsp-srow-stack">
+        <div class="dsp-srow-text"><span class="dsp-stitle" data-i18n="s.look.variant">卡片样式</span></div>
+        <div class="dsp-cards"><button class="dsp-vcard on" type="button" data-vcard="a">
     <span class="dsp-thumb"><img class="dsp-thumb-img" data-thumb="a" src="assets/variant-a-zh-dark.png" alt="" decoding="async"></span>
     <span class="dsp-vcard-label" data-i18n="s.look.a">极简</span></button><button class="dsp-vcard" type="button" data-vcard="b">
     <span class="dsp-thumb"><img class="dsp-thumb-img" data-thumb="b" src="assets/variant-b-zh-dark.png" alt="" decoding="async"></span>
     <span class="dsp-vcard-label" data-i18n="s.look.b">雷达</span></button><button class="dsp-vcard" type="button" data-vcard="c">
     <span class="dsp-thumb"><img class="dsp-thumb-img" data-thumb="c" src="assets/variant-c-zh-dark.png" alt="" decoding="async"></span>
     <span class="dsp-vcard-label" data-i18n="s.look.c">终端</span></button></div>
+      </div>
       <div class="dsp-srow">
   <div class="dsp-srow-text"><span class="dsp-stitle" data-i18n="s.look.theme">主题</span></div><span class="dsp-seg" data-seg="theme"><button class="dsp-segbtn on" type="button" data-i18n="s.theme.auto">跟随</button><button class="dsp-segbtn" type="button" data-i18n="s.theme.dark">深色</button><button class="dsp-segbtn" type="button" data-i18n="s.theme.light">浅色</button><button class="dsp-segbtn" type="button" data-i18n="s.theme.claude">Claude Style</button></span></div>
       <div class="dsp-srow">
-  <div class="dsp-srow-text"><span class="dsp-stitle" data-i18n="s.look.fold">默认折叠</span><span class="dsp-sdesc" data-i18n="s.look.foldDesc">折叠后只保留标题和状态。</span></div><span class="dsp-switch" aria-hidden="true"><i></i></span></div>
+  <div class="dsp-srow-text"><span class="dsp-stitle" data-i18n="s.look.fold">默认折叠</span></div><span class="dsp-switch" role="switch" tabindex="0" aria-checked="false"><i></i></span></div>
       <div class="dsp-srow">
-  <div class="dsp-srow-text"><span class="dsp-stitle" data-i18n="s.look.compact">悬浮窗简洁模式</span><span class="dsp-sdesc" data-i18n="s.look.compactDesc">悬浮窗里隐去底部统计与事件，只留卡片。</span></div><span class="dsp-switch on" aria-hidden="true"><i></i></span></div>
+  <div class="dsp-srow-text"><span class="dsp-stitle" data-i18n="s.look.compact">悬浮窗简洁模式</span></div><span class="dsp-switch on" role="switch" tabindex="0" aria-checked="true"><i></i></span></div>
       <div class="dsp-srow">
   <div class="dsp-srow-text"><span class="dsp-stitle" data-i18n="s.look.lang">语言</span></div><span class="dsp-seg" data-seg="lang"><button class="dsp-segbtn on" type="button" data-i18n="s.lang.auto">跟随系统</button><button class="dsp-segbtn" type="button" data-i18n="s.lang.zh">中文</button><button class="dsp-segbtn" type="button" data-i18n="s.lang.en">English</button><button class="dsp-segbtn" type="button" data-i18n="s.lang.ru">Русский</button></span></div>
     </div>
@@ -1492,9 +1507,12 @@ transition:transform .24s cubic-bezier(.22,.61,.36,1),width .24s cubic-bezier(.2
     <div class="dsp-tabpanel" data-pane="watch" hidden>
       <div class="dsp-srow dsp-srow-standalone">
         <div class="dsp-srow-text"><span class="dsp-stitle" data-i18n="s.watch.custom">自定义配置</span>
-          <span class="dsp-sdesc" data-i18n="s.watch.customDesc">正在使用自定义配置，默认配置暂时挂起。</span></div><span class="dsp-switch on" aria-hidden="true"><i></i></span>
+          <span class="dsp-sdesc" data-i18n="s.watch.customDesc">正在使用自定义配置，默认配置暂时挂起。</span></div><span class="dsp-switch on" role="switch" tabindex="0" aria-checked="true"><i></i></span>
       </div>
       <div class="dsp-sgroup"><span class="dsp-sgroup-title" data-i18n="s.prof.group">配置</span></div>
+      <div class="dsp-srow">
+        <div class="dsp-srow-text"><span class="dsp-stitle" data-i18n="s.prof.pick">选择配置</span><span class="dsp-sdesc" data-i18n="s.prof.current">当前：自定义 3（120 秒）</span></div>
+      </div>
       <div class="dsp-listbox">
         <div class="dsp-srow dsp-srow-prof" role="radio" aria-checked="false" aria-label="默认">
           <span class="dsp-libradio" aria-hidden="true"></span>
@@ -1516,14 +1534,19 @@ transition:transform .24s cubic-bezier(.22,.61,.36,1),width .24s cubic-bezier(.2
           <div class="dsp-srow-text"><span class="dsp-stitle" data-i18n="s.prof.c3">自定义 3</span><span class="dsp-badge" data-i18n="s.prof.active">当前</span></div>
           <span class="dsp-sval" data-i18n="s.sec.120">120 秒</span><span class="dsp-sacts"><span class="dsp-slink" data-i18n="s.prof.setDefault">设为默认</span><span class="dsp-slink" data-i18n="s.prof.rename">重命名</span><span class="dsp-slink" data-i18n="s.prof.del">删除</span></span>
         </div>
+        <div class="dsp-srow dsp-srow-prof" role="radio" aria-checked="false" aria-label="配置 4" tabindex="0">
+          <span class="dsp-libradio" aria-hidden="true"></span>
+          <div class="dsp-srow-text"><span class="dsp-stitle" data-i18n="s.prof.c4">配置 4</span></div>
+          <span class="dsp-sval" data-i18n="s.sec.60">60 秒</span><span class="dsp-sacts"><span class="dsp-slink" data-i18n="s.prof.setDefault">设为默认</span><span class="dsp-slink" data-i18n="s.prof.rename">重命名</span><span class="dsp-slink" data-i18n="s.prof.del">删除</span></span>
+        </div>
         <div class="dsp-srow dsp-srow-new" data-new><span class="dsp-stitle" data-i18n="s.prof.new">＋ 新建</span></div>
       </div>
       <div class="dsp-sgroup-box"><div class="dsp-sgroup"><span class="dsp-sgroup-title" data-i18n="s.watch.group">守夜行为</span></div>
         <div class="dsp-srow">
-  <div class="dsp-srow-text"><span class="dsp-stitle" data-i18n="s.row.cd">倒计时时长</span><span class="dsp-sdesc" data-i18n="s.row.cdDesc">关机前留出的取消时间，10–600 秒。</span></div><span class="dsp-seg"><button class="dsp-segbtn" type="button" data-i18n="s.cd.30">30 秒</button><button class="dsp-segbtn" type="button" data-i18n="s.cd.60">60 秒</button><button class="dsp-segbtn on" type="button" data-i18n="s.cd.120">2 分钟</button><button class="dsp-segbtn" type="button" data-i18n="s.cd.300">5 分钟</button></span></div>
+  <div class="dsp-srow-text"><span class="dsp-stitle" data-i18n="s.row.cd">倒计时时长</span><span class="dsp-sdesc" data-i18n="s.row.cdDesc">执行前的取消时间，10–600 秒。</span></div><span class="dsp-seg"><button class="dsp-segbtn" type="button" data-i18n="s.cd.30">30 秒</button><button class="dsp-segbtn" type="button" data-i18n="s.cd.60">60 秒</button><button class="dsp-segbtn on" type="button" data-i18n="s.cd.120">2 分钟</button><button class="dsp-segbtn" type="button" data-i18n="s.cd.300">5 分钟</button></span></div>
         <div class="dsp-srow dsp-srow-stack">
           <div class="dsp-srow-text"><span class="dsp-stitle" data-i18n="s.row.action">任务完成后做什么</span><span class="dsp-sdesc" data-i18n="s.row.actionDesc">到点后执行这个动作。灰掉的选项在当前系统上不可用，原因写在选项下面。</span></div>
-          <div class="dsp-actctl"><div class="dsp-sel" role="combobox" aria-expanded="false" aria-label="任务完成后做什么" data-i18n-aria="s.row.action" tabindex="0"><span data-i18n="s.action.custom">执行脚本</span><span class="dsp-selcaret" aria-hidden="true"></span></div></div>
+          <div class="dsp-actctl"><div class="dsp-selwrap"><button class="dsp-sel" type="button" role="combobox" aria-expanded="false" aria-label="任务完成后做什么" data-i18n-aria="s.row.action" data-selbtn><span data-selval data-i18n="s.action.custom">执行脚本</span><span class="dsp-selcaret" aria-hidden="true"></span></button><div class="dsp-selmenu" role="listbox" aria-label="任务完成后做什么" hidden><button class="dsp-selitem" type="button" role="option" data-action="shutdown" aria-selected="false" data-i18n="s.action.shutdown">关机</button><button class="dsp-selitem" type="button" role="option" data-action="restart" aria-selected="false" data-i18n="s.action.restart">重启</button><button class="dsp-selitem" type="button" role="option" data-action="sleep" aria-selected="false" data-i18n="s.action.sleep">睡眠</button><button class="dsp-selitem" type="button" role="option" data-action="hibernate" aria-selected="false" data-i18n="s.action.hibernate">休眠</button><button class="dsp-selitem" type="button" role="option" data-action="lock" aria-selected="false" data-i18n="s.action.lock">锁屏</button><button class="dsp-selitem" type="button" role="option" data-action="signout" aria-selected="false" data-i18n="s.action.signout">注销</button><button class="dsp-selitem is-na" type="button" role="option" data-action="restart-dsh" aria-selected="false" aria-disabled="true" disabled data-i18n="s.action.restartDsh">重启 DSH</button><button class="dsp-selitem" type="button" role="option" data-action="custom" aria-selected="true" data-i18n="s.action.custom">执行脚本</button></div></div></div>
         </div>
         <div class="dsp-srow dsp-srow-stack dsp-libblock">
           <div class="dsp-libhead"><div class="dsp-libheadtext"><span class="dsp-stitle" data-i18n="s.script.title">自定义脚本</span><span class="dsp-sdesc" data-i18n="s.script.desc">选择的文件保存在插件数据目录，不写进配置。</span></div><span class="dsp-libup" data-i18n="s.script.upload">＋ 上传脚本</span></div>
@@ -1533,7 +1556,7 @@ transition:transform .24s cubic-bezier(.22,.61,.36,1),width .24s cubic-bezier(.2
               <span class="dsp-libname"><span class="dsp-libdot is-use" aria-hidden="true"></span><span class="dsp-libname-txt">night-batch</span></span>
               <span class="dsp-libmeta">py · 1.2 KB</span><span class="dsp-libused" data-i18n="s.script.used2">被 2 个配置使用</span><span class="dsp-libpill is-ok" data-i18n="s.script.confirmedShort">✓ 已确认</span><button class="dsp-libmore" type="button" aria-label="更多" aria-expanded="true">⋯</button>
             </div>
-            <div class="dsp-libmenu" role="menu"><button class="dsp-libmitem" type="button" role="menuitem" data-i18n="s.prof.rename">重命名</button><button class="dsp-libmitem is-danger" type="button" role="menuitem" data-i18n="s.prof.del">删除</button></div></div>
+            <div class="dsp-libmenu" role="menu" hidden><button class="dsp-libmitem" type="button" role="menuitem" data-i18n="s.prof.rename">重命名</button><button class="dsp-libmitem is-danger" type="button" role="menuitem" data-i18n="s.prof.del">删除</button></div></div>
             <div class="dsp-libwrap"><div class="dsp-librow" role="radio" aria-checked="false">
               <span class="dsp-libradio" aria-hidden="true"></span>
               <span class="dsp-libname"><span class="dsp-libdot is-ready" aria-hidden="true"></span><span class="dsp-libname-txt">cleanup</span></span>
@@ -1559,39 +1582,45 @@ transition:transform .24s cubic-bezier(.22,.61,.36,1),width .24s cubic-bezier(.2
         <div class="dsp-srow">
   <div class="dsp-srow-text"><span class="dsp-stitle" data-i18n="s.row.sessions">会话都停下来</span><span class="dsp-sdesc" data-i18n="s.row.sessionsDesc">底线条件，始终开启。</span></div><span class="dsp-sval" data-i18n="s.always">总是开启</span></div>
         <div class="dsp-srow">
-  <div class="dsp-srow-text"><span class="dsp-stitle" data-i18n="s.row.jobs">后台任务跑完</span><span class="dsp-sdesc" data-i18n="s.row.jobsDesc">有后台任务在跑时，先不下发关机指令。</span></div><span class="dsp-switch on" aria-hidden="true"><i></i></span></div>
+  <div class="dsp-srow-text"><span class="dsp-stitle" data-i18n="s.row.jobs">后台任务跑完</span><span class="dsp-sdesc" data-i18n="s.row.jobsDesc">有后台任务时先不执行。</span></div><span class="dsp-switch on" role="switch" tabindex="0" aria-checked="true"><i></i></span></div>
         <div class="dsp-srow">
-  <div class="dsp-srow-text"><span class="dsp-stitle" data-i18n="s.row.errors">有会话报错就跳过这一轮</span><span class="dsp-sdesc" data-i18n="s.row.errorsDesc">只认成功的任务，出过错的批次不关机。</span></div><span class="dsp-switch on" aria-hidden="true"><i></i></span></div>
+  <div class="dsp-srow-text"><span class="dsp-stitle" data-i18n="s.row.errors">有会话报错就跳过这一轮</span><span class="dsp-sdesc" data-i18n="s.row.errorsDesc">出过错的批次不执行。</span></div><span class="dsp-switch on" role="switch" tabindex="0" aria-checked="true"><i></i></span></div>
         <div class="dsp-srow">
-  <div class="dsp-srow-text"><span class="dsp-stitle" data-i18n="s.row.halt">熔断后仍执行</span><span class="dsp-sdesc" data-i18n="s.row.haltDesc">配额耗尽等原因停下后，仍然按上面的动作执行。</span></div><span class="dsp-switch on" aria-hidden="true"><i></i></span></div>
+  <div class="dsp-srow-text"><span class="dsp-stitle" data-i18n="s.row.halt">熔断后仍执行</span><span class="dsp-sdesc" data-i18n="s.row.haltDesc">配额耗尽等原因停下后，仍然按上面的动作执行；关掉则一直等着你处理。</span></div><span class="dsp-switch on" role="switch" tabindex="0" aria-checked="true"><i></i></span></div>
         <div class="dsp-srow">
-  <div class="dsp-srow-text"><span class="dsp-stitle" data-i18n="s.row.afk">AFK 自动回答</span><span class="dsp-sdesc" data-i18n="s.row.afkDesc">武装后 agent 若向你提问，自动代为回复。</span></div><span class="dsp-switch on" aria-hidden="true"><i></i></span></div>
+  <div class="dsp-srow-text"><span class="dsp-stitle" data-i18n="s.row.afk">AFK 自动回答</span><span class="dsp-sdesc" data-i18n="s.row.afkDesc">武装后 agent 若向你提问，自动代为回复：告知你处于 AFK、先完成已交代的任务、汇总报告并落盘，不碰未交代的分支。</span></div><span class="dsp-switch on" role="switch" tabindex="0" aria-checked="true"><i></i></span></div>
       </div>
     </div>
 
     <div class="dsp-tabpanel" data-pane="notify" hidden>
-      <div class="dsp-sgroup-box"><div class="dsp-sgroup"><span class="dsp-sgroup-title" data-i18n="s.notify.group">通知</span></div>
+      <div class="dsp-sgroup-box">
         <div class="dsp-srow">
-  <div class="dsp-srow-text"><span class="dsp-stitle" data-i18n="s.notify.master">状态变化通知</span><span class="dsp-sdesc" data-i18n="s.notify.masterDesc">进入倒计时、即将关机、首次阻断、阻断恢复时各一条。</span></div><span class="dsp-switch on" aria-hidden="true"><i></i></span></div>
+  <div class="dsp-srow-text"><span class="dsp-stitle" data-i18n="s.notify.master">状态变化通知</span><span class="dsp-sdesc" data-i18n="s.notify.masterDesc">进入倒计时、即将执行、首次阻断、阻断恢复时各一条；手动武装、解除、取消不提醒。</span></div><span class="dsp-switch on" role="switch" tabindex="0" aria-checked="true"><i></i></span></div>
         <div class="dsp-srow">
-  <div class="dsp-srow-text"><span class="dsp-stitle" data-i18n="s.notify.countdown">进入倒计时</span></div><span class="dsp-switch on" aria-hidden="true"><i></i></span></div>
+  <div class="dsp-srow-text"><span class="dsp-stitle" data-i18n="s.notify.countdown">进入倒计时</span></div><span class="dsp-switch on" role="switch" tabindex="0" aria-checked="true"><i></i></span></div>
         <div class="dsp-srow">
-  <div class="dsp-srow-text"><span class="dsp-stitle" data-i18n="s.notify.fired">即将关机</span></div><span class="dsp-switch on" aria-hidden="true"><i></i></span></div>
+  <div class="dsp-srow-text"><span class="dsp-stitle" data-i18n="s.notify.fired">即将执行</span></div><span class="dsp-switch on" role="switch" tabindex="0" aria-checked="true"><i></i></span></div>
         <div class="dsp-srow">
-  <div class="dsp-srow-text"><span class="dsp-stitle" data-i18n="s.notify.blocked">首次阻断</span></div><span class="dsp-switch on" aria-hidden="true"><i></i></span></div>
+  <div class="dsp-srow-text"><span class="dsp-stitle" data-i18n="s.notify.blocked">首次阻断</span></div><span class="dsp-switch on" role="switch" tabindex="0" aria-checked="true"><i></i></span></div>
         <div class="dsp-srow">
-  <div class="dsp-srow-text"><span class="dsp-stitle" data-i18n="s.notify.recovered">阻断恢复</span></div><span class="dsp-switch" aria-hidden="true"><i></i></span></div>
+  <div class="dsp-srow-text"><span class="dsp-stitle" data-i18n="s.notify.recovered">阻断恢复</span></div><span class="dsp-switch on" role="switch" tabindex="0" aria-checked="true"><i></i></span></div>
       </div>
     </div>
 
     <div class="dsp-tabpanel" data-pane="status" hidden>
-      <div class="dsp-sgroup-box"><div class="dsp-sgroup"><span class="dsp-sgroup-title" data-i18n="s.status.group">状态</span></div>
+      <div class="dsp-sgroup-box">
         <div class="dsp-srow">
-  <div class="dsp-srow-text"><span class="dsp-stitle" data-i18n="s.status.blocked">当前阻断</span></div><span class="dsp-sval" data-i18n="s.status.blockedV">外部服务暂不可用，插件会自动重试。</span></div>
-        <div class="dsp-srow">
-  <div class="dsp-srow-text"><span class="dsp-stitle" data-i18n="s.status.last">上次为什么没关机</span></div><span class="dsp-sval" data-i18n="s.status.lastV">还有 2 个后台任务在运行，暂不关机。</span></div>
-        <div class="dsp-srow">
-  <div class="dsp-srow-text"><span class="dsp-stitle" data-i18n="s.status.log">事件日志</span></div><span class="dsp-sval" data-i18n="s.status.logV">最近 4 条，完整记录在插件 data/events.log。</span></div>
+  <div class="dsp-srow-text"><span class="dsp-stitle" data-i18n="s.status.blocked">当前阻断</span><span class="dsp-sdesc" data-i18n="s.status.blockedDesc">没有阻断，条件满足就会正常倒计时。</span></div><span class="dsp-sval dsp-sval-dim" data-i18n="s.status.none">无</span></div>
+        <div class="dsp-srow dsp-srow-stack">
+  <div class="dsp-srow-text"><span class="dsp-stitle" data-i18n="s.status.skip">上次为什么没执行</span></div><span class="dsp-sval" data-i18n="s.status.skipV">有会话报错，这一轮按设定跳过</span></div>
+        <div class="dsp-srow dsp-srow-stack">
+  <div class="dsp-srow-text"><span class="dsp-stitle" data-i18n="s.status.log">事件日志</span><span class="dsp-sdesc" data-i18n="s.status.logDesc">最近 3 条，完整记录在插件 data/events.log。</span></div>
+          <div class="dsp-evlog">
+            <div class="dsp-ev"><span class="dsp-ev-time">20:39:12</span><span class="dsp-ev-text" data-i18n="s.status.ev1">武装 · 进入倒计时 120 秒</span></div>
+            <div class="dsp-ev"><span class="dsp-ev-time">20:41:12</span><span class="dsp-ev-text" data-i18n="s.status.ev2">动作已发出 · 执行脚本 night-batch</span></div>
+            <div class="dsp-ev"><span class="dsp-ev-time">20:41:13</span><span class="dsp-ev-text" data-i18n="s.status.ev3">脚本退出码 0 · 结束</span></div>
+          </div>
+        </div>
       </div>
     </div>
   </div>
@@ -1931,15 +1960,14 @@ transition:transform .24s cubic-bezier(.22,.61,.36,1),width .24s cubic-bezier(.2
       's.look.a': '极简',
       's.look.b': '雷达',
       's.look.c': '终端',
+      's.look.variant': '卡片样式',
       's.look.theme': '主题',
       's.theme.auto': '跟随',
       's.theme.dark': '深色',
       's.theme.light': '浅色',
       's.theme.claude': 'Claude Style',
       's.look.fold': '默认折叠',
-      's.look.foldDesc': '折叠后只保留标题和状态。',
       's.look.compact': '悬浮窗简洁模式',
-      's.look.compactDesc': '悬浮窗里隐去底部统计与事件，只留卡片。',
       's.look.lang': '语言',
       's.lang.auto': '跟随系统',
       's.lang.zh': '中文',
@@ -1948,6 +1976,18 @@ transition:transform .24s cubic-bezier(.22,.61,.36,1),width .24s cubic-bezier(.2
       's.watch.custom': '自定义配置',
       's.watch.customDesc': '正在使用自定义配置，默认配置暂时挂起。',
       's.prof.group': '配置',
+      's.prof.pick': '选择配置',
+      's.prof.current': '当前：自定义 3（120 秒）',
+      's.prof.c4': '配置 4',
+      's.sec.60': '60 秒',
+      's.status.none': '无',
+      's.status.blockedDesc': '没有阻断，条件满足就会正常倒计时。',
+      's.status.skip': '上次为什么没执行',
+      's.status.skipV': '有会话报错，这一轮按设定跳过',
+      's.status.logDesc': '最近 3 条，完整记录在插件 data/events.log。',
+      's.status.ev1': '武装 · 进入倒计时 120 秒',
+      's.status.ev2': '动作已发出 · 执行脚本 night-batch',
+      's.status.ev3': '脚本退出码 0 · 结束',
       's.prof.pick': '选择配置',
       's.prof.cur': '自定义 3（120 秒）',
       's.prof.default': '默认',
@@ -1961,30 +2001,24 @@ transition:transform .24s cubic-bezier(.22,.61,.36,1),width .24s cubic-bezier(.2
       's.row.sessionsDesc': '底线条件，始终开启。',
       's.always': '总是开启',
       's.row.jobs': '后台任务跑完',
-      's.row.jobsDesc': '有后台任务在跑时，先不下发关机指令。',
+      's.row.jobsDesc': '有后台任务时先不执行。',
       's.row.errors': '有会话报错就跳过这一轮',
-      's.row.errorsDesc': '只认成功的任务，出过错的批次不关机。',
+      's.row.errorsDesc': '出过错的批次不执行。',
       's.row.cd': '倒计时时长',
-      's.row.cdDesc': '关机前留出的取消时间，10–600 秒。',
+      's.row.cdDesc': '执行前的取消时间，10–600 秒。',
       's.cd.30': '30 秒',
       's.cd.60': '60 秒',
       's.cd.90': '90 秒',
       's.cd.120': '2 分钟',
       's.cd.300': '5 分钟',
-      's.notify.group': '通知',
       's.notify.master': '状态变化通知',
-      's.notify.masterDesc': '进入倒计时、即将关机、首次阻断、阻断恢复时各一条。',
+      's.notify.masterDesc': '进入倒计时、即将执行、首次阻断、阻断恢复时各一条；手动武装、解除、取消不提醒。',
       's.notify.countdown': '进入倒计时',
-      's.notify.fired': '即将关机',
+      's.notify.fired': '即将执行',
       's.notify.blocked': '首次阻断',
       's.notify.recovered': '阻断恢复',
-      's.status.group': '状态',
       's.status.blocked': '当前阻断',
-      's.status.blockedV': '外部服务暂不可用，插件会自动重试。',
-      's.status.last': '上次为什么没关机',
-      's.status.lastV': '还有 2 个后台任务在运行，暂不关机。',
       's.status.log': '事件日志',
-      's.status.logV': '最近 4 条，完整记录在插件 data/events.log。',
       's.prof.c2': '自定义 2',
       's.prof.c3': '自定义 3',
       's.prof.active': '当前',
@@ -1993,6 +2027,13 @@ transition:transform .24s cubic-bezier(.22,.61,.36,1),width .24s cubic-bezier(.2
       's.row.action': '任务完成后做什么',
       's.row.actionDesc': '到点后执行这个动作。灰掉的选项在当前系统上不可用，原因写在选项下面。',
       's.action.custom': '执行脚本',
+      's.action.shutdown': '关机',
+      's.action.restart': '重启',
+      's.action.sleep': '睡眠',
+      's.action.hibernate': '休眠',
+      's.action.lock': '锁屏',
+      's.action.signout': '注销',
+      's.action.restartDsh': '重启 DSH',
       's.script.title': '自定义脚本',
       's.script.desc': '选择的文件保存在插件数据目录，不写进配置。',
       's.script.upload': '＋ 上传脚本',
@@ -2006,9 +2047,9 @@ transition:transform .24s cubic-bezier(.22,.61,.36,1),width .24s cubic-bezier(.2
       's.script.withdraw': '撤销确认',
       's.script.more': '查看完整说明',
       's.row.halt': '熔断后仍执行',
-      's.row.haltDesc': '配额耗尽等原因停下后，仍然按上面的动作执行。',
+      's.row.haltDesc': '配额耗尽等原因停下后，仍然按上面的动作执行；关掉则一直等着你处理。',
       's.row.afk': 'AFK 自动回答',
-      's.row.afkDesc': '武装后 agent 若向你提问，自动代为回复。',
+      's.row.afkDesc': '武装后 agent 若向你提问，自动代为回复：告知你处于 AFK、先完成已交代的任务、汇总报告并落盘，不碰未交代的分支。',
     },
 
     en: {
@@ -2204,15 +2245,14 @@ transition:transform .24s cubic-bezier(.22,.61,.36,1),width .24s cubic-bezier(.2
       's.look.a': 'Minimal',
       's.look.b': 'Radar',
       's.look.c': 'Terminal',
+      's.look.variant': 'Card style',
       's.look.theme': 'Theme',
       's.theme.auto': 'Auto',
       's.theme.dark': 'Dark',
       's.theme.light': 'Light',
       's.theme.claude': 'Claude Style',
       's.look.fold': 'Collapsed by default',
-      's.look.foldDesc': 'Keeps just the title and the state.',
       's.look.compact': 'Compact floating window',
-      's.look.compactDesc': 'Hides the stats and the event log, leaving the card alone.',
       's.look.lang': 'Language',
       's.lang.auto': 'Auto',
       's.lang.zh': '中文',
@@ -2221,6 +2261,18 @@ transition:transform .24s cubic-bezier(.22,.61,.36,1),width .24s cubic-bezier(.2
       's.watch.custom': 'Custom profile',
       's.watch.customDesc': 'A custom profile is in use; Default is on hold.',
       's.prof.group': 'Profiles',
+      's.prof.pick': 'Active profile',
+      's.prof.current': 'Now: Custom 3 (120s)',
+      's.prof.c4': 'Profile 4',
+      's.sec.60': '60s',
+      's.status.none': 'None',
+      's.status.blockedDesc': 'Nothing is blocking it; it counts down as soon as the gates pass.',
+      's.status.skip': 'Why the last run was skipped',
+      's.status.skipV': 'A session had an error, so this batch was skipped',
+      's.status.logDesc': 'The last 3 lines; the full log is in the plugin’s data/events.log.',
+      's.status.ev1': 'Armed · countdown 120s',
+      's.status.ev2': 'Action sent · ran the script night-batch',
+      's.status.ev3': 'Script exited 0 · done',
       's.prof.pick': 'Active profile',
       's.prof.cur': 'Custom 3 (120 s)',
       's.prof.default': 'Default',
@@ -2234,30 +2286,24 @@ transition:transform .24s cubic-bezier(.22,.61,.36,1),width .24s cubic-bezier(.2
       's.row.sessionsDesc': 'The floor condition; always on.',
       's.always': 'Always on',
       's.row.jobs': 'Background jobs finished',
-      's.row.jobsDesc': 'While a job is running, no shutdown command goes out.',
+      's.row.jobsDesc': 'Holds off while background jobs are still running.',
       's.row.errors': 'Skip a round with errors',
-      's.row.errorsDesc': 'Only clean batches count; a batch that errored never shuts down.',
+      's.row.errorsDesc': 'A batch that had an error is skipped.',
       's.row.cd': 'Countdown',
-      's.row.cdDesc': 'Time to cancel before shutdown, 10–600 s.',
+      's.row.cdDesc': 'Time to cancel before it runs, 10–600 s.',
       's.cd.30': '30 s',
       's.cd.60': '60 s',
       's.cd.90': '90 s',
       's.cd.120': '2 min',
       's.cd.300': '5 min',
-      's.notify.group': 'Alerts',
       's.notify.master': 'Tell me when the state changes',
-      's.notify.masterDesc': 'One notice each for the countdown, the last call, the first block and the recovery.',
+      's.notify.masterDesc': 'One notice each for the countdown, the run, the first block and the recovery; manual arm, disarm and cancel stay silent.',
       's.notify.countdown': 'Countdown starts',
-      's.notify.fired': 'About to shut down',
+      's.notify.fired': 'Running it',
       's.notify.blocked': 'First block',
       's.notify.recovered': 'Block cleared',
-      's.status.group': 'Status',
       's.status.blocked': 'Blocked right now',
-      's.status.blockedV': 'The external service is down; the plugin retries on its own.',
-      's.status.last': 'Why it did not shut down',
-      's.status.lastV': 'Two background jobs were still running, so it held off.',
       's.status.log': 'Event log',
-      's.status.logV': 'The last four lines; the full log is in the plugin’s data/events.log.',
       's.prof.c2': 'Custom 2',
       's.prof.c3': 'Custom 3',
       's.prof.active': 'Active',
@@ -2266,6 +2312,13 @@ transition:transform .24s cubic-bezier(.22,.61,.36,1),width .24s cubic-bezier(.2
       's.row.action': 'What happens when the work is done',
       's.row.actionDesc': 'Runs this when the countdown ends. Greyed options are unavailable on this system, and the reason sits under the picker.',
       's.action.custom': 'Run a script',
+      's.action.shutdown': 'Shut down',
+      's.action.restart': 'Restart',
+      's.action.sleep': 'Sleep',
+      's.action.hibernate': 'Hibernate',
+      's.action.lock': 'Lock',
+      's.action.signout': 'Sign out',
+      's.action.restartDsh': 'Restart DSH',
       's.script.title': 'Custom scripts',
       's.script.desc': 'Uploaded files live in the plugin data directory, never in the config.',
       's.script.upload': '+ Upload script',
@@ -2279,9 +2332,9 @@ transition:transform .24s cubic-bezier(.22,.61,.36,1),width .24s cubic-bezier(.2
       's.script.withdraw': 'Withdraw',
       's.script.more': 'Read the full note',
       's.row.halt': 'Still run after a halt',
-      's.row.haltDesc': 'After a halt (quota, and so on) still run the action above.',
+      's.row.haltDesc': 'After a halt (quota, and so on) still run the action above; turn it off and it waits for you instead.',
       's.row.afk': 'AFK auto-reply',
-      's.row.afkDesc': 'While armed, answers for you when the agent asks something.',
+      's.row.afkDesc': 'While armed, answers the agent for you: says you are AFK, finishes what was already asked, then reports back. It never picks an option for you.',
     },
 
     ru: {
@@ -2477,15 +2530,14 @@ transition:transform .24s cubic-bezier(.22,.61,.36,1),width .24s cubic-bezier(.2
       's.look.a': 'Минимал',
       's.look.b': 'Радар',
       's.look.c': 'Терминал',
+      's.look.variant': 'Вид карточки',
       's.look.theme': 'Тема',
       's.theme.auto': 'Как в системе',
       's.theme.dark': 'Тёмная',
       's.theme.light': 'Светлая',
       's.theme.claude': 'Claude Style',
       's.look.fold': 'Свёрнуто по умолчанию',
-      's.look.foldDesc': 'Остаются только заголовок и состояние.',
       's.look.compact': 'Компактное плавающее окно',
-      's.look.compactDesc': 'Прячет статистику и журнал событий, оставляя карточку.',
       's.look.lang': 'Язык',
       's.lang.auto': 'Как в системе',
       's.lang.zh': '中文',
@@ -2494,6 +2546,18 @@ transition:transform .24s cubic-bezier(.22,.61,.36,1),width .24s cubic-bezier(.2
       's.watch.custom': 'Своя конфигурация',
       's.watch.customDesc': 'Сейчас работает своя конфигурация, конфигурация по умолчанию отложена.',
       's.prof.group': 'Конфигурации',
+      's.prof.pick': 'Выбор конфигурации',
+      's.prof.current': 'Сейчас: Своя 3 (120 с)',
+      's.prof.c4': 'Конфигурация 4',
+      's.sec.60': '60 с',
+      's.status.none': 'Нет',
+      's.status.blockedDesc': 'Блокировки нет: как только условия выполнены, идёт отсчёт.',
+      's.status.skip': 'Почему пропущен прошлый запуск',
+      's.status.skipV': 'В сессии была ошибка, партия пропущена',
+      's.status.logDesc': 'Последние 3 строки; полный журнал — в data/events.log плагина.',
+      's.status.ev1': 'Взведено · отсчёт 120 с',
+      's.status.ev2': 'Действие отправлено · скрипт night-batch',
+      's.status.ev3': 'Скрипт завершился с кодом 0',
       's.prof.pick': 'Активная конфигурация',
       's.prof.cur': 'Своя 3 (120 с)',
       's.prof.default': 'По умолчанию',
@@ -2507,30 +2571,24 @@ transition:transform .24s cubic-bezier(.22,.61,.36,1),width .24s cubic-bezier(.2
       's.row.sessionsDesc': 'Базовое условие, включено всегда.',
       's.always': 'Всегда включено',
       's.row.jobs': 'Фоновые задачи завершились',
-      's.row.jobsDesc': 'Пока задача идёт, команда на выключение не отправляется.',
+      's.row.jobsDesc': 'Пока идут фоновые задачи, действие не выполняется.',
       's.row.errors': 'Пропустить раунд с ошибкой',
-      's.row.errorsDesc': 'Считаются только чистые партии; партия с ошибкой не выключает.',
+      's.row.errorsDesc': 'Партия с ошибкой пропускается.',
       's.row.cd': 'Длительность отсчёта',
-      's.row.cdDesc': 'Время на отмену перед выключением, 10–600 с.',
+      's.row.cdDesc': 'Время на отмену перед выполнением, 10–600 с.',
       's.cd.30': '30 с',
       's.cd.60': '60 с',
       's.cd.90': '90 с',
       's.cd.120': '2 мин',
       's.cd.300': '5 мин',
-      's.notify.group': 'Уведомления',
       's.notify.master': 'Сообщать об изменении состояния',
-      's.notify.masterDesc': 'По одному сообщению на старт отсчёта, последний вызов, первую блокировку и восстановление.',
+      's.notify.masterDesc': 'По одному сообщению на старт отсчёта, выполнение, первую блокировку и восстановление; ручные действия молчат.',
       's.notify.countdown': 'Начался отсчёт',
-      's.notify.fired': 'Скоро выключение',
+      's.notify.fired': 'Выполняется',
       's.notify.blocked': 'Первая блокировка',
       's.notify.recovered': 'Блокировка снята',
-      's.status.group': 'Состояние',
       's.status.blocked': 'Блокировка сейчас',
-      's.status.blockedV': 'Внешний сервис недоступен, плагин повторяет попытки сам.',
-      's.status.last': 'Почему не выключилось',
-      's.status.lastV': 'Ещё работали две фоновые задачи, поэтому выключение отложено.',
       's.status.log': 'Журнал событий',
-      's.status.logV': 'Последние четыре строки; полный журнал — в data/events.log плагина.',
       's.prof.c2': 'Своя 2',
       's.prof.c3': 'Своя 3',
       's.prof.active': 'Текущий',
@@ -2539,6 +2597,13 @@ transition:transform .24s cubic-bezier(.22,.61,.36,1),width .24s cubic-bezier(.2
       's.row.action': 'Что делать по завершении',
       's.row.actionDesc': 'Действие выполняется, когда отсчёт закончится. Серые пункты на этой системе недоступны, причина указана под списком.',
       's.action.custom': 'Запустить скрипт',
+      's.action.shutdown': 'Выключение',
+      's.action.restart': 'Перезагрузка',
+      's.action.sleep': 'Сон',
+      's.action.hibernate': 'Гибернация',
+      's.action.lock': 'Блокировка',
+      's.action.signout': 'Выход из сеанса',
+      's.action.restartDsh': 'Перезапуск DSH',
       's.script.title': 'Свои скрипты',
       's.script.desc': 'Загруженные файлы лежат в каталоге данных плагина и не попадают в конфиг.',
       's.script.upload': '+ Загрузить скрипт',
@@ -2552,9 +2617,9 @@ transition:transform .24s cubic-bezier(.22,.61,.36,1),width .24s cubic-bezier(.2
       's.script.withdraw': 'Отозвать',
       's.script.more': 'Полное описание',
       's.row.halt': 'Выполнять после остановки',
-      's.row.haltDesc': 'После остановки (например, из-за квоты) всё равно выполнять действие выше.',
+      's.row.haltDesc': 'После остановки (например, из-за квоты) всё равно выполнять действие выше; если выключить — плагин будет ждать вас.',
       's.row.afk': 'Автоответ в AFK',
-      's.row.afkDesc': 'Пока режим включён, отвечает за вас, когда агент задаёт вопрос.',
+      's.row.afkDesc': 'Пока режим включён, отвечает агенту за вас: сообщает об AFK, доводит уже порученное и присылает отчёт. Варианты за вас не выбирает.',
     },
   }
 
@@ -3562,12 +3627,83 @@ transition:transform .24s cubic-bezier(.22,.61,.36,1),width .24s cubic-bezier(.2
       })
     }
 
+    // The settings mock is a picture you can poke: switches flip, the action
+    // dropdown opens, the script rows swap their ⋯ menu and the profile list
+    // moves its radio. Nothing here talks to a host — it is a tour, not a form.
+    function wireSettingsControls() {
+      var wrap = document.querySelector('.setWrap')
+      if (!wrap) return
+      function closeMenus(except) {
+        var menus = wrap.querySelectorAll('.dsp-selmenu, .dsp-libmenu')
+        for (var i = 0; i < menus.length; i++) if (menus[i] !== except) menus[i].hidden = true
+        var mores = wrap.querySelectorAll('.dsp-libmore')
+        for (var j = 0; j < mores.length; j++) if (!except || !except.contains(mores[j])) mores[j].setAttribute('aria-expanded', 'false')
+        var sels = wrap.querySelectorAll('[data-selbtn]')
+        for (var k = 0; k < sels.length; k++) if (!except || !except.contains(sels[k])) sels[k].setAttribute('aria-expanded', 'false')
+      }
+      wrap.addEventListener('click', function (e) {
+        var sw = e.target.closest('.dsp-switch')
+        if (sw) {
+          var on = !sw.classList.contains('on')
+          sw.classList.toggle('on', on)
+          sw.setAttribute('aria-checked', on ? 'true' : 'false')
+          return
+        }
+        var more = e.target.closest('.dsp-libmore')
+        if (more) {
+          var box = more.closest('.dsp-libwrap')
+          var menu = box ? box.querySelector('.dsp-libmenu') : null
+          var wasOpen = menu && !menu.hidden
+          closeMenus(null)
+          if (menu && !wasOpen) { menu.hidden = false; more.setAttribute('aria-expanded', 'true') }
+          return
+        }
+        var prof = e.target.closest('.dsp-srow-prof')
+        if (prof && !e.target.closest('.dsp-slink')) {
+          var rows = wrap.querySelectorAll('.dsp-srow-prof')
+          var badge = wrap.querySelector('.dsp-badge')
+          for (var i = 0; i < rows.length; i++) {
+            var on = rows[i] === prof
+            rows[i].classList.toggle('is-active', on)
+            rows[i].setAttribute('aria-checked', on ? 'true' : 'false')
+            if (on && badge) { var txt = rows[i].querySelector('.dsp-srow-text'); if (txt && badge.parentNode !== txt) txt.appendChild(badge) }
+          }
+          return
+        }
+        var selBtn = e.target.closest('[data-selbtn]')
+        if (selBtn) {
+          var menu2 = selBtn.parentNode.querySelector('.dsp-selmenu')
+          var open = menu2 && menu2.hidden
+          closeMenus(menu2)
+          if (menu2) menu2.hidden = !open
+          selBtn.setAttribute('aria-expanded', open ? 'true' : 'false')
+          return
+        }
+        var item = e.target.closest('.dsp-selitem')
+        if (item && !item.disabled) {
+          var list = item.parentNode
+          var items = list.querySelectorAll('.dsp-selitem')
+          for (var m = 0; m < items.length; m++) items[m].setAttribute('aria-selected', items[m] === item ? 'true' : 'false')
+          var btn = list.parentNode.querySelector('[data-selbtn]')
+          var val = btn ? btn.querySelector('[data-selval]') : null
+          if (val) { val.textContent = item.textContent; val.removeAttribute('data-i18n') }
+          list.hidden = true
+          if (btn) btn.setAttribute('aria-expanded', 'false')
+        }
+      })
+      document.addEventListener('click', function (e) {
+        if (e.target.closest('.setWrap')) return
+        closeMenus(null)
+      })
+    }
+
     renderVariants()
     renderStates()
     fillSidebars()
     syncThumbs()
     wireSettingsTabs()
     wireMockSegs()
+    wireSettingsControls()
 
     state = { variant: 'A', view: 'off', blocked: null, jobs: 0, agent: 0, agentTotal: 0, sec: 0, phase: 'idle', btnHint: false }
     paint()
