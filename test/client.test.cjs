@@ -690,10 +690,9 @@ void (async () => {
   assert.deepStrictEqual(missing, [], 'missing settings labels; got: ' + text.slice(0, 300))
   assert.ok(!text.includes('终端里的 6 个小块'), 'LED legend hidden while variant != C')
 
-  // --- custom-profile rows follow customEnabled in both directions -----------
-  // The settings tree is a plain element tree here, so presence checks walk the
-  // nodes instead of relying on text: the option value and the file input are
-  // the behaviour, while the labels are copy that may change.
+  // --- the script library follows the chosen action, not customEnabled ------
+  // Presence is checked by walking the settings tree: the option values, the
+  // file input and the library block are the behaviour; labels are copy.
   function walkNodes(node, visit) {
     if (node == null || node === false) return
     if (Array.isArray(node)) { for (const child of node) walkNodes(child, visit); return }
@@ -709,50 +708,111 @@ void (async () => {
     const options = []
     let fileInputs = 0
     let ackRows = 0
+    let libBlocks = 0
+    let libRows = 0
+    let libLists = 0
     walkNodes(tree, (n) => {
+      const cls = n.props && typeof n.props.className === 'string' ? n.props.className.split(/\s+/) : []
       if (n.type === 'option') options.push(n)
       if (n.type === 'input' && n.props && n.props.type === 'file') fileInputs += 1
-      if (typeof n.props?.className === 'string' && n.props.className.includes('dsp-ackrow')) ackRows += 1
+      if (cls.includes('dsp-ackrow')) ackRows += 1
+      if (cls.includes('dsp-libblock')) libBlocks += 1
+      if (cls.includes('dsp-librow')) libRows += 1
+      if (cls.includes('dsp-lib') || cls.includes('dsp-libempty')) libLists += 1
     })
-    return { options, fileInputs, ackRows }
+    return { options, fileInputs, ackRows, libBlocks, libRows, libLists }
   }
-  state.profiles = [{ id: 'default', label: '默认配置', countdownSec: 60, action: 'shutdown' }]
-  state.activeProfileId = 'default'
+  const setAction = async (enabled, action) => {
+    state.customEnabled = enabled
+    state.profiles = [{ id: 'default', label: '默认配置', countdownSec: 60, action }]
+    state.activeProfileId = 'default'
+    await repaint()
+    return settingsParts(settingsTree())
+  }
+  state.actions = { shutdown: { available: true }, custom: { available: true } }
 
-  state.customEnabled = false
-  await repaint()
+  // Off + a non-custom action: neither the block nor the picker offers scripts.
   {
-    const parts = settingsParts(settingsTree())
+    const parts = await setAction(false, 'shutdown')
     assert.ok(!parts.options.some((o) => o.props.value === 'custom'),
       'the picker has no custom option while custom profiles are off')
-    assert.strictEqual(parts.fileInputs, 0, 'the script row is not rendered while custom profiles are off')
-    assert.strictEqual(parts.ackRows, 0, 'the script confirmation is not rendered while custom profiles are off')
-  }
-
-  state.customEnabled = true
-  await repaint()
-  {
-    const parts = settingsParts(settingsTree())
-    assert.ok(parts.options.some((o) => o.props.value === 'custom'),
-      'the picker offers custom once custom profiles are on')
-    assert.strictEqual(parts.fileInputs, 1, 'the script row is rendered once custom profiles are on')
-  }
-
-  // Boundary: the feature was turned off while the active profile still stores
-  // action=custom. The picker must keep a disabled placeholder, not silently
-  // rewrite the stored choice to shutdown.
-  state.customEnabled = false
-  state.profiles = [{ id: 'default', label: '默认配置', countdownSec: 60, action: 'custom' }]
-  await repaint()
-  {
-    const parts = settingsParts(settingsTree())
-    const hidden = parts.options[0]
-    assert.ok(hidden && hidden.props.value === 'custom' && hidden.props.disabled === true,
-      'a stored custom action keeps a disabled placeholder option')
-    assert.strictEqual(flat(hidden, []).join(''), clientText.zh['action.custom.off'],
-      'the placeholder explains why custom is unavailable')
+    assert.strictEqual(parts.libBlocks, 0, 'the script block is absent while the action is shutdown')
+    assert.strictEqual(parts.fileInputs, 0, 'the upload input is absent while the action is shutdown')
+    assert.strictEqual(parts.ackRows, 0, 'the confirmation row is absent while the action is shutdown')
   }
   calls.push('custom-hidden-without-profiles-ok')
+
+  // The block is owned by the action, not by the feature flag: a custom action
+  // still shows the library while custom profiles are off, and switching away
+  // hides it again.
+  {
+    const on = await setAction(false, 'custom')
+    assert.strictEqual(on.libBlocks, 1, 'a custom action shows the script block even with profiles off')
+    assert.strictEqual(on.fileInputs, 1, 'the upload input follows the custom action')
+    assert.strictEqual(on.libLists, 1, 'the library list follows the custom action')
+    const off = await setAction(false, 'shutdown')
+    assert.strictEqual(off.libBlocks, 0, 'switching to shutdown hides the script block')
+    assert.strictEqual(off.fileInputs, 0, 'switching to shutdown hides the upload input')
+    assert.strictEqual(off.libLists, 0, 'switching to shutdown hides the library list')
+  }
+  calls.push('script-block-follows-action-ok')
+
+  // Unavailable actions disappear; 'unknown' stays selectable.
+  {
+    const base = await setAction(true, 'shutdown')
+    state.actions = { ...state.actions, sleep: { available: false, reason: 'unsupported-on-platform' } }
+    await repaint()
+    const hidden = settingsParts(settingsTree())
+    assert.strictEqual(hidden.options.length, base.options.length - 1,
+      'an unavailable action is not rendered at all')
+    const sleepLabel = clientText.zh['action.sleep']
+    assert.ok(!hidden.options.some((o) => flat(o, []).join('') === sleepLabel),
+      'the unavailable action label is gone from the menu')
+    state.actions = { ...state.actions, sleep: { available: 'unknown', reason: null } }
+    await repaint()
+    const unknown = settingsParts(settingsTree())
+    const unknownOpt = unknown.options.find((o) => o.props.value === 'sleep')
+    assert.ok(unknownOpt && !unknownOpt.props.disabled,
+      'an unknown action stays in the menu and stays selectable')
+  }
+  calls.push('unavailable-actions-hidden-ok')
+
+  // A stored value the menu cannot show keeps one disabled placeholder, so the
+  // select does not silently rewrite it.
+  {
+    state.actions = { ...state.actions, sleep: { available: false, reason: 'unsupported-on-platform' } }
+    const parts = await setAction(true, 'sleep')
+    const first = parts.options[0]
+    assert.ok(first && first.props.value === 'sleep' && first.props.disabled === true,
+      'an unavailable stored action keeps a disabled placeholder')
+    assert.strictEqual(flat(first, []).join(''), clientText.zh['action.unavailable'],
+      'the placeholder says the action is unavailable')
+    const offParts = await setAction(false, 'custom')
+    const customFirst = offParts.options[0]
+    assert.ok(customFirst && customFirst.props.value === 'custom' && customFirst.props.disabled === true,
+      'a stored custom action keeps a disabled placeholder while profiles are off')
+    assert.strictEqual(flat(customFirst, []).join(''), clientText.zh['action.custom.off'],
+      'that placeholder explains why custom is unavailable')
+  }
+  calls.push('placeholder-when-selected-unavailable-ok')
+
+  // The description is a straight sentence in every language, with no leftover
+  // "greyed out" copy from the old disabled-option design.
+  {
+    const forbidden = ['灰', '灰色', 'greyed', 'grayed', 'сер']
+    for (const lang of ['zh', 'en', 'ru']) {
+      const actual = clientText[lang]['set.action.desc']
+      assert.strictEqual(actual, clientText[lang]['set.action.desc'], 'the description is read from the bundle')
+      assert.ok(typeof actual === 'string' && actual.length > 0, 'the description exists in ' + lang)
+      for (const word of forbidden) {
+        assert.ok(!actual.toLowerCase().includes(word.toLowerCase()),
+          'the description must not mention disabled styling in ' + lang)
+      }
+    }
+  }
+  calls.push('action-desc-copy-ok')
+  state.actions = { shutdown: { available: true }, custom: { available: true } }
+  await setAction(true, 'custom')
 
   // Consent lives in the shared library row: an unconfirmed entry shows a gate
   // button, the dialog sends `{ ackScript: { scriptId } }`, and withdrawing is
@@ -1338,8 +1398,9 @@ void (async () => {
     }
   }
 
-  // 12f. The ack gate is selectable: a custom action waiting for confirmation
-  // stays enabled in the picker and the note explains what is still missing.
+  // 12f. Unavailable actions are not listed: an unacknowledged custom action
+  // collapses to one disabled placeholder when it is the stored value, and the
+  // picker no longer carries a per-action reason note.
   {
     state.customEnabled = true
     state.activeProfileId = 'default'
@@ -1365,12 +1426,12 @@ void (async () => {
       if (n.props && n.props.value === 'custom' && n.type === 'option') option = n
       if (n.props && n.props.className === 'dsp-sreason') reason = n
     })
-    assert.ok(option, 'the custom option is rendered: ' + JSON.stringify(opts.map((o) => o.props)))
-    assert.strictEqual(option.props.disabled, false, 'a pending acknowledgement stays selectable')
-    assert.ok(reason, 'the picker explains the pending reason')
-    assert.strictEqual(flat(reason, []).join(''), clientText.zh['action.reason.script-not-acknowledged'],
-      'the note names the acknowledgement, not a generic refusal')
-    calls.push('action-note-pending-ok')
+    assert.ok(option, 'the stored custom value keeps a placeholder: ' + JSON.stringify(opts.map((o) => o.props)))
+    assert.strictEqual(option.props.disabled, true, 'the placeholder cannot be submitted')
+    assert.strictEqual(flat(option, []).join(''), clientText.zh['action.unavailable'],
+      'the placeholder says the action is unavailable')
+    assert.strictEqual(reason, null, 'an unavailable action has no inline reason note')
+    calls.push('action-pending-placeholder-ok')
   }
 
   // 12g. "解除" on a blocked card is one request: /unblock. Chaining /disarm +
