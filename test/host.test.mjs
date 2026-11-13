@@ -1512,8 +1512,9 @@ assert.strictEqual(routes.size, 0, 'disposer removes HTTP routes')
   await postState('/disarm')
   calls.push('parked-only-halted-ok')
 
-  // 46. Four writers clear the park; four unrelated settings must not. Each
-  // clear is its own scenario so a single broken path cannot hide behind another.
+  // 46. Three writers clear the park: arming, the haltExecute branch, and an
+  // explicit cancel. Four unrelated settings must not. A new session starting is
+  // no longer one of them: only a *waiting* block self-heals on new activity.
   const halt = async () => {
     errorHandler({ agent: rootAgent, error: { code: 'QUOTA' } })
     await flush()
@@ -1529,11 +1530,7 @@ assert.strictEqual(routes.size, 0, 'disposer removes HTTP routes')
   await halt()
   await postState('/disarm')
   assert.strictEqual(readCfg().parked, null, 'disarming clears the park')
-  // success turn (new activity)
-  await halt()
-  statusHandler({ agent: rootAgent, status: 'running' })
-  await flush()
-  assert.strictEqual(readCfg().parked, null, 'a successful turn clears the park')
+  // a new session must not clear a halt; that writer is gone on purpose (d74e3b6).
   // shutdownOnHalt fires
   await postState('/config', { updateProfile: { id: 'c1', patch: { onlyOnSuccess: true, afkAutoAnswer: false, shutdownOnHalt: true } } })
   await postState('/arm')
@@ -1572,8 +1569,10 @@ assert.strictEqual(routes.size, 0, 'disposer removes HTTP routes')
   calls.push('parked-clear-ok')
 
   // 47. halted + shutdownOnHalt must actually reach the countdown and clear the
-  // block; the parent gate stays on, so the halted branch must skip the errored
-  // gate for this batch without erasing the error set used by later batches.
+  // block even though the halt now survives ordinary activity: the haltExecute
+  // branch is the one place allowed to clear it. The parent gate stays on, so the
+  // halted branch must skip the errored gate for this batch without erasing the
+  // error set used by later batches.
   await postState('/config', { updateProfile: { id: 'c1', patch: { onlyOnSuccess: true, afkAutoAnswer: false, shutdownOnHalt: true, action: 'shutdown' } } })
   await postState('/arm')
   await halt()
@@ -1587,7 +1586,7 @@ assert.strictEqual(routes.size, 0, 'disposer removes HTTP routes')
   assert.strictEqual(spawns.length, n, 'the countdown itself sends nothing')
   await postState('/cancel')
   await postState('/disarm')
-  calls.push('halt-fires-ok')
+  calls.push('halt-executes-when-armed-ok')
 
   // 48. The mother switch is a hard gate: with onlyOnSuccess off, the effective
   // value is forced off and a halt stays parked, but the stored user choice must
@@ -1605,6 +1604,79 @@ assert.strictEqual(routes.size, 0, 'disposer removes HTTP routes')
   assert.strictEqual(readCfg().profiles.find((p) => p.id === 'c1').shutdownOnHalt, true, 'the stored choice is untouched')
   await postState('/disarm')
   calls.push('halt-blocked-when-mother-off-ok')
+
+  // 48b. A halted block is a decision, not a failed provider call. Only a
+  // waiting block may self-heal when a session starts; the unarmed tryArm() must
+  // also stay side-effect free (no skip line, no parked write).
+  await postState('/disarm')
+  await postState('/config', { updateProfile: { id: 'c1', patch: { onlyOnSuccess: true, afkAutoAnswer: true, shutdownOnHalt: true, action: 'shutdown' } } })
+  await postState('/config', { activeProfileId: 'c1' })
+  await halt()
+  await flush()
+  st = await stateNow()
+  assert.strictEqual(st.blockedLevel, 'halted', 'precondition: a halt is parked')
+  assert.strictEqual(st.armed, false, 'precondition: the mode is off')
+  const parkedHalt = readCfg().parked
+  assert.strictEqual(parkedHalt.code, 'QUOTA', 'precondition: the halt is on disk')
+  n = spawns.length
+  const skipBefore = st.lastSkip
+  statusHandler({ agent: rootAgent, status: 'running' })
+  await flush()
+  st = await stateNow()
+  assert.strictEqual(st.blockedLevel, 'halted', 'a new session does not clear a halt')
+  assert.strictEqual(st.state, 'idle', 'nothing arms itself while the mode is off')
+  assert.strictEqual(st.armed, false, 'the mode stays off')
+  assert.strictEqual(spawns.length, n, 'no command is sent')
+  assert.deepStrictEqual(readCfg().parked, parkedHalt, 'the parked halt is untouched on disk')
+  statusHandler({ agent: rootAgent, status: 'idle' })
+  await flush()
+  st = await stateNow()
+  assert.strictEqual(st.state, 'idle', 'an idle event does not arm an unarmed guard')
+  assert.strictEqual(st.armed, false, 'and does not flip the switch')
+  assert.deepStrictEqual(st.lastSkip, skipBefore, 'an idle event on an off guard leaves no skip line')
+  assert.deepStrictEqual(readCfg().parked, parkedHalt, 'an idle event on an off guard leaves the park alone')
+  assert.strictEqual(spawns.length, n, 'still nothing is sent')
+  calls.push('halt-survives-new-session-ok')
+
+  // 48c. A waiting block still heals. The host-refused-timer path leaves
+  // retryAt=0/retryTimer=null, so the next running event is its only recovery;
+  // the scheduled-timer path clears it without another retryRecovered line.
+  await postState('/disarm')
+  await postState('/arm')
+  await postState('/disarm')
+  const realRetrySetTimeout = ctx.setTimeout
+  ctx.setTimeout = () => { throw new Error('no timer') }
+  try {
+    errorHandler({ agent: rootAgent, error: { code: 'RATE_LIMIT' } })
+    await flush()
+  } finally {
+    ctx.setTimeout = realRetrySetTimeout
+  }
+  st = await stateNow()
+  assert.strictEqual(st.blockedLevel, 'waiting', 'precondition: a waiting block exists')
+  assert.strictEqual(st.retryAt, 0, 'a refused timer leaves no retry deadline')
+  assert.strictEqual(readCfg().parked, null, 'a waiting block is never parked')
+  const recoveredBefore = (await eventsNow()).filter((e) => e.key === 'log.retryRecovered').length
+  n = spawns.length
+  statusHandler({ agent: rootAgent, status: 'running' })
+  await flush()
+  st = await stateNow()
+  assert.strictEqual(st.blockedLevel, null, 'a waiting block self-heals on new activity')
+  assert.strictEqual(spawns.length, n, 'healing a waiting block sends nothing')
+  const recoveredAfter = (await eventsNow()).filter((e) => e.key === 'log.retryRecovered').length
+  assert.strictEqual(recoveredAfter - recoveredBefore, 1, 'the heal is logged once')
+  // The timed path also clears the wait, without a second recovery line.
+  errorHandler({ agent: rootAgent, error: { code: 'RATE_LIMIT' } })
+  await flush()
+  assert.strictEqual((await stateNow()).blockedLevel, 'waiting', 'precondition: a timed wait')
+  const retryTimer = [...timers.entries()].pop()
+  timers.delete(retryTimer[0])
+  retryTimer[1]()
+  await flush()
+  assert.strictEqual((await stateNow()).blockedLevel, null, 'the retry timer clears the wait')
+  assert.strictEqual((await eventsNow()).filter((e) => e.key === 'log.retryRecovered').length,
+    recoveredAfter, 'the timer path does not add another recovery line')
+  calls.push('waiting-still-heals-ok')
 
   // 49. Custom-profile-only actions vanish while custom profiles are off: not
   // just the picker (the client hides those rows) but the host map itself, so a
