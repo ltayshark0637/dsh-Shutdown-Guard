@@ -17,7 +17,19 @@
 
 ## 安装
 
-已发布到 npm，推荐：
+**推荐：本地目录安装。** 插件的配置、已上传的脚本、事件日志都写在插件目录里的 `data/`；只有让 DSH 指向你自己的目录，升级才不会动它。
+
+```bash
+git clone https://github.com/ltayshark0637/dsh-Shutdown-Guard
+```
+
+克隆到任意位置后：DSH 设置 → 插件 → 添加 → 填**该目录的绝对路径** → 安装 → 完整退出 DSH 再打开（刷新页面不生效）。
+
+升级就在该目录里 `git pull`，然后完整退出 DSH 重开。**`data/` 不受影响** —— 配置、已上传的脚本、事件日志都还在。
+
+> **用 npm / GitHub 方式装也可以，但升级前请先备份 `data/`**：这两种方式装的是由包管理器管理的副本，升级会整个替换插件目录，里面的配置、已上传的脚本、事件日志可能一起丢失。想省掉这一步，就用上面的本地目录安装。
+
+需要走 registry 通道时（网络受限优先用 npm 那条，它走 registry；GitHub 那条本质是 `pnpm add github:...`，需要 clone）：
 
 ```bash
 dsh plugin --profile web add dsh-shutdown-guard
@@ -35,9 +47,7 @@ dsh plugin --profile web add dsh-shutdown-guard@1.6.2
 dsh plugin --profile web add github:ltayshark0637/dsh-Shutdown-Guard
 ```
 
-装到 DSH 的插件目录，装完必须完整退出 DSH 再打开（刷新页面不生效）。
-
-> 网络受限时优先用 npm 那条（走 registry）。GitHub 那条本质是 `pnpm add github:...`，需要 clone；都不通就用本地路径安装：DSH 设置 → 插件 → 添加，填本目录的绝对路径 → 安装 → 重启。
+这三条装的都是由包管理器管理的副本：升级会整个替换插件目录，**升级前先备份 `data/`**。
 
 ## 三种外观
 

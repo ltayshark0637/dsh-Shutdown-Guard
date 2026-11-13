@@ -15,9 +15,21 @@ It does not shut down the moment a task ends. Background jobs still running, a s
 
 **▶ [Interactive demo](https://ltayshark0637.github.io/dsh-Shutdown-Guard/demo.html)** — see what it looks like and how it decides without installing anything. All data is generated locally; nothing leaves your machine.
 
-## Installation
+## Install
 
-Published on npm — this is the recommended route:
+**Recommended: install from a local directory.** The plugin keeps its config, uploaded scripts and event log in a `data/` folder inside the plugin directory; only a checkout that DSH points at keeps that folder intact across upgrades.
+
+```bash
+git clone https://github.com/ltayshark0637/dsh-Shutdown-Guard
+```
+
+Then: DSH settings → Plugins → Add, enter the **absolute path of that directory** → install → fully quit DSH and open it again (reloading the page does not help).
+
+To upgrade, run `git pull` in that directory, then fully quit and reopen DSH. **`data/` is untouched** — the config, the uploaded scripts and the event log stay where they are.
+
+> **Installing via npm or GitHub works too, but back up `data/` before upgrading**: those two install a copy managed by a package manager, an upgrade replaces the whole plugin directory, and the config, the uploaded scripts and the event log inside it can disappear with it. If you would rather not do that, use the local-directory install above.
+
+When you do need the registry route (prefer npm when the network is restricted — it goes through the registry; the GitHub form is `pnpm add github:...` underneath and needs a clone):
 
 ```bash
 dsh plugin --profile web add dsh-shutdown-guard
@@ -35,9 +47,7 @@ Or straight from GitHub:
 dsh plugin --profile web add github:ltayshark0637/dsh-Shutdown-Guard
 ```
 
-It installs into the DSH plugin directory. Afterwards, quit DSH completely and start it again — a page refresh is not enough.
-
-> On a restricted network prefer the npm route (it goes through the registry). The GitHub route is really `pnpm add github:...` and needs a clone; if that fails, install from a local path: DSH Settings → Plugins → Add, enter the absolute path to this directory → install → restart.
+All three install a package-manager copy: an upgrade replaces the whole plugin directory, so **back up `data/` first**.
 
 ## Three looks
 
