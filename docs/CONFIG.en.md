@@ -99,7 +99,7 @@ The switch shown on the settings page is the derived value `shutdownOnHaltEffect
 | `onlyOnSuccess: false` (master switch off) | forced `false` |
 | `onlyOnSuccess: true` | honours the `shutdownOnHalt` the user stored |
 
-**The value the user stored on disk is never rewritten**, so flipping the master switch back and forth never loses the user's original choice; when the master switch is off the settings page merely greys the control out.
+**The value the user stored on disk is never rewritten**, so flipping the master switch back and forth never loses the user's original choice; when the master switch is off the settings page merely makes the control unclickable (the value is kept).
 
 ## 3. profile fields
 
@@ -132,9 +132,11 @@ Each profile stores its own copy; they do not affect one another.
 
 ## 4. `action`: what runs at zero
 
-Eight ids, **seven usable**; `restart-dsh` is listed but greyed out.
+Eight action ids exist and **all of them can run**; whether one shows up in the menu depends on this machine and the switch (next paragraph).
 
-**What is visible by default**: with "custom profiles" off, the action list offers shutdown, restart, sleep and hibernate only; lock, sign out and the custom script are gated by `customEnabled`. Turning it on is what makes the whole custom-script block (file picker, display name, warning and confirmation) appear in the settings page. If a profile still stores `custom` while the switch is off, the top of the dropdown keeps a disabled "Custom script (unavailable)" placeholder; it disappears as soon as the value changes to one of the listed actions — otherwise the dropdown would look blank and say nothing.
+**What is visible by default**: with "custom profiles" off, **on Windows** only the custom script needs that switch — lock goes through `rundll32 user32.dll,LockWorkStation` and sign out through `shutdown /l`, plain commands running with your own rights, so they are selectable right away; **on macOS and Linux** lock, sign out and the custom script stay behind the switch, because those three borrow the desktop's own tooling (`pmset`, `loginctl`, `osascript`) and vary far too much between environments. Turning the switch on is what makes the whole custom-script block (file picker, display name, warning and confirmation) appear in the settings page; the block is also only rendered when the action is set to the custom script.
+
+**An action this machine cannot run does not appear in the menu at all** — it is not left behind as a dead entry. Actions that can only be probed as `'unknown'` (the system actions on macOS and Linux) stay selectable: whether they really run is decided by the OS at that moment, and a failure is explained on the card. If a profile still stores `custom` while the switch is off, the top of the dropdown keeps an unselectable "Custom script (unavailable)" placeholder; it disappears as soon as the value changes to one of the listed actions — otherwise the dropdown would look blank and say nothing.
 
 | id | win32 | macOS | Linux |
 | --- | --- | --- | --- |
@@ -144,13 +146,13 @@ Eight ids, **seven usable**; `restart-dsh` is listed but greyed out.
 | `sleep` | `rundll32 powrprof.dll,SetSuspendState` | `pmset sleepnow` | `systemctl suspend` |
 | `lock` | `rundll32 user32.dll,LockWorkStation` | **unsupported** (no supported CLI) | `loginctl lock-session` |
 | `signout` | `shutdown /l` | `osascript` sign-out | `loginctl terminate-user`, **which also ends DSH itself** (DSH runs inside that user session) |
-| `restart-dsh` | **listed but not selectable today** | same | same |
+| `restart-dsh` | ends the host process and starts it again (on the desktop build the whole app exits and comes back) | same | same |
 | `custom` | runs the **script selected from the library** (see 4.1) | same | same |
 
 - All actions are **inline**: the plugin counts the countdown itself, and at zero it sends **exactly once** — sending means immediate execution. Cancel = nothing is sent.
 - Cost: if DSH is killed or crashes during the countdown, the action **will not** run. The old implementation used a system timer (`shutdown /t N`), which would still have shut down in that case. This is a deliberate trade-off — better to miss a shutdown than to shut down wrongly.
 - An unknown `action` falls back to `shutdown`: a corrupted config can never produce a state that is "armed with no action at all".
-- **Why `restart-dsh` is greyed out**: restarting DSH has to go through `app.relaunch()`, a capability of the Electron main process that the plugin has no path to; `process.exit()` would skip host cleanup and could damage running sessions, so it is deliberately not done. The id is kept so the config file stays readable and can be lit up directly once the host exposes an interface.
+- **How `restart-dsh` works**: the plugin calls no internal host API; it writes a one-shot helper into the plugin data directory that first ends the host process and then starts the same executable again — on the desktop build the whole app exits and comes back, on the command line it is the same command with its original arguments. The run goes to `data/restart.log`, the outcome to `data/restart.status`, and the next launch reads that and records "restart completed" in the event log. If `dsh-autorestart` is installed it owns restarts and this plugin stays out of the way — two restarters would race over the same process.
 
 ### 4.1 A custom action = one file picked from the script library
 
@@ -227,19 +229,20 @@ If a re-probe finds that the **currently selected action** has become unavailabl
 
 | Value | When it appears |
 | --- | --- |
-| `no-custom-profile` | "custom profiles" is off, so `lock` / `signout` / `custom` are all unavailable |
+| `no-custom-profile` | "custom profiles" is off so the action is unavailable: on Windows only `custom` hits this, on macOS / Linux `lock` and `signout` hit it too |
 | `no-script` | `action: custom` but no script is selected, or the selected entry's file has been deleted |
 | `missing-interpreter` | the script is there, but none of `python` / `python3` / `node` / `powershell` can be found |
 | `needs-elevation` | used for built-in actions on non-win32: availability reports `'unknown'` with this reason — the command was found, but TCC / polkit may require authorisation. **This is a conservative label for "cannot be probed reliably", not a detection result**: do not read it as "needs sudo"; on a real Ubuntu 24.04.5 LTS desktop all six actions ran without any extra elevation |
 | `unsupported-on-platform` | the platform has no honest way to do it (macOS `lock`) |
-| `no-host-restart` | `restart-dsh`: Electron's `app.relaunch()` is out of reach |
+| `no-host-restart` | `restart-dsh`: this environment has no host executable that can be restarted safely |
+| `host-restart-taken` | `restart-dsh`: `dsh-autorestart` is installed and owns restarts, so this one steps aside |
 | `script-not-acknowledged` | never acknowledged, or the acknowledged bytes no longer match what is on disk — including a hand-edited file |
 | `no-cli` | the executable cannot be found during probing (the failure value of `argvReachable`; macOS icon/path problems land here too) |
 | `no-session` | kept in the enum; no path currently produces it (an old branch for unavailable sessions) |
 
 The old value `no-custom-command` has been removed (it belonged to the replaced command-line model and was never released).
 
-The boundary of `no-custom-profile`: it is decided by that one switch and says nothing about whether anything is configured. `restart-dsh` is always `no-host-restart` and is **not affected** by it; `custom` with the switch on but no script selected reports `no-script` — one says "this action is not open right now", the other says "it is open, but you have not set it up yet", and the two must not be conflated.
+The boundary of `no-custom-profile`: it is decided by the "custom profiles" switch (plus the platform difference) and says nothing about whether anything is configured. On Windows only `custom` hits it; on macOS / Linux `lock` and `signout` do too. `custom` with the switch on but no script selected reports `no-script` — one says "this action is not open on this machine", the other says "it is open, but you have not set it up yet", and the two must not be conflated.
 
 ### 4.6 What each of the four script kinds does on Windows
 
@@ -327,7 +330,7 @@ When the action cannot run, `POST /arm` does **not** arm and then fail: it refus
 | --- | --- |
 | `no-script` | `action: custom`, but no script is selected or the selected file has been deleted |
 | `script-not-acknowledged` | the selected script was never acknowledged, or the bytes on disk differ from the acknowledged ones |
-| that action's probe `reason` | probing already found it unavailable (`no-custom-profile`, `missing-interpreter`, `no-cli`, …) |
+| that action's probe `reason` | probing already found it unavailable (`no-script`, `missing-interpreter`, `no-cli`, …; `no-custom-profile` only when that action is behind the switch) |
 | `action-unavailable` | fallback: no specific reason available, but the action really cannot run |
 
 The UI shows that refusal reason instead of a switch that pretends to have armed.

@@ -99,7 +99,7 @@
 | `onlyOnSuccess: false`（母开关关） | 强制 `false` |
 | `onlyOnSuccess: true` | 尊重用户存的 `shutdownOnHalt` |
 
-**磁盘上用户存的值永不被改写**，所以母开关来回切不会丢掉用户原来的选择；设置页在母开关关掉时只是把控件置灰。
+**磁盘上用户存的值永不被改写**，所以母开关来回切不会丢掉用户原来的选择；设置页在母开关关掉时只是把控件变成不可点（值仍然保留）。
 
 ## 3. profile 字段
 
@@ -132,9 +132,11 @@
 
 ## 4. `action`：到点做什么
 
-八个 id，**七个可用**；`restart-dsh` 列出但置灰。
+八个动作 id 都存在，而且**都能用**；菜单里能不能看到，取决于这台机器与开关（见下一段）。
 
-**默认可见范围**：未开启「自定义配置」时，动作列表只给关机、重启、睡眠、休眠；锁屏、注销、自定义脚本这三项由 `customEnabled` 开关控制。开启后「自定义脚本」整块（选择文件、显示名、警示与确认）才出现在设置页。若某份配置里存的仍是 `custom` 而开关已经被关掉，下拉顶端会留一条禁用的「自定义脚本（不可用）」占位，改成任一在列动作后自动消失 —— 这样不会出现「下拉空白、什么也不显示」的假象。
+**默认可见范围**：未开启「自定义配置」时，**Windows 上**只有「自定义脚本」需要这个开关 —— 锁屏走 `rundll32 user32.dll,LockWorkStation`、注销走 `shutdown /l`，都是以你自己的权限跑的普通命令，可以直接选；**macOS / Linux 上**锁屏、注销、自定义脚本三项仍由开关控制，因为这三项要借桌面自己的工具（`pmset`、`loginctl`、`osascript`），环境差异太大。开启后「自定义脚本」整块（选择文件、显示名、警示与确认）才出现在设置页；动作没选「自定义脚本」时，这一整块也不出现。
+
+**当前系统做不了的动作不会出现在菜单里**，不会留成一条点不动的条目。只能探测到 `'unknown'` 的动作（macOS / Linux 上的系统动作）仍然可选：能不能执行由系统在那一刻决定，失败了会在卡片上写明原因。若某份配置里存的仍是 `custom` 而开关已经被关掉，下拉顶端会留一条不可选的「自定义脚本（不可用）」占位，改成任一在列动作后自动消失 —— 这样不会出现「下拉空白、什么也不显示」的假象。
 
 | id | win32 | macOS | Linux |
 | --- | --- | --- | --- |
@@ -144,13 +146,13 @@
 | `sleep` | `rundll32 powrprof.dll,SetSuspendState` | `pmset sleepnow` | `systemctl suspend` |
 | `lock` | `rundll32 user32.dll,LockWorkStation` | **不支持**（没有受支持的 CLI） | `loginctl lock-session` |
 | `signout` | `shutdown /l` | `osascript` 注销 | `loginctl terminate-user`，**会连带结束 DSH 自己**（DSH 跑在该用户会话里） |
-| `restart-dsh` | **列出但当前不可选** | 同左 | 同左 |
+| `restart-dsh` | 结束宿主进程再把它拉起来（桌面端整个应用退出后自己回来） | 同左 | 同左 |
 | `custom` | 执行**用户上传的脚本**（见 4.1） | 同左 | 同左 |
 
 - 所有动作都是 **inline**：倒计时由插件自己数，到点**只发一次**、发出去就是立即执行。取消 = 什么都不发。
 - 代价：倒计时期间 DSH 被杀掉或崩溃，动作**不会**执行。旧实现用系统定时器（`shutdown /t N`），那种情况仍会关。这是刻意的取舍 —— 宁可漏关，也不错关。
 - 未知 `action` 回落 `shutdown`：配置写坏也不会出现「武装着却没有任何动作」的状态。
-- **`restart-dsh` 为什么置灰**：重启 DSH 要走 `app.relaunch()`，那是 Electron 主进程的能力，插件没有路径够到它；`process.exit()` 会跳过宿主清理、可能损坏正在跑的会话，所以刻意不做。保留这个 id 是为了让配置文件可读、将来宿主开放接口时直接点亮。
+- **`restart-dsh` 是怎么做的**：插件不调宿主内部接口，而是在插件数据目录写一个一次性的小脚本，先结束宿主进程、再用同一个可执行文件把它拉回来；桌面端是应用整个退出再启动，命令行下就是同一条命令带原来的参数重启。过程写进 `data/restart.log`，结果写进 `data/restart.status`，下次启动读到后会在事件日志里记一条「重启已完成」。本机装了 `dsh-autorestart` 时，重启这件事归它管，本插件不再插手 —— 两个重启器会抢同一个进程。
 
 ### 4.1 自定义动作 = 从脚本库挑一个文件
 
@@ -227,19 +229,20 @@ POST /config
 
 | 值 | 什么时候出现 |
 | --- | --- |
-| `no-custom-profile` | 未开启「自定义配置」时，`lock` / `signout` / `custom` 这三个动作一律不可用 |
+| `no-custom-profile` | 未开启「自定义配置」时不可用：Windows 上只有 `custom` 会命中这条；macOS / Linux 上还包括 `lock` 与 `signout` |
 | `no-script` | `action: custom` 但没选脚本，或选中的条目文件已经被删掉 |
 | `missing-interpreter` | 脚本在，但 `python` / `python3` / `node` / `powershell` 一个都找不到 |
 | `needs-elevation` | 内置动作在非 win32 上就用它：可用性报 `'unknown'`、原因给这个 —— 命令找到了，但 TCC / polkit 可能要求授权。**这是「无法可靠探测时的保守标注，不是检测结果」**：不能读成「需要 sudo」；实测 Ubuntu 24.04.5 LTS 桌面上六个动作都不需要额外提权即可执行 |
 | `unsupported-on-platform` | 本平台没有诚实的做法（macOS 的 `lock`） |
-| `no-host-restart` | `restart-dsh`：够不着 Electron 的 `app.relaunch()` |
+| `no-host-restart` | `restart-dsh`：当前环境找不到能安全重启的宿主可执行文件 |
+| `host-restart-taken` | `restart-dsh`：本机装了 `dsh-autorestart`，重启归它管，这里不再重复 |
 | `script-not-acknowledged` | 没确认过，或确认的字节与当前不一致 —— 包括磁盘文件被手改成别的字节 |
 | `no-cli` | 探测阶段找不到可执行文件（`argvReachable` 的失败值；macOS 的图标/路径问题也落这里） |
 | `no-session` | 枚举里保留，当前没有任何路径会产出它（会话不可用的旧分支） |
 
 `no-custom-command` 这个旧值已删除（它属于被替换掉的命令行模型，从未发布过）。
 
-`no-custom-profile` 的边界：它只由那一个开关决定，和「有没有配好」无关。`restart-dsh` 恒为 `no-host-restart`，**不受这条影响**；`custom` 在开关打开之后，如果还没上传脚本，报的是 `no-script` —— 一个说「这个动作现在不开放」，一个说「开放了但你还没准备」，两者不能混为一谈。
+`no-custom-profile` 的边界：它只由「自定义配置」这一个开关（加上平台差异）决定，和「有没有配好」无关。Windows 上只有 `custom` 会命中它；macOS / Linux 上还有 `lock` 与 `signout`。`custom` 在开关打开之后、如果还没上传脚本，报的是 `no-script` —— 一个说「这个动作在这台机器上不开放」，一个说「开放了但你还没准备」，两者不能混为一谈。
 
 ### 4.6 Windows 上四种脚本各是什么效果
 
@@ -327,7 +330,7 @@ POST /config
 | --- | --- |
 | `no-script` | `action: custom`，但没选脚本或选中的文件已被删掉 |
 | `script-not-acknowledged` | 选中的脚本没确认过，或磁盘上的字节与确认的不一致 |
-| 该动作的探测 `reason` | 探测阶段就判了不可用（如 `no-custom-profile`、`missing-interpreter`、`no-cli`） |
+| 该动作的探测 `reason` | 探测阶段就判了不可用（如 `no-script`、`missing-interpreter`、`no-cli`；`no-custom-profile` 只在该动作受开关控制时出现） |
 | `action-unavailable` | 兜底：拿不到具体原因，但动作确实不可运行 |
 
 界面侧据此把「拒绝原因」直接显示出来，而不是显示一个假装武装成功的开关。
