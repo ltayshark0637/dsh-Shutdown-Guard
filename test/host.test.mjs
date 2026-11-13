@@ -1,17 +1,24 @@
 import assert from 'node:assert'
-import { apply } from '../lib/index.mjs'
+import { apply, hostRestartPlan } from '../lib/index.mjs'
 import { LANGS, MESSAGES, catalogCoverage, t } from '../lib/i18n.mjs'
 import { writeV4SharedScripts, SAMPLES, SHARED_SHA, sha256 } from './fixtures/script-library.mjs'
 
 const spawns = []
 const timers = new Map()
-// Each run starts from a clean profile store: an earlier run may have left
-// customEnabled / activeProfileId in data/config.json.
+// The dsh-autorestart gate asks the real home directory. Point it at an empty
+// sandbox so the answer never depends on what happens to be installed on the
+// developer's machine; 54e creates the marker there on purpose.
+let emptyHome = ''
 {
   const fs = await import('node:fs')
   const pathMod = await import('node:path')
+  const os = await import('node:os')
   const { fileURLToPath } = await import('node:url')
   const here = pathMod.dirname(fileURLToPath(import.meta.url))
+  emptyHome = pathMod.join(os.tmpdir(), 'dsh-guard-empty-home-' + process.pid)
+  fs.mkdirSync(emptyHome, { recursive: true })
+  process.env.USERPROFILE = emptyHome
+  process.env.HOME = emptyHome
   const cfg = pathMod.join(here, '..', 'data', 'config.json')
   try { fs.unlinkSync(cfg) } catch { /* absent on a first run */ }
   // Same for the UI preferences: assertion 26 expects the shipped defaults.
@@ -1154,8 +1161,8 @@ assert.strictEqual(routes.size, 0, 'disposer removes HTTP routes')
     assert.ok(st.actions[id].available === true || st.actions[id].available === false || st.actions[id].available === 'unknown', `${id} uses the tri-state`)
     assert.ok(st.actions[id].reason === null || typeof st.actions[id].reason === 'string', `${id} reason is prose-free`)
   }
-  assert.strictEqual(st.actions['restart-dsh'].available, false, 'DSH cannot restart itself')
-  assert.strictEqual(st.actions['restart-dsh'].reason, 'no-host-restart', 'the reason is machine-readable')
+  assert.strictEqual(st.actions['restart-dsh'].available, true, 'the host can restart itself')
+  assert.strictEqual(st.actions['restart-dsh'].reason, null, 'no gate owns restart-dsh in an empty home')
   assert.strictEqual(st.actions.custom.available, false, 'custom without a script is unavailable')
   assert.strictEqual(st.actions.custom.reason, 'no-script', 'custom explains the missing script')
   assert.strictEqual(st.actionReady, true, 'the selected shutdown action is usable')
@@ -1611,8 +1618,6 @@ assert.strictEqual(routes.size, 0, 'disposer removes HTTP routes')
       `${id} reports no-custom-profile while custom profiles are off`)
   }
   assert.strictEqual(st.actions.shutdown.available, true, 'shutdown needs no custom profile')
-  assert.strictEqual(st.actions['restart-dsh'].reason, 'no-host-restart',
-    'the restart-dsh reason wins over the custom-profile gate')
   // The default profile keeps action editable, so a stale profile can still say
   // lock after the feature is switched off. The gate must refuse that arm even
   // though the profile itself is the default one.
@@ -2143,8 +2148,9 @@ assert.strictEqual(routes.size, 0, 'disposer removes HTTP routes')
   // availability table carries the same reason.
   await postState('/config', { updateProfile: { id: 'c1', patch: { action: 'restart-dsh' } } })
   r = await postState('/arm')
-  assert.deepStrictEqual([r.status, r.body.error, r.body.armed], [409, 'no-host-restart', false],
-    'an action the host cannot run is refused with its probe reason')
+  assert.deepStrictEqual([r.status, r.body.armed], [200, true],
+    'restart-dsh is a real action now, so it can be armed')
+  await postState('/disarm')
   await postState('/config', { updateProfile: { id: 'c1', patch: { action: 'custom' } } })
   calls.push('arm-refusal-enumerated-ok')
 
@@ -2291,6 +2297,75 @@ assert.strictEqual(routes.size, 0, 'disposer removes HTTP routes')
   assert.strictEqual(st.lastSkip, null, 'the stale error skip does not survive the cleared window')
   await postState('/disarm')
   calls.push('stale-skip-cleared-ok')
+
+  // 54e. restart-dsh is planned, never launched by the tests. The helper text is
+  // the contract: kill only this pid (no /T, the helper is our child), then start
+  // the same executable in the same cwd with the same argv.
+  {
+    const fs = await import('node:fs')
+    const pathMod = await import('node:path')
+    const win = hostRestartPlan({
+      platform: 'win32',
+      execPath: 'C:\\Program Files\\DeepSeek Harness\\app.exe',
+      argv: ['a b', 'say "hi"'],
+      cwd: 'C:\\work dir',
+      dataDir: 'C:\\data',
+      pid: 4242,
+    })
+    assert.strictEqual(win.ok, true, 'a windows plan exists')
+    assert.ok(win.content.includes('taskkill /PID 4242 /F'), 'the helper kills this pid')
+    assert.ok(!win.content.includes('/T'), 'the helper is a child, so /T would kill it too')
+    assert.ok(win.content.includes('start "" "C:\\Program Files\\DeepSeek Harness\\app.exe"'),
+      'the helper restarts the same executable')
+    assert.ok(win.content.includes('"a b"'), 'arguments with spaces stay quoted')
+    assert.ok(win.content.includes('say \\"hi\\"'), 'embedded quotes survive cmd quoting')
+    assert.ok(win.content.includes('cd /d "C:\\work dir"'), 'the helper keeps the working directory')
+    assert.ok(win.content.includes('>> C:\\data\\restart.log 2>&1'), 'the output goes to restart.log')
+    calls.push('host-restart-plan-ok')
+
+    const posix = hostRestartPlan({
+      platform: 'linux',
+      execPath: '/opt/dsh/app',
+      argv: ["a'b"],
+      cwd: '/work dir',
+      dataDir: '/data',
+      pid: 4242,
+    })
+    assert.strictEqual(posix.ok, true, 'a posix plan exists')
+    assert.ok(posix.content.includes('kill -TERM 4242'), 'the helper SIGTERMs this pid')
+    assert.ok(posix.content.includes('exec \'/opt/dsh/app\''), 'the helper execs the same binary')
+    assert.ok(posix.content.includes('cd \'/work dir\''), 'the helper keeps the working directory')
+    assert.ok(posix.content.includes("'a'\\''b'"), 'single quotes are escaped for sh')
+    assert.ok(posix.content.includes('>> \'/data/restart.log\''), 'the output goes to restart.log')
+    calls.push('host-restart-plan-posix-ok')
+
+    assert.deepStrictEqual(hostRestartPlan({ execPath: '' }),
+      { ok: false, reason: 'no-host-restart' }, 'no executable means no honest restart')
+    assert.deepStrictEqual(hostRestartPlan({ platform: 'aix' }),
+      { ok: false, reason: 'unsupported-on-platform' }, 'unknown platforms are refused')
+    calls.push('host-restart-plan-unavailable-ok')
+
+    // The dsh-autorestart marker is read live by the gate, so a recheck (and an
+    // arm) must see it appear and disappear without a restart.
+    const marker = pathMod.join(emptyHome, '.dsh', 'storages', 'dsh-autorestart')
+    fs.mkdirSync(marker, { recursive: true })
+    await postState('/config', { recheck: true })
+    await flush()
+    st = await stateNow()
+    assert.deepStrictEqual(st.actions['restart-dsh'],
+      { available: false, reason: 'host-restart-taken' },
+      'an installed dsh-autorestart owns the restart')
+    fs.rmSync(pathMod.join(emptyHome, '.dsh'), { recursive: true, force: true })
+    await postState('/config', { recheck: true })
+    await flush()
+    st = await stateNow()
+    assert.deepStrictEqual(st.actions['restart-dsh'], { available: true, reason: null },
+      'removing the marker returns the action to the host')
+    assert.strictEqual(st.actions['restart-dsh'].available, hostRestartPlan().ok,
+      'the probe answer and the live plan agree')
+    calls.push('host-restart-yields-ok')
+    calls.push('host-restart-ready-parity-ok')
+  }
 
   mount()
 }
