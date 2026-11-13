@@ -138,9 +138,9 @@ off ──武装──▶ armed ──有后台任务──▶ hold ──任务
 ## 7. 平台与失败面
 
 - **平台**：win32、macOS、Linux 现在都按同一条路径挂载 —— 动作表为每个平台备好一行，`apply()` 里只剩一条防御性早退（某平台连 `shutdown` 行都没有时才触发，目前不可达，`log.platformUnsupported` 保留在文案目录里）。
-- **三档实测程度**：Windows **完整验证，含真实执行**；macOS **关机、重启、睡眠、注销四项已真机验证执行成功**（判定闸 → 定时器/补算 → `spawn` → 系统接受 → 机器实际关机 / 重启 / 睡下 / 结束登录会话；Apple Silicon / macOS 27.2 / DSH Desktop），**前提是没有应用阻止**；macOS **不提供真正的休眠**（没有用户级命令，按睡眠处理）、**锁屏不支持**（无可靠 CLI，见下一条）；Linux **六个动作已真机验证执行成功**（Ubuntu 24.04.5 LTS / 桌面会话；`signout` 结束整个登录会话、DSH 随之退出），真实限流 / 超时下的自动重试与插件重载后的武装状态尚未验证。
+- **三档实测程度**：Windows **完整验证，含真实执行**；macOS **关机、重启、睡眠、注销四项已真机验证执行成功**（判定闸 → 定时器/补算 → `spawn` → 系统接受 → 机器实际关机 / 重启 / 睡下 / 结束登录会话；Apple Silicon / macOS 27.2 / DSH Desktop），**前提是没有应用阻止**；macOS **不提供休眠**（系统没有用户级休眠命令，也不拿睡眠冒充）、**锁屏不支持**（无可靠 CLI，见下一条）；Linux **六个动作已真机验证执行成功**（Ubuntu 24.04.5 LTS / 桌面会话；`signout` 结束整个登录会话、DSH 随之退出），真实限流 / 超时下的自动重试与插件重载后的武装状态尚未验证。
 - macOS 上被拦不是插件的问题：系统会先看有没有应用声明「我正在忙」，终端跑着前台命令、编辑器有未保存文档时，系统就等确认，与手动点苹果菜单「关机」被拦是同一种情况；把前台应用空出来再跑，就能正常关机或重启。要无条件执行得走 root（`shutdown -h now`），**macOS 上**插件刻意不碰提权 —— 提权只出现在 Linux 那条一次性的 `pkexec` 重试（见 CONFIG 4.7）。
-  - macOS `lock` 没有可靠 CLI（`displaysleepnow` 只是熄屏，⌃⌘Q 需要辅助功能权限），明确报 `unsupported-on-platform`，不半锁；macOS `hibernate` 没有用户级命令，降级为 `pmset sleepnow`。
+  - macOS `lock` 没有可靠 CLI（`displaysleepnow` 只是熄屏，⌃⌘Q 需要辅助功能权限），明确报 `unsupported-on-platform`，不半锁；macOS `hibernate` 没有用户级命令，直接 `argv: null` + `unsupported-on-platform`，不会降级成睡眠 —— 拿睡眠冒充休眠等于对用户说谎。
   - Linux `signout` 用 `loginctl terminate-user`，会连带结束 DSH 自己（DSH 跑在该用户会话里）。
   - 非 win32 上凡是能解析到命令的动作，可用性一律报 `'unknown'`：TCC / polkit 可能在最后一刻拒绝，报 `true` 就是撒谎。`actionReadyNow()` 只把 `false` 当不可用，所以 `'unknown'` **是可武装的** —— 它表示「系统仍是否决方」，不是坏了。
 - 不修改 `app.asar` 与 DSH 源码，全部通过槽位与事件挂载。
