@@ -2687,4 +2687,23 @@ assert.strictEqual(routes.size, 0, 'disposer removes HTTP routes')
   mount()
 }
 
+// 55. npm publishes only what `files` lists, so an `icon` outside that whitelist
+// resolves during development and 404s after install. DSH reads the icon while
+// building plugin metadata, so the installed plugin shows
+// `包元信息错误：Plugin metadata for dsh-shutdown-guard: Error: ENOENT ... lstat`
+// instead of its icon.
+{
+  const fs = await import('node:fs')
+  const pathMod = await import('node:path')
+  const { fileURLToPath } = await import('node:url')
+  const root = pathMod.join(pathMod.dirname(fileURLToPath(import.meta.url)), '..')
+  const pkg = JSON.parse(fs.readFileSync(pathMod.join(root, 'package.json'), 'utf8'))
+  assert.strictEqual(typeof pkg.icon, 'string', 'package.json declares an icon path')
+  assert.ok(fs.existsSync(pathMod.join(root, pkg.icon)),
+    `the declared icon exists in the repository: ${pkg.icon}`)
+  assert.ok(pkg.files.includes(pkg.icon),
+    `files must ship the declared icon ${pkg.icon}; files = ${JSON.stringify(pkg.files)}`)
+  calls.push('pack-icon-shipped-ok')
+}
+
 console.log('PASS: ' + calls.join(', '))
