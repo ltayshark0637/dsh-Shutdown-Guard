@@ -18,7 +18,7 @@
   "icon": "assets/icon-glyph-128.png",
   "files": [
     "lib",
-    "assets/icon-shield-2-128.png",
+    "assets/icon-glyph-128.png",
     "cordis.patch.yml",
     "README.md",
     "README.en.md",
